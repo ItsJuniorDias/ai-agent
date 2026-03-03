@@ -36,18 +36,15 @@ export default function JiraSettings() {
 
   const loadSettings = async () => {
     try {
-      const values = await AsyncStorage.multiGet([
-        STORAGE_KEYS.EMAIL,
-        STORAGE_KEYS.TOKEN,
-        STORAGE_KEYS.DOMAIN,
+      const [emailValue, tokenValue, domainValue] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEYS.EMAIL),
+        AsyncStorage.getItem(STORAGE_KEYS.TOKEN),
+        AsyncStorage.getItem(STORAGE_KEYS.DOMAIN),
       ]);
-      values.forEach(([key, value]) => {
-        if (value) {
-          if (key === STORAGE_KEYS.EMAIL) setEmail(value);
-          if (key === STORAGE_KEYS.TOKEN) setToken(value);
-          if (key === STORAGE_KEYS.DOMAIN) setDomain(value);
-        }
-      });
+
+      if (emailValue) setEmail(emailValue);
+      if (tokenValue) setToken(tokenValue);
+      if (domainValue) setDomain(domainValue);
     } catch (e) {
       Alert.alert("Error", "Could not load settings.");
     }
@@ -61,10 +58,10 @@ export default function JiraSettings() {
 
     setLoading(true);
     try {
-      await AsyncStorage.multiSet([
-        [STORAGE_KEYS.EMAIL, email.trim()],
-        [STORAGE_KEYS.TOKEN, token.trim()],
-        [STORAGE_KEYS.DOMAIN, domain.toLowerCase().trim()],
+      await Promise.all([
+        AsyncStorage.setItem(STORAGE_KEYS.EMAIL, email.trim()),
+        AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token.trim()),
+        AsyncStorage.setItem(STORAGE_KEYS.DOMAIN, domain.toLowerCase().trim()),
       ]);
       Alert.alert("Success", "Settings saved securely.");
     } catch (e) {
@@ -179,8 +176,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F2F2F7", // iOS System Background
   },
   scrollContent: {
-    padding: 20,
-    paddingTop: 40,
+    paddingHorizontal: 20,
   },
   header: {
     marginBottom: 32,
