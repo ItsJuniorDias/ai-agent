@@ -3,18 +3,20 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-  Alert, // <-- Imported Alert
+  Alert,
   FlatList,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons"; // <-- Imported Expo's icon package
+import { Ionicons } from "@expo/vector-icons";
 
 export default function History() {
   const [history, setHistory] = useState([]);
   const router = useRouter();
+
+  console.log("History screen rendered with history:", history);
 
   // Loads data whenever the screen gains focus
   useFocusEffect(
@@ -89,6 +91,14 @@ export default function History() {
           <Text style={styles.cardTitle} numberOfLines={1}>
             {item.title}
           </Text>
+
+          <Text style={styles.cardDescription} numberOfLines={2}>
+            {item.messages.some((msg) => msg.role === "user")
+              ? item.messages.find((msg) => msg.role !== "user")?.text ||
+                "No response"
+              : "No user message"}
+          </Text>
+
           <Text style={styles.cardDate}>{item.date}</Text>
         </View>
 
@@ -100,9 +110,6 @@ export default function History() {
           <Ionicons name="trash-outline" size={22} color="#FF3B30" />
         </TouchableOpacity>
       </View>
-      <Text style={styles.cardSnippet} numberOfLines={1}>
-        {item.snippet}
-      </Text>
     </TouchableOpacity>
   );
 
@@ -162,19 +169,28 @@ const styles = StyleSheet.create({
   headerTextContainer: {
     flex: 1,
     marginRight: 10,
+    gap: 4,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
+    color: "#1A1A1A",
+  },
+  cardDescription: {
+    fontSize: 16,
+    fontWeight: "400",
     color: "#1A1A1A",
   },
   cardDate: {
     fontSize: 12,
     color: "#888",
+    marginTop: 8,
   },
-  cardSnippet: {
+  cardResponse: {
     fontSize: 14,
-    color: "#666",
+    color: "#444",
+    marginTop: 4,
+    lineHeight: 20,
   },
   emptyText: {
     textAlign: "center",

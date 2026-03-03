@@ -52,7 +52,13 @@
           "savePhotosPermission": "O aplicativo precisa de permissão para salvar as imagens geradas por IA na sua galeria de fotos."
         }
       ],
-      "expo-video"
+      [
+        "@react-native-voice/voice",
+        {
+          "microphonePermission": "Permitir que o assistente ouça seus comandos de voz.",
+          "speechRecognitionPermission": "Permitir que o assistente transforme sua fala em texto."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
