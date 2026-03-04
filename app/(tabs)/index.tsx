@@ -13,8 +13,8 @@ import Voice, {
 // 2. IMPORTS NORMAIS
 import { GoogleGenerativeAI, ChatSession } from "@google/generative-ai";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -28,19 +28,18 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  ActionSheetIOS, // <-- IMPORTADO PARA O MENU NATIVO DO IOS
+  ActionSheetIOS,
 } from "react-native";
 import Markdown from "react-native-markdown-display";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
-import { FontAwesome5 } from "@expo/vector-icons";
+import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 
-// IMPORT ATUALIZADO PARA O GITHUB
-import { createPullRequest, getAIAnalysis } from "@/service/runCodeReview"; // Ajuste o caminho se necessário
+// IMPORT DO GITHUB
+import { createPullRequest, getAIAnalysis } from "@/service/runCodeReview";
 
 global.Buffer = Buffer;
 
-// Adicionando os objetos globais que a SDK do Gemini espera encontrar
 Object.assign(global, {
   TextEncoder,
   TextDecoder,
@@ -48,7 +47,7 @@ Object.assign(global, {
   TransformStream,
 });
 
-// --- NOVOS TIPOS PARA O RAG (MEMÓRIA VETORIAL) ---
+// --- TIPOS ---
 type MemoryVector = {
   id: string;
   text: string;
@@ -68,12 +67,11 @@ type StoredConversation = {
   messages: ChatMessage[];
 };
 
-// --- TIPO ATUALIZADO PARA O GITHUB ---
 type GitHubConfig = {
   accessToken: string;
-  baseUrl: string; // Ex: https://api.github.com
-  repoOwner: string; // Ex: facebook
-  repoName: string; // Ex: react-native
+  baseUrl: string;
+  repoOwner: string;
+  repoName: string;
   sourceBranch: string;
   targetBranch: string;
   title: string;
@@ -81,11 +79,65 @@ type GitHubConfig = {
 };
 
 const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
-
-// Inicializa a API do Google
 const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
 
-// --- FUNÇÃO MATEMÁTICA: SIMILARIDADE DE COSSENO ---
+// --- DICIONÁRIO DE INTEGRAÇÕES (Regra de Ouro) ---
+const INTEGRATION_CONFIG = {
+  github: {
+    icon: "github",
+    color: "#181717",
+    actionText: "Create Pull Request",
+    route: "/(github)",
+  },
+  jira: {
+    icon: "jira",
+    color: "#0052CC",
+    actionText: "Create Task",
+    route: "/(jira)",
+  },
+  gitlab: {
+    icon: "gitlab",
+    color: "#FC6D26",
+    actionText: "Create Merge Request",
+    route: "/(gitlab)",
+  },
+  slack: {
+    icon: "slack",
+    color: "#4A154B",
+    actionText: "Send to Channel",
+    route: "/(slack)",
+  },
+  linear: {
+    icon: "vector-line",
+    color: "#5E6AD2",
+    actionText: "Create Issue",
+    route: "/(linear)",
+  },
+  vercel: {
+    icon: "triangle",
+    color: "#000000",
+    actionText: "Deploy to Vercel",
+    route: "/(vercel)",
+  },
+
+  notion: {
+    icon: "notebook",
+    color: "#000000",
+    actionText: "Save to Notion",
+    route: "/(notion)",
+  },
+
+  gmail: {
+    icon: "email-outline",
+    color: "#D14836",
+    actionText: "Send Email",
+    route: "/(gmail)",
+  },
+
+  chat: null, // Chat não renderiza botão extra
+};
+
+// --- FUNÇÃO MATEMÁTICA ---
 function cosineSimilarity(vecA: number[], vecB: number[]) {
   let dotProduct = 0;
   let normA = 0;
@@ -107,16 +159,19 @@ export default function App() {
 
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isJiraLoading, setIsJiraLoading] = useState(false);
 
+  const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+
+  // NOVO: Estado único de loading para qualquer integração
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
+  // Guarda qual foi a integração escolhida no Onboarding
+  const [activeIntegration, setActiveIntegration] = useState<string>("chat");
 
   const [conversationId, setConversationId] = useState(
     paramConversationId || Date.now().toString(),
   );
-
-  const [isGitHubLoading, setIsGitHubLoading] = useState(false);
 
   const model = useRef<ReturnType<typeof genAI.getGenerativeModel> | null>(
     null,
@@ -126,6 +181,32 @@ export default function App() {
   > | null>(null);
   const chatRef = useRef<ChatSession | null>(null);
   const scrollViewRef = useRef<ScrollView | null>(null);
+
+  // Define as propriedades visuais da ferramenta atual baseada no dicionário
+  const currentTool =
+    activeIntegration !== "chat"
+      ? INTEGRATION_CONFIG[activeIntegration as keyof typeof INTEGRATION_CONFIG]
+      : null;
+
+  // Carrega a integração selecionada
+  useFocusEffect(
+    useCallback(() => {
+      const loadIntegration = async () => {
+        try {
+          // Atualizado para a mesma key que usamos no inglês OnboardingScreen (@primary_integration)
+          const selected =
+            (await AsyncStorage.getItem("@primary_integration")) ||
+            (await AsyncStorage.getItem("@selected_integration"));
+          if (selected) {
+            setActiveIntegration(selected);
+          }
+        } catch (error) {
+          console.error("Erro ao carregar a integração:", error);
+        }
+      };
+      loadIntegration();
+    }, []),
+  );
 
   useEffect(() => {
     Voice.onSpeechStart = () => setIsListening(true);
@@ -178,7 +259,6 @@ export default function App() {
           const historyArray: StoredConversation[] = storedHistory
             ? JSON.parse(storedHistory)
             : [];
-
           const currentChat = historyArray.find(
             (item) => item.id === paramConversationId,
           );
@@ -202,82 +282,99 @@ export default function App() {
     initializeChat();
   }, [paramConversationId]);
 
-  // --- NOVA FUNÇÃO: Dispara a criação do Pull Request no GitHub ---
-  const handleGitHubPress = async () => {
+  // --- ROTEADOR DINÂMICO DE AÇÕES ---
+  const executeIntegrationAction = async () => {
     if (!prompt.trim()) {
       Alert.alert(
         "Aviso",
-        "Digite a descrição do Pull Request no chat primeiro.",
+        `Digite a descrição no chat primeiro para usar o ${activeIntegration}.`,
       );
       return;
     }
 
-    setIsGitHubLoading(true);
+    if (Platform.OS !== "web")
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    setIsActionLoading(true);
 
     try {
-      const ghConfigString = await AsyncStorage.getItem("@github_config");
-
-      if (!ghConfigString) {
-        router.push("/(github)");
-        return;
+      switch (activeIntegration) {
+        case "github":
+          await processGitHubAction();
+          break;
+        case "jira":
+          await processJiraAction();
+          break;
+        default:
+          Alert.alert(
+            "Aviso",
+            "Ação não implementada para esta ferramenta ainda.",
+          );
       }
-
-      const ghConfig: GitHubConfig = JSON.parse(ghConfigString);
-      console.log("Configurações do GitHub carregadas:", ghConfig);
-
-      //chamar function getAIAnalysis
-
-      const aiAnalysis = await getAIAnalysis(prompt);
-
-      await createPullRequest(
-        ghConfig.sourceBranch,
-        ghConfig.targetBranch,
-        ghConfig.title || "Review by AI",
-        aiAnalysis,
-      );
-
-      Alert.alert("Sucesso", "Pull Request enviado ao GitHub com sucesso!");
-      setPrompt("");
     } catch (error) {
       console.error(error);
-      Alert.alert("Erro", "Falha ao enviar o PR para o GitHub.");
     } finally {
-      setIsGitHubLoading(false);
+      setIsActionLoading(false);
     }
   };
 
-  // --- MENU DE CONTEXTO NATIVO DO GITHUB ---
-  const showGitHubMenu = () => {
+  const showDynamicMenu = () => {
+    if (!currentTool) return;
+
     if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
         {
           options: [
-            "Cancelar",
-            "Criar Pull Request",
-            "Configurações do GitHub",
+            "Cancel",
+            currentTool.actionText,
+            `${activeIntegration} Settings`,
           ],
           cancelButtonIndex: 0,
-          userInterfaceStyle: "light", // Mude para 'dark' se o seu app tiver tema escuro
+          userInterfaceStyle: "light",
         },
         (buttonIndex) => {
-          if (buttonIndex === 1) {
-            handleGitHubPress();
-          } else if (buttonIndex === 2) {
-            router.push("/(github)");
-          }
+          if (buttonIndex === 1) executeIntegrationAction();
+          else if (buttonIndex === 2) router.push(currentTool.route as any);
         },
       );
     } else {
-      // Fallback para Android e Web
-      Alert.alert("Opções do GitHub", "O que você deseja fazer?", [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Criar Pull Request", onPress: () => handleGitHubPress() },
-        { text: "Configurações", onPress: () => router.push("/(github)") },
-      ]);
+      Alert.alert(
+        `${activeIntegration} Options`,
+        "What would you like to do?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: currentTool.actionText,
+            onPress: () => executeIntegrationAction(),
+          },
+          {
+            text: "Settings",
+            onPress: () => router.push(currentTool.route as any),
+          },
+        ],
+      );
     }
   };
 
-  // --- JIRA ---
+  // --- LÓGICA ESPECÍFICA DAS INTEGRAÇÕES ---
+  const processGitHubAction = async () => {
+    const ghConfigString = await AsyncStorage.getItem("@github_config");
+    if (!ghConfigString) {
+      router.push("/(github)");
+      return;
+    }
+    const ghConfig: GitHubConfig = JSON.parse(ghConfigString);
+    const aiAnalysis = await getAIAnalysis(prompt);
+    await createPullRequest(
+      ghConfig.sourceBranch,
+      ghConfig.targetBranch,
+      ghConfig.title || "Review by AI",
+      aiAnalysis,
+    );
+    Alert.alert("Sucesso", "Pull Request enviado ao GitHub com sucesso!");
+    setPrompt("");
+  };
+
   const handleCreateTaskJira = async ({
     summary,
     description,
@@ -286,17 +383,8 @@ export default function App() {
     domain,
     email = "user_t10tec102@tribanco.com.br",
     issueType = "Story",
-  }: {
-    summary: string;
-    description: string;
-    projectKey: string;
-    apiJiraToken: string;
-    domain: string;
-    email?: string;
-    issueType?: "Story" | "Bug" | "Task";
-  }) => {
+  }: any) => {
     const auth = Buffer.from(`${email}:${apiJiraToken}`).toString("base64");
-
     const bodyData = {
       fields: {
         project: { key: projectKey },
@@ -332,95 +420,61 @@ export default function App() {
       const errorData = await response.json();
       throw new Error(`Erro no Jira: ${JSON.stringify(errorData)}`);
     }
-
     return await response.json();
   };
 
-  const handleJiraPress = async () => {
-    if (!prompt.trim()) {
-      Alert.alert(
-        "Aviso",
-        "Digite a descrição da task no campo de texto primeiro.",
-      );
+  const processJiraAction = async () => {
+    const jiraConfigString = await AsyncStorage.getItem("@jira_config");
+    if (!jiraConfigString) {
+      router.push("/(jira)");
       return;
     }
 
-    if (Platform.OS !== "web")
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    setIsJiraLoading(true);
-
-    try {
-      const jiraConfigString = await AsyncStorage.getItem("@jira_config");
-
-      if (!jiraConfigString) {
-        setIsJiraLoading(false);
-        router.push("/(jira)");
-        return;
-      }
-
-      const jiraConfig = JSON.parse(jiraConfigString);
-
-      if (!jiraConfig.apiToken || !jiraConfig.domain) {
-        setIsJiraLoading(false);
-        router.push("/(jira)");
-        return;
-      }
-
-      const response = await handleCreateTaskJira({
-        summary: "Implementar nova funcionalidade do STP",
-        description: prompt,
-        projectKey: jiraConfig.projectKey || "STP",
-        apiJiraToken: jiraConfig.apiToken,
-        domain: jiraConfig.domain,
-        email: jiraConfig.email,
-      });
-
-      const issueKey = response.key;
-      const issueUrl = `https://${jiraConfig.domain}.atlassian.net/browse/${issueKey}`;
-
-      Alert.alert(
-        "Task Created",
-        `A Jira task was created successfully! Do you want to view it?`,
-        [
-          { text: "No", style: "cancel" },
-          {
-            text: "Yes",
-            onPress: () => {
-              if (Platform.OS === "web") {
-                window.open(issueUrl, "_blank");
-              } else {
-                Linking.openURL(issueUrl);
-              }
-            },
-          },
-        ],
-      );
-
-      setPrompt("");
-    } catch (error) {
-      console.error("Erro ao criar tarefa no Jira:", error);
-      Alert.alert(
-        "Erro",
-        "Não foi possível criar a task no Jira. Verifique os logs e se as suas credenciais estão corretas.",
-      );
-    } finally {
-      setIsJiraLoading(false);
+    const jiraConfig = JSON.parse(jiraConfigString);
+    if (!jiraConfig.apiToken || !jiraConfig.domain) {
+      router.push("/(jira)");
+      return;
     }
+
+    const response = await handleCreateTaskJira({
+      summary: "Implementar nova funcionalidade do STP",
+      description: prompt,
+      projectKey: jiraConfig.projectKey || "STP",
+      apiJiraToken: jiraConfig.apiToken,
+      domain: jiraConfig.domain,
+      email: jiraConfig.email,
+    });
+
+    const issueUrl = `https://${jiraConfig.domain}.atlassian.net/browse/${response.key}`;
+
+    Alert.alert(
+      "Task Created",
+      `A Jira task was created successfully! Do you want to view it?`,
+      [
+        { text: "No", style: "cancel" },
+        {
+          text: "Yes",
+          onPress: () => {
+            Platform.OS === "web"
+              ? window.open(issueUrl, "_blank")
+              : Linking.openURL(issueUrl);
+          },
+        },
+      ],
+    );
+    setPrompt("");
   };
 
-  // --- MOTOR RAG ---
+  // --- MEMÓRIA E CHAT ---
   const saveMemoryToVectorDB = async (text: string) => {
     if (!embeddingModel.current) return;
     try {
       const result = await embeddingModel.current.embedContent(text);
       const embedding = result.embedding.values;
-
       const storedMemories = await AsyncStorage.getItem("@vector_memory");
       const memoryArray: MemoryVector[] = storedMemories
         ? JSON.parse(storedMemories)
         : [];
-
       memoryArray.push({ id: Date.now().toString(), text, embedding });
       await AsyncStorage.setItem("@vector_memory", JSON.stringify(memoryArray));
     } catch (error) {
@@ -435,26 +489,21 @@ export default function App() {
     try {
       const result = await embeddingModel.current.embedContent(promptText);
       const promptEmbedding = result.embedding.values;
-
       const storedMemories = await AsyncStorage.getItem("@vector_memory");
       if (!storedMemories) return [];
 
       const memoryArray: MemoryVector[] = JSON.parse(storedMemories);
-
       const scoredMemories = memoryArray.map((memory) => ({
         text: memory.text,
         score: cosineSimilarity(promptEmbedding, memory.embedding),
       }));
 
-      const topMemories = scoredMemories
+      return scoredMemories
         .filter((m) => m.score > 0.65)
         .sort((a, b) => b.score - a.score)
         .slice(0, 3)
         .map((m) => m.text);
-
-      return topMemories;
     } catch (error) {
-      console.error("Erro ao buscar memórias:", error);
       return [];
     }
   };
@@ -558,7 +607,6 @@ export default function App() {
 
     try {
       const retrievedMemories = await searchLongTermMemory(currentPrompt);
-
       let enrichedPrompt = currentPrompt;
       if (retrievedMemories.length > 0) {
         enrichedPrompt = `[FATOS ANTIGOS RESGATADOS DA MEMÓRIA DO USUÁRIO: ${retrievedMemories.join(" | ")}]\n\nPergunta atual do usuário: ${currentPrompt}`;
@@ -575,7 +623,6 @@ export default function App() {
           ...withoutPlaceholder,
           { role: "model" as const, text: fullText },
         ];
-
         setTimeout(() => saveConversation(conversationId, finalMessages), 0);
         return finalMessages;
       });
@@ -690,38 +737,27 @@ export default function App() {
               />
             </TouchableOpacity>
 
-            {/* BOTÃO DO GITHUB COM MENU DE CONTEXTO */}
-            <TouchableOpacity
-              onPress={showGitHubMenu}
-              style={styles.actionIconButton}
-              disabled={isGitHubLoading} // Removido o bloqueio para permitir acessar as configurações com o input vazio
-            >
-              {isGitHubLoading ? (
-                <ActivityIndicator size="small" color="#181717" />
-              ) : (
-                <FontAwesome5
-                  name="github"
-                  size={20}
-                  color={!prompt.trim() ? "#A9A9AC" : "#181717"}
-                />
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handleJiraPress}
-              style={styles.actionIconButton}
-              disabled={!prompt.trim() || isJiraLoading}
-            >
-              {isJiraLoading ? (
-                <ActivityIndicator size="small" color="#0052CC" />
-              ) : (
-                <FontAwesome5
-                  name="jira"
-                  size={20}
-                  color={!prompt.trim() ? "#A9A9AC" : "#0052CC"}
-                />
-              )}
-            </TouchableOpacity>
+            {/* RENDERIZAÇÃO DINÂMICA DA FERRAMENTA */}
+            {currentTool && (
+              <TouchableOpacity
+                onPress={showDynamicMenu}
+                style={styles.actionIconButton}
+                disabled={isActionLoading}
+              >
+                {isActionLoading ? (
+                  <ActivityIndicator size="small" color={currentTool.color} />
+                ) : (
+                  //validar se estiver o icone
+                  <>
+                    <MaterialCommunityIcons
+                      name={currentTool.icon}
+                      size={22}
+                      color={currentTool.color}
+                    />
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
 
             <TextInput
               style={styles.input}
@@ -731,6 +767,7 @@ export default function App() {
               onChangeText={setPrompt}
               multiline
             />
+
             {isLoading ? (
               <ActivityIndicator
                 style={styles.loader}

@@ -40,7 +40,7 @@ export default function SplashScreen() {
 
     // Redirecionamento após o total das animações (aprox 2.5s a 3s)
     const timer = setTimeout(() => {
-      router.replace("/(tabs)");
+      router.replace("/(onboarding)");
     }, 3500);
 
     return () => clearTimeout(timer);
