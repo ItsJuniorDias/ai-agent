@@ -78,21 +78,6 @@ export default function JiraSettings() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* // Button back style apple like */}
-          <View>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={{
-                padding: 8,
-                borderRadius: 8,
-                alignSelf: "flex-start",
-                marginBottom: 16,
-              }}
-            >
-              <MaterialIcons name="arrow-back" size={32} color="#007AFF" />
-            </TouchableOpacity>
-          </View>
-
           <View style={styles.header}>
             <Text style={styles.title}>Jira Integration</Text>
             <Text style={styles.subtitle}>
@@ -163,6 +148,13 @@ export default function JiraSettings() {
             ) : (
               <Text style={styles.buttonText}>Save Settings</Text>
             )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.secondaryButtonText}>Cancel</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -257,4 +249,10 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "600",
   },
+  secondaryButton: {
+    height: 52,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  secondaryButtonText: { color: "#007AFF", fontSize: 17, fontWeight: "400" },
 });

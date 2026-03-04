@@ -13,7 +13,7 @@ import Voice, {
 // 2. IMPORTS NORMAIS
 import { GoogleGenerativeAI, ChatSession } from "@google/generative-ai";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useLocalSearchParams, useRouter } from "expo-router"; // <-- ADICIONADO useRouter
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -28,12 +28,15 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActionSheetIOS, // <-- IMPORTADO PARA O MENU NATIVO DO IOS
 } from "react-native";
 import Markdown from "react-native-markdown-display";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { runCodeReview } from "@/service/runCodeReview";
+
+// IMPORT ATUALIZADO PARA O GITHUB
+import { createPullRequest, getAIAnalysis } from "@/service/runCodeReview"; // Ajuste o caminho se necessário
 
 global.Buffer = Buffer;
 
@@ -65,19 +68,24 @@ type StoredConversation = {
   messages: ChatMessage[];
 };
 
-type GitLabConfig = {
+// --- TIPO ATUALIZADO PARA O GITHUB ---
+type GitHubConfig = {
   accessToken: string;
-  baseUrl: string; // ex: https://gitlab.com ou seu domínio privado
-  projectId: string; // O ID numérico ou path encodado do projeto
+  baseUrl: string; // Ex: https://api.github.com
+  repoOwner: string; // Ex: facebook
+  repoName: string; // Ex: react-native
+  sourceBranch: string;
+  targetBranch: string;
+  title: string;
+  description: string;
 };
 
 const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
 
-// Inicializa a API do Google (agora fora do componente para reuso)
+// Inicializa a API do Google
 const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
 
 // --- FUNÇÃO MATEMÁTICA: SIMILARIDADE DE COSSENO ---
-// Mede a "distância" semântica entre dois arrays de números (vetores)
 function cosineSimilarity(vecA: number[], vecB: number[]) {
   let dotProduct = 0;
   let normA = 0;
@@ -92,7 +100,7 @@ function cosineSimilarity(vecA: number[], vecB: number[]) {
 }
 
 export default function App() {
-  const router = useRouter(); // <-- NOVO: Hook de navegação
+  const router = useRouter();
   const { conversationId: paramConversationId } = useLocalSearchParams<{
     conversationId?: string;
   }>();
@@ -108,7 +116,7 @@ export default function App() {
     paramConversationId || Date.now().toString(),
   );
 
-  const [isGitLabLoading, setIsGitLabLoading] = useState(false);
+  const [isGitHubLoading, setIsGitHubLoading] = useState(false);
 
   const model = useRef<ReturnType<typeof genAI.getGenerativeModel> | null>(
     null,
@@ -120,7 +128,6 @@ export default function App() {
   const scrollViewRef = useRef<ScrollView | null>(null);
 
   useEffect(() => {
-    // Configura os listeners do Voice
     Voice.onSpeechStart = () => setIsListening(true);
     Voice.onSpeechEnd = () => setIsListening(false);
     Voice.onSpeechError = (e: SpeechErrorEvent) => {
@@ -129,12 +136,11 @@ export default function App() {
     };
     Voice.onSpeechResults = (e: SpeechResultsEvent) => {
       if (e.value && e.value.length > 0) {
-        setPrompt(e.value[0]); // Pega o resultado mais provável e joga no input
+        setPrompt(e.value[0]);
       }
     };
 
     return () => {
-      // Limpeza ao desmontar
       Voice.destroy().then(Voice.removeAllListeners);
     };
   }, []);
@@ -148,7 +154,6 @@ export default function App() {
       return;
     }
 
-    // Modelo de Chat
     model.current = genAI.getGenerativeModel({
       model: "gemini-2.5-pro",
       systemInstruction:
@@ -156,7 +161,6 @@ export default function App() {
       tools: [{ googleSearch: {} }],
     });
 
-    // Novo: Modelo especializado em transformar texto em Vetores (Embeddings)
     embeddingModel.current = genAI.getGenerativeModel({
       model: "gemini-embedding-001",
     });
@@ -198,44 +202,89 @@ export default function App() {
     initializeChat();
   }, [paramConversationId]);
 
-  const handleGitLabPress = async () => {
+  // --- NOVA FUNÇÃO: Dispara a criação do Pull Request no GitHub ---
+  const handleGitHubPress = async () => {
     if (!prompt.trim()) {
-      Alert.alert("Aviso", "Digite o comentário do review primeiro.");
+      Alert.alert(
+        "Aviso",
+        "Digite a descrição do Pull Request no chat primeiro.",
+      );
       return;
     }
 
-    setIsGitLabLoading(true);
+    setIsGitHubLoading(true);
 
     try {
-      // 1. Busca configs (Seguindo seu padrão do AsyncStorage)
-      const glConfigString = await AsyncStorage.getItem("@gitlab_config");
+      const ghConfigString = await AsyncStorage.getItem("@github_config");
 
-      if (!glConfigString) {
-        router.push("/(gitlab)"); // Sugestão de rota de config
+      if (!ghConfigString) {
+        router.push("/(github)");
         return;
       }
 
-      const glConfig: GitLabConfig = JSON.parse(glConfigString);
+      const ghConfig: GitHubConfig = JSON.parse(ghConfigString);
+      console.log("Configurações do GitHub carregadas:", ghConfig);
 
-      await runCodeReview(glConfig.projectId);
+      //chamar function getAIAnalysis
 
-      Alert.alert("Sucesso", "Comentário de Code Review enviado ao GitLab!");
+      const aiAnalysis = await getAIAnalysis(prompt);
+
+      await createPullRequest(
+        ghConfig.sourceBranch,
+        ghConfig.targetBranch,
+        ghConfig.title || "Review by AI",
+        aiAnalysis,
+      );
+
+      Alert.alert("Sucesso", "Pull Request enviado ao GitHub com sucesso!");
       setPrompt("");
     } catch (error) {
-      Alert.alert("Erro", "Falha ao enviar review para o GitLab.");
+      console.error(error);
+      Alert.alert("Erro", "Falha ao enviar o PR para o GitHub.");
     } finally {
-      setIsGitLabLoading(false);
+      setIsGitHubLoading(false);
     }
   };
 
-  // Exemplo de payload para criar a task via API do Jira (Cloud)
+  // --- MENU DE CONTEXTO NATIVO DO GITHUB ---
+  const showGitHubMenu = () => {
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: [
+            "Cancelar",
+            "Criar Pull Request",
+            "Configurações do GitHub",
+          ],
+          cancelButtonIndex: 0,
+          userInterfaceStyle: "light", // Mude para 'dark' se o seu app tiver tema escuro
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            handleGitHubPress();
+          } else if (buttonIndex === 2) {
+            router.push("/(github)");
+          }
+        },
+      );
+    } else {
+      // Fallback para Android e Web
+      Alert.alert("Opções do GitHub", "O que você deseja fazer?", [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Criar Pull Request", onPress: () => handleGitHubPress() },
+        { text: "Configurações", onPress: () => router.push("/(github)") },
+      ]);
+    }
+  };
+
+  // --- JIRA ---
   const handleCreateTaskJira = async ({
     summary,
     description,
     projectKey,
     apiJiraToken,
     domain,
-    email = "user_t10tec102@tribanco.com.br", // <-- Adicionado com fallback
+    email = "user_t10tec102@tribanco.com.br",
     issueType = "Story",
   }: {
     summary: string;
@@ -243,7 +292,7 @@ export default function App() {
     projectKey: string;
     apiJiraToken: string;
     domain: string;
-    email?: string; // <-- Opcional para suportar o que vem do storage
+    email?: string;
     issueType?: "Story" | "Bug" | "Task";
   }) => {
     const auth = Buffer.from(`${email}:${apiJiraToken}`).toString("base64");
@@ -287,7 +336,6 @@ export default function App() {
     return await response.json();
   };
 
-  // --- NOVA FUNÇÃO: Dispara a criação no Jira baseada no input atual ---
   const handleJiraPress = async () => {
     if (!prompt.trim()) {
       Alert.alert(
@@ -303,11 +351,9 @@ export default function App() {
     setIsJiraLoading(true);
 
     try {
-      // --- NOVO: VALIDAÇÃO DE DADOS CADASTRADOS ---
       const jiraConfigString = await AsyncStorage.getItem("@jira_config");
 
       if (!jiraConfigString) {
-        // Se não existir nenhuma configuração, redireciona
         setIsJiraLoading(false);
         router.push("/(jira)");
         return;
@@ -315,26 +361,22 @@ export default function App() {
 
       const jiraConfig = JSON.parse(jiraConfigString);
 
-      // Validação de segurança para garantir que as chaves essenciais existem
       if (!jiraConfig.apiToken || !jiraConfig.domain) {
         setIsJiraLoading(false);
         router.push("/(jira)");
         return;
       }
-      // ---------------------------------------------
 
       const response = await handleCreateTaskJira({
         summary: "Implementar nova funcionalidade do STP",
         description: prompt,
-        projectKey: jiraConfig.projectKey || "STP", // Pega do config ou usa fallback
+        projectKey: jiraConfig.projectKey || "STP",
         apiJiraToken: jiraConfig.apiToken,
         domain: jiraConfig.domain,
-        email: jiraConfig.email, // Repassa se existir no config
+        email: jiraConfig.email,
       });
 
-      console.log("Tarefa criada no Jira:", response);
       const issueKey = response.key;
-      // Ajustado para usar o domínio salvo
       const issueUrl = `https://${jiraConfig.domain}.atlassian.net/browse/${issueKey}`;
 
       Alert.alert(
@@ -355,7 +397,7 @@ export default function App() {
         ],
       );
 
-      setPrompt(""); // Limpa o input após enviar para o Jira
+      setPrompt("");
     } catch (error) {
       console.error("Erro ao criar tarefa no Jira:", error);
       Alert.alert(
@@ -367,25 +409,20 @@ export default function App() {
     }
   };
 
-  // --- MOTOR RAG: SALVAR E BUSCAR MEMÓRIAS ---
+  // --- MOTOR RAG ---
   const saveMemoryToVectorDB = async (text: string) => {
     if (!embeddingModel.current) return;
     try {
-      // 1. Transforma o texto em vetor
       const result = await embeddingModel.current.embedContent(text);
       const embedding = result.embedding.values;
 
-      // 2. Busca o banco atual
       const storedMemories = await AsyncStorage.getItem("@vector_memory");
       const memoryArray: MemoryVector[] = storedMemories
         ? JSON.parse(storedMemories)
         : [];
 
-      // 3. Adiciona a nova memória
       memoryArray.push({ id: Date.now().toString(), text, embedding });
       await AsyncStorage.setItem("@vector_memory", JSON.stringify(memoryArray));
-
-      console.log("Memória salva no banco vetorial local!");
     } catch (error) {
       console.error("Erro ao salvar vetor:", error);
     }
@@ -396,27 +433,23 @@ export default function App() {
   ): Promise<string[]> => {
     if (!embeddingModel.current) return [];
     try {
-      // 1. Transforma a pergunta atual em vetor
       const result = await embeddingModel.current.embedContent(promptText);
       const promptEmbedding = result.embedding.values;
 
-      // 2. Carrega as memórias passadas
       const storedMemories = await AsyncStorage.getItem("@vector_memory");
       if (!storedMemories) return [];
 
       const memoryArray: MemoryVector[] = JSON.parse(storedMemories);
 
-      // 3. Calcula a similaridade de todas as memórias com a pergunta atual
       const scoredMemories = memoryArray.map((memory) => ({
         text: memory.text,
         score: cosineSimilarity(promptEmbedding, memory.embedding),
       }));
 
-      // 4. Ordena pelas maiores pontuações e pega as que têm similaridade razoável (ex: > 0.65)
       const topMemories = scoredMemories
         .filter((m) => m.score > 0.65)
         .sort((a, b) => b.score - a.score)
-        .slice(0, 3) // Pega o Top 3 para não estourar o limite de tokens
+        .slice(0, 3)
         .map((m) => m.text);
 
       return topMemories;
@@ -457,9 +490,7 @@ export default function App() {
         historyArray.unshift(conversationData);
       }
       await AsyncStorage.setItem("@chat_history", JSON.stringify(historyArray));
-    } catch (e) {
-      console.error("Falha ao salvar o histórico:", e);
-    }
+    } catch (e) {}
   };
 
   const clearChat = () => {
@@ -523,26 +554,18 @@ export default function App() {
     const userMessage: ChatMessage = { role: "user", text: currentPrompt };
     const placeholderMessage: ChatMessage = { role: "model", text: "..." };
 
-    // Atualiza a UI com a mensagem LIMPA do usuário
     setMessages((prev) => [...prev, userMessage, placeholderMessage]);
 
     try {
-      // --- INÍCIO DO FLUXO RAG ---
-      // 1. Busca fatos antigos relevantes no banco local
       const retrievedMemories = await searchLongTermMemory(currentPrompt);
 
-      // 2. Monta o Prompt Enriquecido (invisível para o usuário)
       let enrichedPrompt = currentPrompt;
       if (retrievedMemories.length > 0) {
         enrichedPrompt = `[FATOS ANTIGOS RESGATADOS DA MEMÓRIA DO USUÁRIO: ${retrievedMemories.join(" | ")}]\n\nPergunta atual do usuário: ${currentPrompt}`;
-        console.log("RAG Ativado. Injetando:", retrievedMemories);
       }
 
-      // 3. Salva a nova mensagem do usuário para o futuro, paralelamente
       saveMemoryToVectorDB(currentPrompt);
-      // --- FIM DO FLUXO RAG ---
 
-      // Envia o prompt turbinado para o Gemini
       const result = await chatRef.current.sendMessage(enrichedPrompt);
       const fullText = result.response.text();
 
@@ -557,7 +580,6 @@ export default function App() {
         return finalMessages;
       });
     } catch (error) {
-      console.error(error);
       setMessages((prev) => {
         const withoutPlaceholder = prev.slice(0, -1);
         return [
@@ -578,16 +600,12 @@ export default function App() {
       if (isListening) {
         await Voice.stop();
       } else {
-        setPrompt(""); // Opcional: limpa o texto antes de começar
-
-        await Voice.start("pt-BR"); // Força o idioma para Português Brasil
-
+        setPrompt("");
+        await Voice.start("pt-BR");
         if (Platform.OS !== "web")
           await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) {}
   };
 
   return (
@@ -672,25 +690,26 @@ export default function App() {
               />
             </TouchableOpacity>
 
+            {/* BOTÃO DO GITHUB COM MENU DE CONTEXTO */}
             <TouchableOpacity
-              onPress={() => handleGitLabPress()}
-              style={styles.jiraButton} // Reutilizando estilo ou criando styles.gitlabButton
-              disabled={!prompt.trim() || isGitLabLoading}
+              onPress={showGitHubMenu}
+              style={styles.actionIconButton}
+              disabled={isGitHubLoading} // Removido o bloqueio para permitir acessar as configurações com o input vazio
             >
-              {isGitLabLoading ? (
-                <ActivityIndicator size="small" color="#FC6D26" />
+              {isGitHubLoading ? (
+                <ActivityIndicator size="small" color="#181717" />
               ) : (
                 <FontAwesome5
-                  name="gitlab"
+                  name="github"
                   size={20}
-                  color={!prompt.trim() ? "#A9A9AC" : "#FC6D26"} // Cor oficial do GitLab
+                  color={!prompt.trim() ? "#A9A9AC" : "#181717"}
                 />
               )}
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={handleJiraPress}
-              style={styles.jiraButton}
+              style={styles.actionIconButton}
               disabled={!prompt.trim() || isJiraLoading}
             >
               {isJiraLoading ? (
@@ -828,7 +847,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 4,
   },
-  jiraButton: {
+  actionIconButton: {
     padding: 10,
     justifyContent: "center",
     alignItems: "center",
