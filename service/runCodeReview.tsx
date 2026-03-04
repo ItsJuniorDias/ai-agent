@@ -1,20 +1,29 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import axios from "axios";
 
-const genAI = new GoogleGenerativeAI(process.env.EXPO_PUBLIC_GOOGLE_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.EXPO_PUBLIC_GOOGLE_API_KEY!);
 
-const GITLAB_API = "https://gitlab.com/api/v4";
-const PROJECT_ID = "SEU_ID_DO_PROJETO"; // O ID numérico no GitLab
-const TOKEN = process.env.GITLAB_TOKEN;
+const GITHUB_API = "https://api.github.com";
+const REPO_OWNER = "ItsJuniorDias"; // Ex: 'sua-empresa' ou 'seu-usuario'
+const REPO_NAME = "ai-agent"; // Ex: 'meu-app-react'
+const GITHUB_TOKEN = process.env.EXPO_PUBLIC_GITHUB_TOKEN;
 
-async function getAIAnalysis(diffContext: string) {
+// Configuração padrão de Headers para o GitHub
+const githubHeaders = {
+  Authorization: `Bearer ${GITHUB_TOKEN}`,
+  Accept: "application/vnd.github.v3+json",
+  "X-GitHub-Api-Version": "2022-11-28",
+};
+
+/**
+ * 1. Gera a análise usando Gemini 2.5 Pro
+ */
+export async function getAIAnalysis(diffContext: string) {
   try {
-    // Recomendo o modelo Pro para raciocínio complexo em código
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-pro",
-      // O System Instruction define a "personalidade" e as regras rígidas do agente
-      systemInstruction: `Você é um Engenheiro Sênior de React com Vite usando tailwind. 
-      Sua tarefa é fazer Code Review em Merge Requests.
+      systemInstruction: `Você é um Engenheiro Sênior de React Native com Expo. 
+      Sua tarefa é fazer Code Review em Pull Requests.
       Foque estritamente em:
       1. Performance: re-renderizações desnecessárias, uso incorreto de hooks (useEffect, useMemo, useCallback).
       2. Listas: Otimização de FlatList/FlashList.
@@ -22,51 +31,48 @@ async function getAIAnalysis(diffContext: string) {
       Se o código estiver perfeito, responda apenas: "Nenhum problema de performance encontrado."`,
     });
 
-    const prompt = `Aqui estão as alterações do Merge Request do aplicativo TOL:\n\n${diffContext}\n\nAnalise o código acima e sugira melhorias.`;
+    const prompt = `Aqui estão as alterações do Pull Request do aplicativo:\n\n${diffContext}\n\nAnalise o código acima e sugira melhorias.`;
 
-    // Chama o Gemini para processar o prompt
     const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
-
-    return responseText;
+    return result.response.text();
   } catch (error) {
     console.error("Erro ao chamar o Gemini:", error);
     return "Falha ao gerar análise de IA.";
   }
 }
 
-export async function runCodeReview(mrIid) {
+/**
+ * 2. Cria o Pull Request no GitHub
+ */
+export async function createPullRequest(
+  sourceBranch: string,
+  targetBranch: string,
+  title: string,
+  description: string,
+) {
   try {
-    // 1. Busca os diffs do Merge Request
-    const { data: changes } = await axios.get(
-      `${GITLAB_API}/projects/${PROJECT_ID}/merge_requests/${mrIid}/changes`,
-      { headers: { "PRIVATE-TOKEN": TOKEN } },
-    );
-
-    // Filtra apenas arquivos .js, .jsx, .ts, .tsx e package.json
-    const relevantChanges = changes.changes.filter(
-      (c) =>
-        /\.(ts|tsx|js|jsx)$/.test(c.new_path) || c.new_path === "package.json",
-    );
-
-    if (relevantChanges.length === 0) return;
-
-    const diffContext = relevantChanges
-      .map((c) => `Arquivo: ${c.new_path}\nDiff:\n${c.diff}`)
-      .join("\n\n");
-
-    // 2. Solicita análise da IA (Exemplo de chamada interna do seu agente)
-    const reviewResult = await getAIAnalysis(diffContext);
-
-    // 3. Posta o comentário no GitLab
-    await axios.post(
-      `${GITLAB_API}/projects/${PROJECT_ID}/merge_requests/${mrIid}/notes`,
+    const response = await axios.post(
+      `${GITHUB_API}/repos/${REPO_OWNER}/${REPO_NAME}/pulls`,
       {
-        body: `### 📱 Expo/React Native Performance Review\n\n${reviewResult}`,
+        title: title,
+        body: description,
+        head: sourceBranch, // Branch com as suas alterações
+        base: targetBranch, // Branch destino (ex: 'main')
       },
-      { headers: { "PRIVATE-TOKEN": TOKEN } },
+      { headers: githubHeaders },
     );
-  } catch (error) {
-    console.error("Erro ao processar MR:", error.message);
+
+    console.log(
+      `PR aberto com sucesso! Número do PR: #${response.data.number}`,
+    );
+    console.log(`Link: ${response.data.html_url}`);
+
+    return response.data; // Retorna os dados do PR, útil para pegar o 'number'
+  } catch (error: any) {
+    console.error(
+      "Erro ao abrir PR no GitHub:",
+      error.response?.data || error.message,
+    );
+    throw error;
   }
 }
