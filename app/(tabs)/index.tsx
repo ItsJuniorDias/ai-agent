@@ -33,6 +33,7 @@ import Markdown from "react-native-markdown-display";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { FontAwesome5 } from "@expo/vector-icons";
+import { runCodeReview } from "@/service/runCodeReview";
 
 global.Buffer = Buffer;
 
@@ -62,6 +63,12 @@ type StoredConversation = {
   title: string;
   date: string;
   messages: ChatMessage[];
+};
+
+type GitLabConfig = {
+  accessToken: string;
+  baseUrl: string; // ex: https://gitlab.com ou seu domínio privado
+  projectId: string; // O ID numérico ou path encodado do projeto
 };
 
 const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
@@ -100,6 +107,8 @@ export default function App() {
   const [conversationId, setConversationId] = useState(
     paramConversationId || Date.now().toString(),
   );
+
+  const [isGitLabLoading, setIsGitLabLoading] = useState(false);
 
   const model = useRef<ReturnType<typeof genAI.getGenerativeModel> | null>(
     null,
@@ -189,40 +198,34 @@ export default function App() {
     initializeChat();
   }, [paramConversationId]);
 
-  const jiraTool = {
-    functionDeclarations: [
-      {
-        name: "createJiraTask",
-        description:
-          "Cria uma nova task ou story no Jira do Tribanco baseada em uma user story ou descrição técnica.",
-        parameters: {
-          type: "OBJECT",
-          properties: {
-            summary: {
-              type: "string",
-              description: "Um título conciso e profissional para a task.",
-            },
-            description: {
-              type: "string",
-              description:
-                "O detalhamento técnico, incluindo contexto e critérios de aceitação.",
-            },
-            projectKey: {
-              type: "string",
-              description:
-                "A chave do projeto no Jira (ex: 'PROJ', 'WEB', 'API').",
-            },
-            issueType: {
-              type: "string",
-              description:
-                "O tipo da tarefa. Padrão: 'Story'. Opções: 'Bug', 'Task', 'Story'.",
-              enum: ["Story", "Bug", "Task"],
-            },
-          },
-          required: ["summary", "description", "projectKey"],
-        },
-      },
-    ],
+  const handleGitLabPress = async () => {
+    if (!prompt.trim()) {
+      Alert.alert("Aviso", "Digite o comentário do review primeiro.");
+      return;
+    }
+
+    setIsGitLabLoading(true);
+
+    try {
+      // 1. Busca configs (Seguindo seu padrão do AsyncStorage)
+      const glConfigString = await AsyncStorage.getItem("@gitlab_config");
+
+      if (!glConfigString) {
+        router.push("/(gitlab)"); // Sugestão de rota de config
+        return;
+      }
+
+      const glConfig: GitLabConfig = JSON.parse(glConfigString);
+
+      await runCodeReview(glConfig.projectId);
+
+      Alert.alert("Sucesso", "Comentário de Code Review enviado ao GitLab!");
+      setPrompt("");
+    } catch (error) {
+      Alert.alert("Erro", "Falha ao enviar review para o GitLab.");
+    } finally {
+      setIsGitLabLoading(false);
+    }
   };
 
   // Exemplo de payload para criar a task via API do Jira (Cloud)
@@ -667,6 +670,22 @@ export default function App() {
                 size={20}
                 color={isListening ? "#FF3B30" : "#007AFF"}
               />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => handleGitLabPress()}
+              style={styles.jiraButton} // Reutilizando estilo ou criando styles.gitlabButton
+              disabled={!prompt.trim() || isGitLabLoading}
+            >
+              {isGitLabLoading ? (
+                <ActivityIndicator size="small" color="#FC6D26" />
+              ) : (
+                <FontAwesome5
+                  name="gitlab"
+                  size={20}
+                  color={!prompt.trim() ? "#A9A9AC" : "#FC6D26"} // Cor oficial do GitLab
+                />
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
