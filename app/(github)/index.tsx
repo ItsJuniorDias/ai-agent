@@ -94,13 +94,13 @@ export default function GitHubScreen() {
             </View>
             <Text style={styles.title}>GitHub Setup</Text>
             <Text style={styles.subtitle}>
-              Configure sua conexão e o Pull Request.
+              Configuration for AI-Powered Code Reviews
             </Text>
           </View>
 
           {/* Grupo 1: Conexão */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>CONFIGURAÇÕES DE CONEXÃO</Text>
+            <Text style={styles.sectionLabel}>CONNECTION SETTINGS</Text>
             <View style={styles.inputGroup}>
               <View style={styles.inputWrapper}>
                 <TextInput
@@ -155,14 +155,14 @@ export default function GitHubScreen() {
               </View>
             </View>
             <Text style={styles.footerText}>
-              O Owner e Repository formam o caminho do projeto. Ex:
+              The Owner and Repository form the project path. Ex:
               github.com/owner/repository
             </Text>
           </View>
 
-          {/* Grupo 2: Detalhes do Pull Request */}
+          {/* Group 2: Pull Request Details */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>DETALHES DO PULL REQUEST</Text>
+            <Text style={styles.sectionLabel}>PULL REQUEST DETAILS </Text>
             <View style={styles.inputGroup}>
               <View style={styles.inputWrapper}>
                 <TextInput
@@ -226,7 +226,7 @@ export default function GitHubScreen() {
               {loading ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text style={styles.primaryButtonText}>Salvar</Text>
+                <Text style={styles.primaryButtonText}>Save</Text>
               )}
             </TouchableOpacity>
 
@@ -234,7 +234,7 @@ export default function GitHubScreen() {
               style={styles.secondaryButton}
               onPress={() => router.back()}
             >
-              <Text style={styles.secondaryButtonText}>Cancelar</Text>
+              <Text style={styles.secondaryButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
 

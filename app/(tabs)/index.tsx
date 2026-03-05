@@ -13,8 +13,8 @@ import Voice, {
 // 2. IMPORTS NORMAIS
 import { GoogleGenerativeAI, ChatSession } from "@google/generative-ai";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -28,19 +28,23 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  ActionSheetIOS, // <-- IMPORTADO PARA O MENU NATIVO DO IOS
+  ActionSheetIOS,
 } from "react-native";
 import Markdown from "react-native-markdown-display";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
-import { FontAwesome5 } from "@expo/vector-icons";
+import {
+  Feather,
+  FontAwesome5,
+  FontAwesome6,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 
-// IMPORT ATUALIZADO PARA O GITHUB
-import { createPullRequest, getAIAnalysis } from "@/service/runCodeReview"; // Ajuste o caminho se necessário
+// IMPORT DO GITHUB
+import { createPullRequest, getAIAnalysis } from "@/service/runCodeReview";
 
 global.Buffer = Buffer;
 
-// Adicionando os objetos globais que a SDK do Gemini espera encontrar
 Object.assign(global, {
   TextEncoder,
   TextDecoder,
@@ -48,7 +52,7 @@ Object.assign(global, {
   TransformStream,
 });
 
-// --- NOVOS TIPOS PARA O RAG (MEMÓRIA VETORIAL) ---
+// --- TIPOS ---
 type MemoryVector = {
   id: string;
   text: string;
@@ -68,12 +72,11 @@ type StoredConversation = {
   messages: ChatMessage[];
 };
 
-// --- TIPO ATUALIZADO PARA O GITHUB ---
 type GitHubConfig = {
   accessToken: string;
-  baseUrl: string; // Ex: https://api.github.com
-  repoOwner: string; // Ex: facebook
-  repoName: string; // Ex: react-native
+  baseUrl: string;
+  repoOwner: string;
+  repoName: string;
   sourceBranch: string;
   targetBranch: string;
   title: string;
@@ -81,11 +84,93 @@ type GitHubConfig = {
 };
 
 const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
+const genAI = new GoogleGenerativeAI(API_KEY);
 
-// Inicializa a API do Google
-const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
+// --- DICIONÁRIO DE INTEGRAÇÕES (Regra de Ouro) ---
+const INTEGRATION_CONFIG = {
+  github: {
+    icon: "github",
+    color: "#181717",
+    actionText: "Create Pull Request",
+    route: "/(github)",
+  },
+  jira: {
+    icon: "jira",
+    color: "#0052CC",
+    actionText: "Create Task",
+    route: "/(jira)",
+  },
+  gitlab: {
+    icon: "gitlab",
+    color: "#FC6D26",
+    actionText: "Create Merge Request",
+    route: "/(gitlab)",
+  },
+  slack: {
+    icon: "slack",
+    color: "#4A154B",
+    actionText: "Send to Channel",
+    route: "/(slack)",
+  },
+  teams: {
+    icon: "microsoft-teams",
+    color: "#6264A7",
+    actionText: "Send to Teams",
+    route: "/(teams)",
+  },
+  linear: {
+    icon: "vector-line",
+    color: "#5E6AD2",
+    actionText: "Create Issue",
+    route: "/(linear)",
+  },
+  vercel: {
+    icon: "triangle",
+    color: "#000000",
+    actionText: "Deploy to Vercel",
+    route: "/(vercel)",
+  },
 
-// --- FUNÇÃO MATEMÁTICA: SIMILARIDADE DE COSSENO ---
+  notion: {
+    icon: "notebook",
+    color: "#000000",
+    actionText: "Save to Notion",
+    route: "/(notion)",
+  },
+
+  gmail: {
+    icon: "email-outline",
+    color: "#D14836",
+    actionText: "Send Email",
+    route: "/(gmail)",
+  },
+
+  figma: {
+    icon: "figma",
+    color: "#F24E1E",
+    actionText: "Send Comment",
+    lib: "Feather",
+    route: "/(figma)",
+  },
+  discord: {
+    icon: "discord",
+    color: "#5865F2",
+    actionText: "Send to Discord",
+    lib: "FontAwesome6",
+    route: "/(discord)",
+  },
+  whatsapp: {
+    icon: "whatsapp",
+    color: "#25D366",
+    actionText: "Send to WhatsApp",
+    lib: "FontAwesome6",
+    route: "/(whatsapp)",
+  },
+
+  chat: null, // Chat não renderiza botão extra
+};
+
+// --- FUNÇÃO MATEMÁTICA ---
 function cosineSimilarity(vecA: number[], vecB: number[]) {
   let dotProduct = 0;
   let normA = 0;
@@ -107,16 +192,19 @@ export default function App() {
 
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isJiraLoading, setIsJiraLoading] = useState(false);
 
+  const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+
+  // NOVO: Estado único de loading para qualquer integração
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
+  // Guarda qual foi a integração escolhida no Onboarding
+  const [activeIntegration, setActiveIntegration] = useState<string>("chat");
 
   const [conversationId, setConversationId] = useState(
     paramConversationId || Date.now().toString(),
   );
-
-  const [isGitHubLoading, setIsGitHubLoading] = useState(false);
 
   const model = useRef<ReturnType<typeof genAI.getGenerativeModel> | null>(
     null,
@@ -126,6 +214,34 @@ export default function App() {
   > | null>(null);
   const chatRef = useRef<ChatSession | null>(null);
   const scrollViewRef = useRef<ScrollView | null>(null);
+
+  // Define as propriedades visuais da ferramenta atual baseada no dicionário
+  const currentTool =
+    activeIntegration !== "chat"
+      ? INTEGRATION_CONFIG[activeIntegration as keyof typeof INTEGRATION_CONFIG]
+      : null;
+
+  console.log(currentTool, "CURRENT TOOL");
+
+  // Carrega a integração selecionada
+  useFocusEffect(
+    useCallback(() => {
+      const loadIntegration = async () => {
+        try {
+          // Atualizado para a mesma key que usamos no inglês OnboardingScreen (@primary_integration)
+          const selected =
+            (await AsyncStorage.getItem("@primary_integration")) ||
+            (await AsyncStorage.getItem("@selected_integration"));
+          if (selected) {
+            setActiveIntegration(selected);
+          }
+        } catch (error) {
+          console.error("Erro ao carregar a integração:", error);
+        }
+      };
+      loadIntegration();
+    }, []),
+  );
 
   useEffect(() => {
     Voice.onSpeechStart = () => setIsListening(true);
@@ -178,7 +294,6 @@ export default function App() {
           const historyArray: StoredConversation[] = storedHistory
             ? JSON.parse(storedHistory)
             : [];
-
           const currentChat = historyArray.find(
             (item) => item.id === paramConversationId,
           );
@@ -202,82 +317,120 @@ export default function App() {
     initializeChat();
   }, [paramConversationId]);
 
-  // --- NOVA FUNÇÃO: Dispara a criação do Pull Request no GitHub ---
-  const handleGitHubPress = async () => {
+  // --- ROTEADOR DINÂMICO DE AÇÕES ---
+  const executeIntegrationAction = async () => {
     if (!prompt.trim()) {
       Alert.alert(
         "Aviso",
-        "Digite a descrição do Pull Request no chat primeiro.",
+        `Digite a descrição no chat primeiro para usar o ${activeIntegration}.`,
       );
       return;
     }
 
-    setIsGitHubLoading(true);
+    if (Platform.OS !== "web")
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    setIsActionLoading(true);
 
     try {
-      const ghConfigString = await AsyncStorage.getItem("@github_config");
-
-      if (!ghConfigString) {
-        router.push("/(github)");
-        return;
+      switch (activeIntegration) {
+        case "github":
+          await processGitHubAction();
+          break;
+        case "jira":
+          await processJiraAction();
+          break;
+        case "slack":
+          await processSlackAction();
+          break;
+        case "vercel":
+          await processVercelAction();
+          break;
+        case "figma":
+          await processFigmaAction();
+          break;
+        case "discord":
+          await processDiscordAction();
+          break;
+        case "whatsapp":
+          await processWhatsAppAction();
+          break;
+        case "gitlab":
+          await processGitlabAction({
+            title: `MR: ${prompt.substring(0, 50)}`,
+            description: prompt,
+            projectId: "79990056",
+            sourceBranch: "main",
+            targetBranch: "feat/integration",
+          });
+          break;
+        default:
+          Alert.alert("Attention", "Action not implemented for this tool yet.");
       }
-
-      const ghConfig: GitHubConfig = JSON.parse(ghConfigString);
-      console.log("Configurações do GitHub carregadas:", ghConfig);
-
-      //chamar function getAIAnalysis
-
-      const aiAnalysis = await getAIAnalysis(prompt);
-
-      await createPullRequest(
-        ghConfig.sourceBranch,
-        ghConfig.targetBranch,
-        ghConfig.title || "Review by AI",
-        aiAnalysis,
-      );
-
-      Alert.alert("Sucesso", "Pull Request enviado ao GitHub com sucesso!");
-      setPrompt("");
     } catch (error) {
       console.error(error);
-      Alert.alert("Erro", "Falha ao enviar o PR para o GitHub.");
     } finally {
-      setIsGitHubLoading(false);
+      setIsActionLoading(false);
     }
   };
 
-  // --- MENU DE CONTEXTO NATIVO DO GITHUB ---
-  const showGitHubMenu = () => {
+  const showDynamicMenu = () => {
+    if (!currentTool) return;
+
     if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
         {
           options: [
-            "Cancelar",
-            "Criar Pull Request",
-            "Configurações do GitHub",
+            "Cancel",
+            currentTool.actionText,
+            `${activeIntegration} Settings`,
           ],
           cancelButtonIndex: 0,
-          userInterfaceStyle: "light", // Mude para 'dark' se o seu app tiver tema escuro
+          userInterfaceStyle: "light",
         },
         (buttonIndex) => {
-          if (buttonIndex === 1) {
-            handleGitHubPress();
-          } else if (buttonIndex === 2) {
-            router.push("/(github)");
-          }
+          if (buttonIndex === 1) executeIntegrationAction();
+          else if (buttonIndex === 2) router.push(currentTool.route as any);
         },
       );
     } else {
-      // Fallback para Android e Web
-      Alert.alert("Opções do GitHub", "O que você deseja fazer?", [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Criar Pull Request", onPress: () => handleGitHubPress() },
-        { text: "Configurações", onPress: () => router.push("/(github)") },
-      ]);
+      Alert.alert(
+        `${activeIntegration} Options`,
+        "What would you like to do?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: currentTool.actionText,
+            onPress: () => executeIntegrationAction(),
+          },
+          {
+            text: "Settings",
+            onPress: () => router.push(currentTool.route as any),
+          },
+        ],
+      );
     }
   };
 
-  // --- JIRA ---
+  // --- LÓGICA ESPECÍFICA DAS INTEGRAÇÕES ---
+  const processGitHubAction = async () => {
+    const ghConfigString = await AsyncStorage.getItem("@github_config");
+    if (!ghConfigString) {
+      router.push("/(github)");
+      return;
+    }
+    const ghConfig: GitHubConfig = JSON.parse(ghConfigString);
+    const aiAnalysis = await getAIAnalysis(prompt);
+    await createPullRequest(
+      ghConfig.sourceBranch,
+      ghConfig.targetBranch,
+      ghConfig.title || "Review by AI",
+      aiAnalysis,
+    );
+    Alert.alert("Sucesso", "Pull Request enviado ao GitHub com sucesso!");
+    setPrompt("");
+  };
+
   const handleCreateTaskJira = async ({
     summary,
     description,
@@ -286,17 +439,8 @@ export default function App() {
     domain,
     email = "user_t10tec102@tribanco.com.br",
     issueType = "Story",
-  }: {
-    summary: string;
-    description: string;
-    projectKey: string;
-    apiJiraToken: string;
-    domain: string;
-    email?: string;
-    issueType?: "Story" | "Bug" | "Task";
-  }) => {
+  }: any) => {
     const auth = Buffer.from(`${email}:${apiJiraToken}`).toString("base64");
-
     const bodyData = {
       fields: {
         project: { key: projectKey },
@@ -332,96 +476,67 @@ export default function App() {
       const errorData = await response.json();
       throw new Error(`Erro no Jira: ${JSON.stringify(errorData)}`);
     }
-
     return await response.json();
   };
 
-  const handleJiraPress = async () => {
-    if (!prompt.trim()) {
-      Alert.alert(
-        "Aviso",
-        "Digite a descrição da task no campo de texto primeiro.",
-      );
+  const processJiraAction = async () => {
+    const jiraConfigString = await AsyncStorage.getItem("@jira_config");
+    if (!jiraConfigString) {
+      router.push("/(jira)");
       return;
     }
 
-    if (Platform.OS !== "web")
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    setIsJiraLoading(true);
-
-    try {
-      const jiraConfigString = await AsyncStorage.getItem("@jira_config");
-
-      if (!jiraConfigString) {
-        setIsJiraLoading(false);
-        router.push("/(jira)");
-        return;
-      }
-
-      const jiraConfig = JSON.parse(jiraConfigString);
-
-      if (!jiraConfig.apiToken || !jiraConfig.domain) {
-        setIsJiraLoading(false);
-        router.push("/(jira)");
-        return;
-      }
-
-      const response = await handleCreateTaskJira({
-        summary: "Implementar nova funcionalidade do STP",
-        description: prompt,
-        projectKey: jiraConfig.projectKey || "STP",
-        apiJiraToken: jiraConfig.apiToken,
-        domain: jiraConfig.domain,
-        email: jiraConfig.email,
-      });
-
-      const issueKey = response.key;
-      const issueUrl = `https://${jiraConfig.domain}.atlassian.net/browse/${issueKey}`;
-
-      Alert.alert(
-        "Task Created",
-        `A Jira task was created successfully! Do you want to view it?`,
-        [
-          { text: "No", style: "cancel" },
-          {
-            text: "Yes",
-            onPress: () => {
-              if (Platform.OS === "web") {
-                window.open(issueUrl, "_blank");
-              } else {
-                Linking.openURL(issueUrl);
-              }
-            },
-          },
-        ],
-      );
-
-      setPrompt("");
-    } catch (error) {
-      console.error("Erro ao criar tarefa no Jira:", error);
-      Alert.alert(
-        "Erro",
-        "Não foi possível criar a task no Jira. Verifique os logs e se as suas credenciais estão corretas.",
-      );
-    } finally {
-      setIsJiraLoading(false);
+    const jiraConfig = JSON.parse(jiraConfigString);
+    if (!jiraConfig.apiToken || !jiraConfig.domain) {
+      router.push("/(jira)");
+      return;
     }
+
+    const response = await handleCreateTaskJira({
+      summary: "Implementar nova funcionalidade do STP",
+      description: prompt,
+      projectKey: jiraConfig.projectKey || "STP",
+      apiJiraToken: jiraConfig.apiToken,
+      domain: jiraConfig.domain,
+      email: jiraConfig.email,
+    });
+
+    const issueUrl = `https://${jiraConfig.domain}.atlassian.net/browse/${response.key}`;
+
+    Alert.alert(
+      "Task Created",
+      `A Jira task was created successfully! Do you want to view it?`,
+      [
+        { text: "No", style: "cancel" },
+        {
+          text: "Yes",
+          onPress: () => {
+            Platform.OS === "web"
+              ? window.open(issueUrl, "_blank")
+              : Linking.openURL(issueUrl);
+          },
+        },
+      ],
+    );
+    setPrompt("");
   };
 
-  // --- MOTOR RAG ---
+  // --- MEMÓRIA E CHAT ---
   const saveMemoryToVectorDB = async (text: string) => {
     if (!embeddingModel.current) return;
+
     try {
       const result = await embeddingModel.current.embedContent(text);
       const embedding = result.embedding.values;
 
       const storedMemories = await AsyncStorage.getItem("@vector_memory");
+
       const memoryArray: MemoryVector[] = storedMemories
         ? JSON.parse(storedMemories)
         : [];
 
       memoryArray.push({ id: Date.now().toString(), text, embedding });
+
       await AsyncStorage.setItem("@vector_memory", JSON.stringify(memoryArray));
     } catch (error) {
       console.error("Erro ao salvar vetor:", error);
@@ -440,21 +555,17 @@ export default function App() {
       if (!storedMemories) return [];
 
       const memoryArray: MemoryVector[] = JSON.parse(storedMemories);
-
       const scoredMemories = memoryArray.map((memory) => ({
         text: memory.text,
         score: cosineSimilarity(promptEmbedding, memory.embedding),
       }));
 
-      const topMemories = scoredMemories
+      return scoredMemories
         .filter((m) => m.score > 0.65)
         .sort((a, b) => b.score - a.score)
         .slice(0, 3)
         .map((m) => m.text);
-
-      return topMemories;
     } catch (error) {
-      console.error("Erro ao buscar memórias:", error);
       return [];
     }
   };
@@ -575,18 +686,29 @@ export default function App() {
           ...withoutPlaceholder,
           { role: "model" as const, text: fullText },
         ];
-
         setTimeout(() => saveConversation(conversationId, finalMessages), 0);
         return finalMessages;
       });
     } catch (error) {
+      console.error("Erro no chat:", error);
+
+      // FIX CRÍTICO AQUI: Se o envio falhar, o histórico interno da sessão corrompe
+      // Recriamos a sessão a partir do histórico de mensagens válidas.
+      if (model.current) {
+        const cleanHistory = messages.map((msg) => ({
+          role: msg.role,
+          parts: [{ text: msg.text }],
+        }));
+        chatRef.current = model.current.startChat({ history: cleanHistory });
+      }
+
       setMessages((prev) => {
         const withoutPlaceholder = prev.slice(0, -1);
         return [
           ...withoutPlaceholder,
           {
             role: "model" as const,
-            text: "Error: Unable to reach the assistant.",
+            text: "Erro de conexão: Não foi possível alcançar o assistente.",
           },
         ];
       });
@@ -606,6 +728,364 @@ export default function App() {
           await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
     } catch (e) {}
+  };
+
+  const processGitlabAction = async ({
+    title,
+    description,
+    projectId,
+    sourceBranch,
+    targetBranch,
+  }: {
+    title: string;
+    description: string;
+    projectId: string;
+    sourceBranch: string;
+    targetBranch: string;
+  }) => {
+    try {
+      // 1. Recuperar as credenciais salvas
+      const savedUrl = await AsyncStorage.getItem("@gitlab_url");
+      const savedToken = await AsyncStorage.getItem("@gitlab_token");
+
+      if (!savedUrl || !savedToken) {
+        Alert.alert(
+          "Atenção",
+          "Por favor, configure sua URL e Token do GitLab primeiro.",
+        );
+        return;
+      }
+
+      // Formatar a URL base da API (remove barra no final se houver)
+      const apiBaseUrl = `${savedUrl.replace(/\/$/, "")}/api/v4`;
+      const headers = {
+        "PRIVATE-TOKEN": savedToken,
+        "Content-Type": "application/json",
+      };
+
+      // 2. Criar o Merge Request
+      const mrResponse = await fetch(
+        `${apiBaseUrl}/projects/${projectId}/merge_requests`,
+        {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify({
+            source_branch: sourceBranch,
+            target_branch: targetBranch,
+            title: title,
+          }),
+        },
+      );
+
+      const responseText = await mrResponse.text();
+
+      console.log("Resposta bruta da API do GitLab:", responseText);
+
+      let mrData;
+      try {
+        // 2. Tentamos converter esse texto para JSON
+        mrData = JSON.parse(responseText);
+      } catch (parseError) {
+        // 3. Se quebrar aqui, nós mostramos o que realmente veio do servidor!
+        console.log("RESPOSTA HTML QUE CAUSOU O ERRO:", responseText);
+        throw new Error(
+          "A API não retornou um JSON válido. Verifique o console para ver o HTML retornado (pode ser tela de login ou erro 404).",
+        );
+      }
+
+      if (!mrResponse.ok) {
+        const errorMsg = mrData.message
+          ? Array.isArray(mrData.message)
+            ? mrData.message.join(", ")
+            : mrData.message
+          : "Erro desconhecido";
+        throw new Error(`Erro na API (${mrResponse.status}): ${errorMsg}`);
+      }
+
+      // 3. Fazer o Code Review (Adicionar um comentário/nota)
+      const reviewResponse = await fetch(
+        `${apiBaseUrl}/projects/${projectId}/merge_requests/${mrData.iid}/notes`,
+        {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify({
+            body:
+              description ||
+              "Revisão automática: O código atende aos padrões. Aprovado! ✅",
+          }),
+        },
+      );
+
+      if (!reviewResponse.ok) {
+        throw new Error("MR criado, mas falhou ao adicionar a revisão.");
+      }
+
+      Alert.alert(
+        "Sucesso!",
+        "Merge Request criado e revisado com sucesso no GitLab.",
+      );
+    } catch (error: any) {
+      Alert.alert("Falha na Integração", error.message);
+      console.error(error);
+    }
+  };
+
+  const processSlackAction = async () => {
+    const botToken = await AsyncStorage.getItem("@slack_bot_token");
+
+    if (!botToken) {
+      Alert.alert(
+        "Atenção",
+        "Por favor, configure seu Bot Token do Slack primeiro.",
+      );
+      return;
+    }
+
+    const response = await fetch("https://slack.com/api/chat.postMessage", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${botToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        channel: "#all-developer", // Você pode querer tornar isso dinâmico
+        text: prompt,
+      }),
+    });
+
+    const data = await response.json();
+    if (!data.ok) {
+      Alert.alert(
+        "Erro",
+        `Falha ao enviar mensagem para o Slack: ${data.error}`,
+      );
+      return;
+    }
+
+    Alert.alert("Sucesso", "Mensagem enviada para o Slack com sucesso!");
+    setPrompt("");
+  };
+
+  const processVercelAction = async () => {
+    const vercelToken = await AsyncStorage.getItem("@vercel_token");
+    const projectId = await AsyncStorage.getItem("@vercel_project_id");
+    // Se o seu projeto estiver em uma conta de "Equipe" (Team), você PRECISA do Team ID
+    const teamId = await AsyncStorage.getItem("@vercel_team_id");
+
+    if (!vercelToken || !projectId) {
+      Alert.alert("Atenção", "Configure Token e Project ID primeiro.");
+      return;
+    }
+
+    try {
+      // 1. Primeiro, buscamos o ID do último deployment de produção
+      const projectRes = await fetch(
+        `https://api.vercel.com/v9/projects/${projectId}${teamId ? `?teamId=${teamId}` : ""}`,
+        {
+          headers: { Authorization: `Bearer ${vercelToken}` },
+        },
+      );
+      const projectData = await projectRes.json();
+
+      // Pegamos o ID do último deploy que deu certo em produção
+      const lastDeployId = projectData.targets?.production?.id;
+
+      if (!lastDeployId) {
+        Alert.alert(
+          "Erro",
+          "Não foi possível encontrar um deploy anterior para replicar.",
+        );
+        return;
+      }
+
+      // 2. Agora disparamos o novo deploy baseado naquele ID
+      const deployRes = await fetch(
+        `https://api.vercel.com/v13/deployments?forceNew=1${teamId ? `&teamId=${teamId}` : ""}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${vercelToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: `Deploy via AI - ${new Date().toLocaleTimeString()}`,
+            deploymentId: lastDeployId, // Aqui está o segredo: ele clona as configs do anterior
+            target: "production",
+          }),
+        },
+      );
+
+      if (!deployRes.ok) {
+        const errorData = await deployRes.json();
+        throw new Error(errorData.error.message);
+      }
+
+      Alert.alert("Sucesso", "Novo deploy de produção iniciado!");
+      setPrompt("");
+    } catch (error) {
+      Alert.alert("Erro no Deploy", error.message);
+      console.error(error);
+    }
+  };
+
+  const processFigmaAction = async () => {
+    const figmaToken = await AsyncStorage.getItem("@figma_token");
+    const fileId = await AsyncStorage.getItem("@figma_file_key");
+
+    if (!figmaToken || !fileId) {
+      Alert.alert(
+        "Atenção",
+        "Configure seu Token e File ID do Figma primeiro.",
+      );
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.figma.com/v1/files/${fileId}/comments`,
+        {
+          method: "POST",
+          headers: {
+            "X-Figma-Token": figmaToken, // Para personal access tokens, geralmente usa-se 'X-Figma-Token: SEU_TOKEN'. Se for OAuth, 'Bearer' está correto.
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: prompt,
+            // O Figma EXIGE o client_meta para saber onde ancorar o comentário.
+            // Aqui estamos fixando na coordenada X:0, Y:0 do canvas.
+            client_meta: {
+              x: 0,
+              y: 0,
+            },
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      console.log("Resposta da API do Figma:", data);
+
+      if (!response.ok) {
+        Alert.alert(
+          "Erro",
+          `Falha ao enviar comentário para o Figma: ${data || "Erro desconhecido"}`,
+        );
+        return;
+      }
+
+      Alert.alert("Sucesso", "Comentário enviado para o Figma com sucesso!");
+      setPrompt("");
+    } catch (error) {
+      Alert.alert("Erro no Figma", error.message);
+      console.error(error);
+    }
+  };
+
+  const processDiscordAction = () => {
+    const discordWebhook = process.env.EXPO_PUBLIC_DISCORD_WEBHOOK_URL;
+    const discordToken = process.env.EXPO_PUBLIC_DISCORD_BOT_TOKEN;
+
+    if (!discordWebhook) {
+      Alert.alert("Atenção", "Configure a URL do Webhook do Discord primeiro.");
+      return;
+    }
+
+    if (!discordToken) {
+      Alert.alert("Atenção", "Configure o Token do Bot do Discord primeiro.");
+      return;
+    }
+
+    try {
+      fetch(discordWebhook, {
+        method: "POST",
+        headers: {
+          Authorization: `Bot ${discordToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content: prompt,
+        }),
+      });
+
+      Alert.alert("Sucesso", "Mensagem enviada para o Discord com sucesso!");
+      setPrompt("");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const processWhatsAppAction = async () => {
+    const waToken = process.env.EXPO_PUBLIC_ACCESS_TOKEN_WHATSAPP;
+    const waPhoneNumberId = process.env.EXPO_PUBLIC_PHONE_NUMBER_ID;
+
+    const recipientNumber = process.env.EXPO_PUBLIC_WHATSAPP_RECIPIENT_NUMBER;
+
+    if (!waToken || !waPhoneNumberId || !recipientNumber) {
+      Alert.alert(
+        "Atenção",
+        "Configure o Token, Phone Number ID e Recipient Number do WhatsApp primeiro.",
+      );
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://graph.facebook.com/v15.0/${waPhoneNumberId}/messages`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${waToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            to: recipientNumber,
+            text: { body: prompt },
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      console.log("Resposta da API do WhatsApp:", data);
+
+      if (!response.ok) {
+        Alert.alert(
+          "Erro",
+          `Falha ao enviar mensagem para o WhatsApp: ${data.error.message}`,
+        );
+        return;
+      }
+
+      Alert.alert("Sucesso", "Mensagem enviada para o WhatsApp com sucesso!");
+      setPrompt("");
+    } catch (error) {
+      Alert.alert("Erro no WhatsApp", error.message);
+      console.error(error);
+    }
+  };
+
+  // Helper para renderizar o ícone correto baseado na biblioteca definida
+  const renderIcon = (option, isSelected) => {
+    const color = isSelected ? "#FFFFFF" : option.color;
+    const size = 20;
+
+    switch (option.lib) {
+      case "Feather":
+        return <Feather name={option.icon} size={size} color={color} />;
+      case "FontAwesome5":
+        return <FontAwesome6 name={option.icon} size={size} color={color} />;
+      case "MaterialCommunityIcons":
+        return (
+          <MaterialCommunityIcons
+            name={option.icon}
+            size={size}
+            color={color}
+          />
+        );
+      default:
+        return <FontAwesome6 name={option.icon} size={size} color={color} />;
+    }
   };
 
   return (
@@ -690,38 +1170,20 @@ export default function App() {
               />
             </TouchableOpacity>
 
-            {/* BOTÃO DO GITHUB COM MENU DE CONTEXTO */}
-            <TouchableOpacity
-              onPress={showGitHubMenu}
-              style={styles.actionIconButton}
-              disabled={isGitHubLoading} // Removido o bloqueio para permitir acessar as configurações com o input vazio
-            >
-              {isGitHubLoading ? (
-                <ActivityIndicator size="small" color="#181717" />
-              ) : (
-                <FontAwesome5
-                  name="github"
-                  size={20}
-                  color={!prompt.trim() ? "#A9A9AC" : "#181717"}
-                />
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handleJiraPress}
-              style={styles.actionIconButton}
-              disabled={!prompt.trim() || isJiraLoading}
-            >
-              {isJiraLoading ? (
-                <ActivityIndicator size="small" color="#0052CC" />
-              ) : (
-                <FontAwesome5
-                  name="jira"
-                  size={20}
-                  color={!prompt.trim() ? "#A9A9AC" : "#0052CC"}
-                />
-              )}
-            </TouchableOpacity>
+            {/* RENDERIZAÇÃO DINÂMICA DA FERRAMENTA */}
+            {currentTool && (
+              <TouchableOpacity
+                onPress={showDynamicMenu}
+                style={styles.actionIconButton}
+                disabled={isActionLoading}
+              >
+                {isActionLoading ? (
+                  <ActivityIndicator size="small" color={currentTool.color} />
+                ) : (
+                  <>{renderIcon(currentTool, false)}</>
+                )}
+              </TouchableOpacity>
+            )}
 
             <TextInput
               style={styles.input}
@@ -731,6 +1193,7 @@ export default function App() {
               onChangeText={setPrompt}
               multiline
             />
+
             {isLoading ? (
               <ActivityIndicator
                 style={styles.loader}
@@ -741,10 +1204,10 @@ export default function App() {
               <TouchableOpacity
                 style={[
                   styles.sendButton,
-                  !prompt.trim() && styles.sendButtonDisabled,
+                  (!prompt.trim() || isLoading) && styles.sendButtonDisabled,
                 ]}
                 onPress={sendMessage}
-                disabled={!prompt.trim()}
+                disabled={!prompt.trim() || isLoading}
               >
                 <Text style={styles.sendIcon}>↑</Text>
               </TouchableOpacity>
