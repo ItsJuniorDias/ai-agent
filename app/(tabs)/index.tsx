@@ -33,7 +33,12 @@ import {
 import Markdown from "react-native-markdown-display";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
-import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  Feather,
+  FontAwesome5,
+  FontAwesome6,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 
 // IMPORT DO GITHUB
 import { createPullRequest, getAIAnalysis } from "@/service/runCodeReview";
@@ -79,7 +84,7 @@ type GitHubConfig = {
 };
 
 const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
-const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
+const genAI = new GoogleGenerativeAI(API_KEY);
 
 // --- DICIONÁRIO DE INTEGRAÇÕES (Regra de Ouro) ---
 const INTEGRATION_CONFIG = {
@@ -107,6 +112,12 @@ const INTEGRATION_CONFIG = {
     actionText: "Send to Channel",
     route: "/(slack)",
   },
+  teams: {
+    icon: "microsoft-teams",
+    color: "#6264A7",
+    actionText: "Send to Teams",
+    route: "/(teams)",
+  },
   linear: {
     icon: "vector-line",
     color: "#5E6AD2",
@@ -132,6 +143,28 @@ const INTEGRATION_CONFIG = {
     color: "#D14836",
     actionText: "Send Email",
     route: "/(gmail)",
+  },
+
+  figma: {
+    icon: "figma",
+    color: "#F24E1E",
+    actionText: "Send Comment",
+    lib: "Feather",
+    route: "/(figma)",
+  },
+  discord: {
+    icon: "discord",
+    color: "#5865F2",
+    actionText: "Send to Discord",
+    lib: "FontAwesome6",
+    route: "/(discord)",
+  },
+  whatsapp: {
+    icon: "whatsapp",
+    color: "#25D366",
+    actionText: "Send to WhatsApp",
+    lib: "FontAwesome6",
+    route: "/(whatsapp)",
   },
 
   chat: null, // Chat não renderiza botão extra
@@ -187,6 +220,8 @@ export default function App() {
     activeIntegration !== "chat"
       ? INTEGRATION_CONFIG[activeIntegration as keyof typeof INTEGRATION_CONFIG]
       : null;
+
+  console.log(currentTool, "CURRENT TOOL");
 
   // Carrega a integração selecionada
   useFocusEffect(
@@ -305,6 +340,21 @@ export default function App() {
         case "jira":
           await processJiraAction();
           break;
+        case "slack":
+          await processSlackAction();
+          break;
+        case "vercel":
+          await processVercelAction();
+          break;
+        case "figma":
+          await processFigmaAction();
+          break;
+        case "discord":
+          await processDiscordAction();
+          break;
+        case "whatsapp":
+          await processWhatsAppAction();
+          break;
         case "gitlab":
           await processGitlabAction({
             title: `MR: ${prompt.substring(0, 50)}`,
@@ -313,20 +363,6 @@ export default function App() {
             sourceBranch: "main",
             targetBranch: "feat/integration",
           });
-          break;
-        case "notion":
-          const notionResult = await handleCreateNotion({
-            title: `Nova Nota - ${new Date().toLocaleString()}`,
-            content: prompt,
-          });
-
-          if (notionResult) {
-            Alert.alert("Sucesso", "Nota salva no Notion com sucesso!");
-            setPrompt(""); // Limpa o input após enviar
-          }
-          break;
-        case "gmail":
-          await handleSendEmail();
           break;
         default:
           Alert.alert("Attention", "Action not implemented for this tool yet.");
@@ -485,102 +521,26 @@ export default function App() {
     setPrompt("");
   };
 
-  const handleCreateNotion = async ({ title, content }: any) => {
-    const notionToken = process.env.EXPO_PUBLIC_NOTION_TOKEN;
-    const databaseId = process.env.EXPO_PUBLIC_NOTION_DATABASE_ID;
-
-    if (!notionToken || !databaseId) {
-      Alert.alert(
-        "Erro",
-        "As credenciais do Notion (Token ou Database ID) estão faltando.",
-      );
-      return null;
-    }
-
-    const response = await fetch("https://api.notion.com/v1/pages", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${notionToken}`,
-        "Notion-Version": "2022-06-28",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        properties: {
-          // "Name" é o identificador padrão da coluna de título no Notion
-          Name: {
-            title: [{ text: { content: title } }],
-          },
-        },
-        // O corpo da página deve ir como blocos dentro de "children"
-        children: [
-          {
-            object: "block",
-            type: "paragraph",
-            paragraph: {
-              rich_text: [
-                {
-                  type: "text",
-                  text: { content: content },
-                },
-              ],
-            },
-          },
-        ],
-      }),
-    });
-
-    console.log("Notion API response:", await response.json());
-  };
-
   // --- MEMÓRIA E CHAT ---
   const saveMemoryToVectorDB = async (text: string) => {
     if (!embeddingModel.current) return;
+
     try {
       const result = await embeddingModel.current.embedContent(text);
       const embedding = result.embedding.values;
+
       const storedMemories = await AsyncStorage.getItem("@vector_memory");
+
       const memoryArray: MemoryVector[] = storedMemories
         ? JSON.parse(storedMemories)
         : [];
+
       memoryArray.push({ id: Date.now().toString(), text, embedding });
+
       await AsyncStorage.setItem("@vector_memory", JSON.stringify(memoryArray));
     } catch (error) {
       console.error("Erro ao salvar vetor:", error);
     }
-  };
-
-  const handleSendEmail = async () => {
-    const tokenGmail = "AIzaSyDl3hLKCgAeG81SuH2JMWbgaGDx8xh6JMQ";
-
-    // Aqui você implementaria a lógica para enviar o e-mail usando o appPassword
-    //implementar chamada a API da google pra ter acesso a minha caixa de email e enviar o email usando o prompt como corpo da mensagem
-
-    const response = await fetch(
-      "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${tokenGmail}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          raw: btoa(
-            `To: its_juniordias1997@icloud.com
-            Subject: Mensagem do Assistente Virtual
-
-            ${prompt}`,
-          ),
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      Alert.alert("Error", "Failed to send email.");
-      return;
-    }
-
-    Alert.alert("Success", "Email sent successfully!");
-    setPrompt("");
   };
 
   const searchLongTermMemory = async (
@@ -590,6 +550,7 @@ export default function App() {
     try {
       const result = await embeddingModel.current.embedContent(promptText);
       const promptEmbedding = result.embedding.values;
+
       const storedMemories = await AsyncStorage.getItem("@vector_memory");
       if (!storedMemories) return [];
 
@@ -708,6 +669,7 @@ export default function App() {
 
     try {
       const retrievedMemories = await searchLongTermMemory(currentPrompt);
+
       let enrichedPrompt = currentPrompt;
       if (retrievedMemories.length > 0) {
         enrichedPrompt = `[FATOS ANTIGOS RESGATADOS DA MEMÓRIA DO USUÁRIO: ${retrievedMemories.join(" | ")}]\n\nPergunta atual do usuário: ${currentPrompt}`;
@@ -728,13 +690,25 @@ export default function App() {
         return finalMessages;
       });
     } catch (error) {
+      console.error("Erro no chat:", error);
+
+      // FIX CRÍTICO AQUI: Se o envio falhar, o histórico interno da sessão corrompe
+      // Recriamos a sessão a partir do histórico de mensagens válidas.
+      if (model.current) {
+        const cleanHistory = messages.map((msg) => ({
+          role: msg.role,
+          parts: [{ text: msg.text }],
+        }));
+        chatRef.current = model.current.startChat({ history: cleanHistory });
+      }
+
       setMessages((prev) => {
         const withoutPlaceholder = prev.slice(0, -1);
         return [
           ...withoutPlaceholder,
           {
             role: "model" as const,
-            text: "Error: Unable to reach the assistant.",
+            text: "Erro de conexão: Não foi possível alcançar o assistente.",
           },
         ];
       });
@@ -850,9 +824,267 @@ export default function App() {
         "Sucesso!",
         "Merge Request criado e revisado com sucesso no GitLab.",
       );
-    } catch (error) {
+    } catch (error: any) {
       Alert.alert("Falha na Integração", error.message);
       console.error(error);
+    }
+  };
+
+  const processSlackAction = async () => {
+    const botToken = await AsyncStorage.getItem("@slack_bot_token");
+
+    if (!botToken) {
+      Alert.alert(
+        "Atenção",
+        "Por favor, configure seu Bot Token do Slack primeiro.",
+      );
+      return;
+    }
+
+    const response = await fetch("https://slack.com/api/chat.postMessage", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${botToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        channel: "#all-developer", // Você pode querer tornar isso dinâmico
+        text: prompt,
+      }),
+    });
+
+    const data = await response.json();
+    if (!data.ok) {
+      Alert.alert(
+        "Erro",
+        `Falha ao enviar mensagem para o Slack: ${data.error}`,
+      );
+      return;
+    }
+
+    Alert.alert("Sucesso", "Mensagem enviada para o Slack com sucesso!");
+    setPrompt("");
+  };
+
+  const processVercelAction = async () => {
+    const vercelToken = await AsyncStorage.getItem("@vercel_token");
+    const projectId = await AsyncStorage.getItem("@vercel_project_id");
+    // Se o seu projeto estiver em uma conta de "Equipe" (Team), você PRECISA do Team ID
+    const teamId = await AsyncStorage.getItem("@vercel_team_id");
+
+    if (!vercelToken || !projectId) {
+      Alert.alert("Atenção", "Configure Token e Project ID primeiro.");
+      return;
+    }
+
+    try {
+      // 1. Primeiro, buscamos o ID do último deployment de produção
+      const projectRes = await fetch(
+        `https://api.vercel.com/v9/projects/${projectId}${teamId ? `?teamId=${teamId}` : ""}`,
+        {
+          headers: { Authorization: `Bearer ${vercelToken}` },
+        },
+      );
+      const projectData = await projectRes.json();
+
+      // Pegamos o ID do último deploy que deu certo em produção
+      const lastDeployId = projectData.targets?.production?.id;
+
+      if (!lastDeployId) {
+        Alert.alert(
+          "Erro",
+          "Não foi possível encontrar um deploy anterior para replicar.",
+        );
+        return;
+      }
+
+      // 2. Agora disparamos o novo deploy baseado naquele ID
+      const deployRes = await fetch(
+        `https://api.vercel.com/v13/deployments?forceNew=1${teamId ? `&teamId=${teamId}` : ""}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${vercelToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: `Deploy via AI - ${new Date().toLocaleTimeString()}`,
+            deploymentId: lastDeployId, // Aqui está o segredo: ele clona as configs do anterior
+            target: "production",
+          }),
+        },
+      );
+
+      if (!deployRes.ok) {
+        const errorData = await deployRes.json();
+        throw new Error(errorData.error.message);
+      }
+
+      Alert.alert("Sucesso", "Novo deploy de produção iniciado!");
+      setPrompt("");
+    } catch (error) {
+      Alert.alert("Erro no Deploy", error.message);
+      console.error(error);
+    }
+  };
+
+  const processFigmaAction = async () => {
+    const figmaToken = await AsyncStorage.getItem("@figma_token");
+    const fileId = await AsyncStorage.getItem("@figma_file_key");
+
+    if (!figmaToken || !fileId) {
+      Alert.alert(
+        "Atenção",
+        "Configure seu Token e File ID do Figma primeiro.",
+      );
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.figma.com/v1/files/${fileId}/comments`,
+        {
+          method: "POST",
+          headers: {
+            "X-Figma-Token": figmaToken, // Para personal access tokens, geralmente usa-se 'X-Figma-Token: SEU_TOKEN'. Se for OAuth, 'Bearer' está correto.
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: prompt,
+            // O Figma EXIGE o client_meta para saber onde ancorar o comentário.
+            // Aqui estamos fixando na coordenada X:0, Y:0 do canvas.
+            client_meta: {
+              x: 0,
+              y: 0,
+            },
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      console.log("Resposta da API do Figma:", data);
+
+      if (!response.ok) {
+        Alert.alert(
+          "Erro",
+          `Falha ao enviar comentário para o Figma: ${data || "Erro desconhecido"}`,
+        );
+        return;
+      }
+
+      Alert.alert("Sucesso", "Comentário enviado para o Figma com sucesso!");
+      setPrompt("");
+    } catch (error) {
+      Alert.alert("Erro no Figma", error.message);
+      console.error(error);
+    }
+  };
+
+  const processDiscordAction = () => {
+    const discordWebhook = process.env.EXPO_PUBLIC_DISCORD_WEBHOOK_URL;
+    const discordToken = process.env.EXPO_PUBLIC_DISCORD_BOT_TOKEN;
+
+    if (!discordWebhook) {
+      Alert.alert("Atenção", "Configure a URL do Webhook do Discord primeiro.");
+      return;
+    }
+
+    if (!discordToken) {
+      Alert.alert("Atenção", "Configure o Token do Bot do Discord primeiro.");
+      return;
+    }
+
+    try {
+      fetch(discordWebhook, {
+        method: "POST",
+        headers: {
+          Authorization: `Bot ${discordToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content: prompt,
+        }),
+      });
+
+      Alert.alert("Sucesso", "Mensagem enviada para o Discord com sucesso!");
+      setPrompt("");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const processWhatsAppAction = async () => {
+    const waToken = process.env.EXPO_PUBLIC_ACCESS_TOKEN_WHATSAPP;
+    const waPhoneNumberId = process.env.EXPO_PUBLIC_PHONE_NUMBER_ID;
+
+    const recipientNumber = process.env.EXPO_PUBLIC_WHATSAPP_RECIPIENT_NUMBER;
+
+    if (!waToken || !waPhoneNumberId || !recipientNumber) {
+      Alert.alert(
+        "Atenção",
+        "Configure o Token, Phone Number ID e Recipient Number do WhatsApp primeiro.",
+      );
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://graph.facebook.com/v15.0/${waPhoneNumberId}/messages`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${waToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            to: recipientNumber,
+            text: { body: prompt },
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      console.log("Resposta da API do WhatsApp:", data);
+
+      if (!response.ok) {
+        Alert.alert(
+          "Erro",
+          `Falha ao enviar mensagem para o WhatsApp: ${data.error.message}`,
+        );
+        return;
+      }
+
+      Alert.alert("Sucesso", "Mensagem enviada para o WhatsApp com sucesso!");
+      setPrompt("");
+    } catch (error) {
+      Alert.alert("Erro no WhatsApp", error.message);
+      console.error(error);
+    }
+  };
+
+  // Helper para renderizar o ícone correto baseado na biblioteca definida
+  const renderIcon = (option, isSelected) => {
+    const color = isSelected ? "#FFFFFF" : option.color;
+    const size = 20;
+
+    switch (option.lib) {
+      case "Feather":
+        return <Feather name={option.icon} size={size} color={color} />;
+      case "FontAwesome5":
+        return <FontAwesome6 name={option.icon} size={size} color={color} />;
+      case "MaterialCommunityIcons":
+        return (
+          <MaterialCommunityIcons
+            name={option.icon}
+            size={size}
+            color={color}
+          />
+        );
+      default:
+        return <FontAwesome6 name={option.icon} size={size} color={color} />;
     }
   };
 
@@ -948,14 +1180,7 @@ export default function App() {
                 {isActionLoading ? (
                   <ActivityIndicator size="small" color={currentTool.color} />
                 ) : (
-                  //validar se estiver o icone
-                  <>
-                    <MaterialCommunityIcons
-                      name={currentTool.icon}
-                      size={22}
-                      color={currentTool.color}
-                    />
-                  </>
+                  <>{renderIcon(currentTool, false)}</>
                 )}
               </TouchableOpacity>
             )}
@@ -979,10 +1204,10 @@ export default function App() {
               <TouchableOpacity
                 style={[
                   styles.sendButton,
-                  !prompt.trim() && styles.sendButtonDisabled,
+                  (!prompt.trim() || isLoading) && styles.sendButtonDisabled,
                 ]}
                 onPress={sendMessage}
-                disabled={!prompt.trim()}
+                disabled={!prompt.trim() || isLoading}
               >
                 <Text style={styles.sendIcon}>↑</Text>
               </TouchableOpacity>

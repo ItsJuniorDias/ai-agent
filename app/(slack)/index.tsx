@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,20 +10,83 @@ import {
   Platform,
   SafeAreaView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+// Chaves para o AsyncStorage
+const STORAGE_KEYS = {
+  BOT_TOKEN: "@slack_bot_token",
+  CHANNEL_ID: "@slack_channel_id",
+  NOTIFICATIONS: "@slack_notifications",
+};
 
 export default function SlackScreen() {
   const [botToken, setBotToken] = useState("");
   const [channelId, setChannelId] = useState("");
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
+  // Carregar dados ao iniciar a tela
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem(STORAGE_KEYS.BOT_TOKEN);
+        const storedChannel = await AsyncStorage.getItem(
+          STORAGE_KEYS.CHANNEL_ID,
+        );
+        const storedNotifs = await AsyncStorage.getItem(
+          STORAGE_KEYS.NOTIFICATIONS,
+        );
+
+        if (storedToken) setBotToken(storedToken);
+        if (storedChannel) setChannelId(storedChannel);
+        if (storedNotifs !== null)
+          setNotificationsEnabled(JSON.parse(storedNotifs));
+      } catch (error) {
+        Alert.alert("Erro", "Não foi possível carregar as configurações.");
+        console.error("Failed to load Slack settings:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
+  // Salvar dados
+  const handleSave = async () => {
     if (!botToken) {
       Alert.alert("Error", "The Bot Token is required.");
       return;
     }
-    Alert.alert("Success", "Slack configuration saved successfully!");
+
+    setIsSaving(true);
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.BOT_TOKEN, botToken);
+      await AsyncStorage.setItem(STORAGE_KEYS.CHANNEL_ID, channelId);
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.NOTIFICATIONS,
+        JSON.stringify(notificationsEnabled),
+      );
+
+      Alert.alert("Success", "Slack configuration saved successfully!");
+    } catch (error) {
+      Alert.alert("Error", "Failed to save configuration.");
+      console.error("Failed to save Slack settings:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.safeArea, styles.center]}>
+        <ActivityIndicator size="large" color="#8E8E93" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -81,14 +144,22 @@ export default function SlackScreen() {
             <Switch
               value={notificationsEnabled}
               onValueChange={setNotificationsEnabled}
-              trackColor={{ false: "#D1D1D6", true: "#34C759" }} // iOS official colors
+              trackColor={{ false: "#D1D1D6", true: "#34C759" }}
             />
           </View>
         </View>
 
         {/* Save/Connect Button */}
-        <TouchableOpacity style={styles.button} onPress={handleSave}>
-          <Text style={styles.buttonText}>Connect to Slack</Text>
+        <TouchableOpacity
+          style={[styles.button, isSaving && styles.buttonDisabled]}
+          onPress={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.buttonText}>Connect to Slack</Text>
+          )}
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -99,6 +170,10 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#F2F2F7", // Default iOS grouped background
+  },
+  center: {
+    justifyContent: "center",
+    alignItems: "center",
   },
   container: {
     flex: 1,
@@ -169,6 +244,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 16,
+    height: 50, // Fixa a altura para não encolher durante o loading
+    justifyContent: "center",
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   buttonText: {
     color: "#FFFFFF",

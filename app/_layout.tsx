@@ -32,6 +32,13 @@ export default function RootLayout() {
         <Stack.Screen name="(gmail)/index" options={{ headerShown: false }} />
         <Stack.Screen name="(slack)/index" options={{ headerShown: false }} />
         <Stack.Screen name="(gitlab)/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(teams)/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(figma)/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(discord)/index" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="(whatsapp)/index"
+          options={{ headerShown: false }}
+        />
 
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>

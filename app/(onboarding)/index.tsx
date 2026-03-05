@@ -8,11 +8,13 @@ import {
   Alert,
   ScrollView,
   Modal,
-  ActivityIndicator,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-
+import {
+  Feather,
+  FontAwesome6,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 const INTEGRATION_CATEGORIES = [
@@ -24,6 +26,7 @@ const INTEGRATION_CATEGORIES = [
         id: "github",
         title: "GitHub",
         icon: "github",
+        lib: "MaterialCommunityIcons",
         desc: "Pull Requests & Issues",
         color: "#181717",
       },
@@ -31,6 +34,7 @@ const INTEGRATION_CATEGORIES = [
         id: "gitlab",
         title: "GitLab",
         icon: "gitlab",
+        lib: "MaterialCommunityIcons",
         desc: "CI/CD & Repositories",
         color: "#FC6D26",
       },
@@ -38,6 +42,7 @@ const INTEGRATION_CATEGORIES = [
         id: "vercel",
         title: "Vercel",
         icon: "triangle",
+        lib: "Feather",
         desc: "Deployments & Edge Logs",
         color: "#000000",
       },
@@ -51,16 +56,24 @@ const INTEGRATION_CATEGORIES = [
         id: "jira",
         title: "Jira",
         icon: "jira",
+        lib: "MaterialCommunityIcons",
         desc: "Enterprise Agile workflows",
         color: "#0052CC",
       },
-      // {
-      //   id: "notion",
-      //   title: "Notion",
-      //   icon: "notebook",
-      //   desc: "Docs & Project Wiki",
-      //   color: "#000000",
-      // },
+    ],
+  },
+  {
+    id: "design_docs",
+    title: "Design & Knowledge",
+    options: [
+      {
+        id: "figma",
+        title: "Figma",
+        icon: "figma",
+        lib: "Feather",
+        desc: "Design files & prototypes",
+        color: "#F24E1E",
+      },
     ],
   },
   {
@@ -68,30 +81,35 @@ const INTEGRATION_CATEGORIES = [
     title: "Communication",
     options: [
       {
+        id: "whatsapp",
+        title: "WhatsApp",
+        icon: "whatsapp",
+        lib: "MaterialCommunityIcons",
+        desc: "Personal & Business messages",
+        color: "#25D366",
+      },
+      {
+        id: "discord",
+        title: "Discord",
+        icon: "discord",
+        lib: "FontAwesome6",
+        desc: "Server communities & voice",
+        color: "#5865F2",
+      },
+      {
         id: "slack",
         title: "Slack",
         icon: "slack",
-        desc: "Team chat & notifications",
-        color: "#E01E5A",
+        lib: "MaterialCommunityIcons",
+        desc: "Channels & Direct Messages",
+        color: "#4A154B",
       },
-      // {
-      //   id: "gmail",
-      //   title: "Gmail",
-      //   icon: "email-outline",
-      //   desc: "Inbox & Thread triaging",
-      //   color: "#EA4335",
-      // },
-    ],
-  },
-  {
-    id: "chat",
-    title: "CHAT",
-    options: [
       {
-        id: "chat_app",
+        id: "chat",
         title: "Chat",
         icon: "chat",
-        desc: "General conversation",
+        lib: "MaterialCommunityIcons",
+        desc: "Chat messages & threads",
         color: "#007AFF",
       },
     ],
@@ -101,10 +119,8 @@ const INTEGRATION_CATEGORIES = [
 export default function OnboardingScreen() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [isGoogleModalVisible, setGoogleModalVisible] = useState(false);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const router = useRouter();
 
-  // Função centralizada para salvar e navegar
   const proceedToNextScreen = async (optionId) => {
     try {
       await AsyncStorage.setItem("@primary_integration", optionId);
@@ -116,21 +132,26 @@ export default function OnboardingScreen() {
 
   const handleContinue = () => {
     if (!selectedOption) {
-      Alert.alert(
-        "Selection Required",
-        "Please choose a primary tool to configure your agent.",
-      );
+      Alert.alert("Selection Required", "Please choose a primary tool.");
       return;
     }
-
-    // Se for Gmail, intercepta e abre o Modal
     if (selectedOption === "gmail") {
       setGoogleModalVisible(true);
-      return;
+    } else {
+      proceedToNextScreen(selectedOption);
     }
+  };
 
-    // Se for outra ferramenta, segue direto
-    proceedToNextScreen(selectedOption);
+  // Helper para renderizar o ícone correto baseado na biblioteca definida
+  const renderIcon = (option, isSelected) => {
+    const IconLib =
+      option.lib === "MaterialCommunityIcons"
+        ? MaterialCommunityIcons
+        : option.lib === "FontAwesome6"
+          ? FontAwesome6
+          : Feather;
+
+    return <IconLib name={option.icon} size={20} color={option.color} />;
   };
 
   return (
@@ -140,19 +161,16 @@ export default function OnboardingScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>How do you want to start?</Text>
             <Text style={styles.subtitle}>
-              Choose your primary workspace to set up your AI Agents context.
+              Choose your primary workspace to set up your AI Agent's context.
             </Text>
           </View>
 
-          {/* Categories & Options */}
           {INTEGRATION_CATEGORIES.map((category) => (
             <View key={category.id} style={styles.categorySection}>
               <Text style={styles.categoryTitle}>{category.title}</Text>
-
               <View style={styles.optionsGrid}>
                 {category.options.map((option) => {
                   const isSelected = selectedOption === option.id;
@@ -160,21 +178,12 @@ export default function OnboardingScreen() {
                     <TouchableOpacity
                       key={option.id}
                       style={[styles.card, isSelected && styles.cardSelected]}
-                      activeOpacity={0.7}
                       onPress={() => setSelectedOption(option.id)}
                     >
-                      <View
-                        style={[
-                          styles.iconContainer,
-                          isSelected && styles.iconContainerSelected,
-                        ]}
-                      >
-                        <MaterialCommunityIcons
-                          name={option.icon}
-                          size={24}
-                          color={option.color}
-                        />
+                      <View style={styles.iconContainer}>
+                        {renderIcon(option, isSelected)}
                       </View>
+
                       <View style={styles.textContainer}>
                         <Text
                           style={[
@@ -203,12 +212,10 @@ export default function OnboardingScreen() {
           ))}
         </ScrollView>
 
-        {/* Sticky Footer */}
         <View style={styles.footer}>
           <TouchableOpacity
             style={[styles.button, !selectedOption && styles.buttonDisabled]}
             onPress={handleContinue}
-            activeOpacity={0.8}
             disabled={!selectedOption}
           >
             <Text style={styles.buttonText}>Continue</Text>
@@ -216,35 +223,26 @@ export default function OnboardingScreen() {
         </View>
       </View>
 
-      {/* MODAL DE LOGIN DO GMAIL */}
-      <Modal
-        visible={isGoogleModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setGoogleModalVisible(false)}
-      >
+      {/* MODAL GMAIL */}
+      <Modal visible={isGoogleModalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <MaterialCommunityIcons name="gmail" size={40} color="#DB4437" />
               <Text style={styles.modalTitle}>Connect Gmail</Text>
               <Text style={styles.modalSubtitle}>
-                Allow the AI Agent to access your emails and threads to assist
-                you better.
+                Allow the AI Agent to access your emails to assist you better.
               </Text>
             </View>
-
             <TouchableOpacity
               style={styles.googleButton}
-              onPress={() => startSignInFlow()}
+              onPress={() => proceedToNextScreen("gmail")}
             >
-              <Text style={styles.googleButtonText}>Connect Gmail</Text>
+              <Text style={styles.googleButtonText}>Sign in with Google</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={() => setGoogleModalVisible(false)}
-              disabled={isLoggingIn}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
