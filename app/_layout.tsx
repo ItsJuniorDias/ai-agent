@@ -31,6 +31,7 @@ export default function RootLayout() {
         <Stack.Screen name="(notion)/index" options={{ headerShown: false }} />
         <Stack.Screen name="(gmail)/index" options={{ headerShown: false }} />
         <Stack.Screen name="(slack)/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(gitlab)/index" options={{ headerShown: false }} />
 
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>

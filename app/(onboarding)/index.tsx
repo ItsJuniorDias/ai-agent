@@ -7,9 +7,12 @@ import {
   SafeAreaView,
   Alert,
   ScrollView,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+
 import { useRouter } from "expo-router";
 
 const INTEGRATION_CATEGORIES = [
@@ -22,21 +25,21 @@ const INTEGRATION_CATEGORIES = [
         title: "GitHub",
         icon: "github",
         desc: "Pull Requests & Issues",
-        color: "#181717", // Preto do GitHub
+        color: "#181717",
       },
       {
         id: "gitlab",
         title: "GitLab",
         icon: "gitlab",
         desc: "CI/CD & Repositories",
-        color: "#FC6D26", // Laranja do GitLab
+        color: "#FC6D26",
       },
       {
         id: "vercel",
         title: "Vercel",
         icon: "triangle",
         desc: "Deployments & Edge Logs",
-        color: "#000000", // Preto do Vercel
+        color: "#000000",
       },
     ],
   },
@@ -45,26 +48,19 @@ const INTEGRATION_CATEGORIES = [
     title: "Management & Planning",
     options: [
       {
-        id: "linear",
-        title: "Linear",
-        icon: "vector-line",
-        desc: "High-performance tracking",
-        color: "#5E6AD2", // Roxo do Linear
-      },
-      {
         id: "jira",
         title: "Jira",
         icon: "jira",
         desc: "Enterprise Agile workflows",
-        color: "#0052CC", // Azul do Jira
+        color: "#0052CC",
       },
-      {
-        id: "notion",
-        title: "Notion",
-        icon: "notebook",
-        desc: "Docs & Project Wiki",
-        color: "#000000", // Preto do Notion
-      },
+      // {
+      //   id: "notion",
+      //   title: "Notion",
+      //   icon: "notebook",
+      //   desc: "Docs & Project Wiki",
+      //   color: "#000000",
+      // },
     ],
   },
   {
@@ -76,27 +72,27 @@ const INTEGRATION_CATEGORIES = [
         title: "Slack",
         icon: "slack",
         desc: "Team chat & notifications",
-        color: "#E01E5A", // Rosa/Vermelho do Slack (ou #4A154B para roxo)
+        color: "#E01E5A",
       },
-      {
-        id: "gmail",
-        title: "Gmail",
-        icon: "email-outline",
-        desc: "Inbox & Thread triaging",
-        color: "#EA4335", // Vermelho do Gmail
-      },
+      // {
+      //   id: "gmail",
+      //   title: "Gmail",
+      //   icon: "email-outline",
+      //   desc: "Inbox & Thread triaging",
+      //   color: "#EA4335",
+      // },
     ],
   },
   {
-    id: "chat", // Corrigi o ID duplicado aqui também
+    id: "chat",
     title: "CHAT",
     options: [
       {
-        id: "chat",
+        id: "chat_app",
         title: "Chat",
         icon: "chat",
         desc: "General conversation",
-        color: "#007AFF", // Azul genérico
+        color: "#007AFF",
       },
     ],
   },
@@ -104,9 +100,21 @@ const INTEGRATION_CATEGORIES = [
 
 export default function OnboardingScreen() {
   const [selectedOption, setSelectedOption] = useState(null);
+  const [isGoogleModalVisible, setGoogleModalVisible] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const router = useRouter();
 
-  const handleContinue = async () => {
+  // Função centralizada para salvar e navegar
+  const proceedToNextScreen = async (optionId) => {
+    try {
+      await AsyncStorage.setItem("@primary_integration", optionId);
+      router.push("/(tabs)");
+    } catch (error) {
+      console.error("Storage Error:", error);
+    }
+  };
+
+  const handleContinue = () => {
     if (!selectedOption) {
       Alert.alert(
         "Selection Required",
@@ -115,12 +123,14 @@ export default function OnboardingScreen() {
       return;
     }
 
-    try {
-      await AsyncStorage.setItem("@primary_integration", selectedOption);
-      router.push("/(tabs)");
-    } catch (error) {
-      console.error("Storage Error:", error);
+    // Se for Gmail, intercepta e abre o Modal
+    if (selectedOption === "gmail") {
+      setGoogleModalVisible(true);
+      return;
     }
+
+    // Se for outra ferramenta, segue direto
+    proceedToNextScreen(selectedOption);
   };
 
   return (
@@ -134,7 +144,7 @@ export default function OnboardingScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>How do you want to start?</Text>
             <Text style={styles.subtitle}>
-              Choose your primary workspace to set up your AI Agent's context.
+              Choose your primary workspace to set up your AI Agents context.
             </Text>
           </View>
 
@@ -162,7 +172,7 @@ export default function OnboardingScreen() {
                         <MaterialCommunityIcons
                           name={option.icon}
                           size={24}
-                          color={option.color} /* <-- Alterado aqui */
+                          color={option.color}
                         />
                       </View>
                       <View style={styles.textContainer}>
@@ -205,26 +215,51 @@ export default function OnboardingScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* MODAL DE LOGIN DO GMAIL */}
+      <Modal
+        visible={isGoogleModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setGoogleModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <MaterialCommunityIcons name="gmail" size={40} color="#DB4437" />
+              <Text style={styles.modalTitle}>Connect Gmail</Text>
+              <Text style={styles.modalSubtitle}>
+                Allow the AI Agent to access your emails and threads to assist
+                you better.
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={() => startSignInFlow()}
+            >
+              <Text style={styles.googleButtonText}>Connect Gmail</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setGoogleModalVisible(false)}
+              disabled={isLoggingIn}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 120,
-  },
-  header: {
-    marginBottom: 32,
-  },
+  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  container: { flex: 1 },
+  scrollContent: { paddingHorizontal: 24, paddingTop: 40, paddingBottom: 120 },
+  header: { marginBottom: 32 },
   title: {
     fontSize: 28,
     fontWeight: "700",
@@ -232,14 +267,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     letterSpacing: -0.5,
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#8E8E93",
-    lineHeight: 22,
-  },
-  categorySection: {
-    marginBottom: 24,
-  },
+  subtitle: { fontSize: 16, color: "#8E8E93", lineHeight: 22 },
+  categorySection: { marginBottom: 24 },
   categoryTitle: {
     fontSize: 13,
     fontWeight: "600",
@@ -249,9 +278,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     letterSpacing: 0.5,
   },
-  optionsGrid: {
-    gap: 12,
-  },
+  optionsGrid: { gap: 12 },
   card: {
     flexDirection: "row",
     alignItems: "center",
@@ -261,10 +288,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "transparent",
   },
-  cardSelected: {
-    backgroundColor: "#E5F0FF",
-    borderColor: "#007AFF",
-  },
+  cardSelected: { backgroundColor: "#E5F0FF", borderColor: "#007AFF" },
   iconContainer: {
     width: 40,
     height: 40,
@@ -274,31 +298,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 12,
   },
-  iconContainerSelected: {
-    backgroundColor: "#FFFFFF",
-  },
-  textContainer: {
-    flex: 1,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1C1C1E",
-  },
-  cardDescription: {
-    fontSize: 13,
-    color: "#8E8E93",
-  },
-  textSelected: {
-    color: "#007AFF",
-  },
+  iconContainerSelected: { backgroundColor: "#FFFFFF" },
+  textContainer: { flex: 1 },
+  cardTitle: { fontSize: 16, fontWeight: "600", color: "#1C1C1E" },
+  cardDescription: { fontSize: 13, color: "#8E8E93" },
+  textSelected: { color: "#007AFF" },
   footer: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     padding: 24,
-    paddingBottom: 34, // Extra padding for iPhone notch
+    paddingBottom: 34,
     backgroundColor: "rgba(255,255,255,0.9)",
     borderTopWidth: 1,
     borderTopColor: "#F2F2F7",
@@ -309,12 +320,64 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
   },
-  buttonDisabled: {
-    backgroundColor: "#D1D1D6",
+  buttonDisabled: { backgroundColor: "#D1D1D6" },
+  buttonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
+
+  // Estilos do Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end", // Modal aparece na parte inferior
   },
-  buttonText: {
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40, // Espaço para a safe area do iPhone
+    alignItems: "center",
+  },
+  modalHeader: {
+    alignItems: "center",
+    marginBottom: 32,
+    marginTop: 8,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1C1C1E",
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 15,
+    color: "#8E8E93",
+    textAlign: "center",
+    paddingHorizontal: 16,
+    lineHeight: 20,
+  },
+  googleButton: {
+    flexDirection: "row",
+    backgroundColor: "#4285F4", // Azul oficial do Google
+    width: "100%",
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  googleButtonText: {
     color: "#FFFFFF",
     fontSize: 17,
     fontWeight: "600",
+  },
+  cancelButton: {
+    width: "100%",
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: "#8E8E93",
+    fontSize: 17,
+    fontWeight: "500",
   },
 });

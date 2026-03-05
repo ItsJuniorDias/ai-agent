@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   SafeAreaView,
   Alert,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function GmailScreen() {
   const [email, setEmail] = useState("");
@@ -18,15 +19,50 @@ export default function GmailScreen() {
   const [syncEmails, setSyncEmails] = useState(true);
   const [syncDrafts, setSyncDrafts] = useState(false);
 
-  const handleSave = () => {
+  // Carrega os dados ao abrir a tela
+  useEffect(() => {
+    const carregarDados = async () => {
+      try {
+        const storedEmail = await AsyncStorage.getItem("@gmail_email");
+        const storedPassword = await AsyncStorage.getItem("@gmail_app_password");
+        const storedSyncEmails = await AsyncStorage.getItem("@gmail_sync_emails");
+        const storedSyncDrafts = await AsyncStorage.getItem("@gmail_sync_drafts");
+
+        if (storedEmail) setEmail(storedEmail);
+        if (storedPassword) setAppPassword(storedPassword);
+        if (storedSyncEmails !== null) setSyncEmails(JSON.parse(storedSyncEmails));
+        if (storedSyncDrafts !== null) setSyncDrafts(JSON.parse(storedSyncDrafts));
+      } catch (error) {
+        console.error("Erro ao carregar os dados", error);
+      }
+    };
+    carregarDados();
+  }, []);
+
+  const handleSave = async () => {
     if (!email || !appPassword) {
       Alert.alert("Erro", "O E-mail e a Senha de App são obrigatórios.");
       return;
     }
-    // Aqui você faria a integração com a API do Gmail ou SMTP/IMAP
-    Alert.alert("Sucesso", "Configurações do Gmail salvas com sucesso!");
+
+    try {
+      // Salva os dados no AsyncStorage
+      await AsyncStorage.setItem("@gmail_email", email);
+      await AsyncStorage.setItem("@gmail_app_password", appPassword);
+      await AsyncStorage.setItem("@gmail_sync_emails", JSON.stringify(syncEmails));
+      await AsyncStorage.setItem("@gmail_sync_drafts", JSON.stringify(syncDrafts));
+
+      Alert.alert("Sucesso", "Configurações do Gmail salvas com sucesso!");
+      
+      // Aqui você faria a chamada para o seu Backend iniciar a sincronização
+      // fetchEmailsFromBackend(email, appPassword);
+
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível salvar as configurações.");
+    }
   };
 
+  // ... (O restante do seu return e styles permanece exatamente igual)
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -65,7 +101,7 @@ export default function GmailScreen() {
               placeholderTextColor="#C7C7CC"
               value={appPassword}
               onChangeText={setAppPassword}
-              secureTextEntry // Hides the password
+              secureTextEntry 
               autoCapitalize="none"
               autoCorrect={false}
             />
@@ -107,83 +143,18 @@ export default function GmailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#F2F2F7",
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 20,
-  },
-  header: {
-    marginBottom: 32,
-    paddingHorizontal: 8,
-  },
-  title: {
-    fontSize: 34,
-    fontWeight: "bold",
-    color: "#000",
-    marginBottom: 8,
-  },
-  description: {
-    fontSize: 15,
-    color: "#8E8E93",
-  },
-  sectionTitle: {
-    fontSize: 13,
-    color: "#8E8E93",
-    marginLeft: 16,
-    marginBottom: 8,
-    textTransform: "uppercase",
-  },
-  sectionFooter: {
-    fontSize: 13,
-    color: "#8E8E93",
-    marginLeft: 16,
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  section: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    overflow: "hidden",
-    marginBottom: 24,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: "#FFFFFF",
-    minHeight: 44,
-  },
-  borderBottom: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#C6C6C8",
-  },
-  label: {
-    fontSize: 17,
-    color: "#000",
-  },
-  input: {
-    flex: 1,
-    fontSize: 17,
-    color: "#8E8E93",
-    textAlign: "right",
-    marginLeft: 16,
-  },
-  button: {
-    backgroundColor: "#4285F4", // Azul oficial do Google mantido da sua versão original
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 16,
-  },
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    fontWeight: "600",
-  },
+  safeArea: { flex: 1, backgroundColor: "#F2F2F7" },
+  container: { flex: 1, paddingHorizontal: 16, paddingTop: 20 },
+  header: { marginBottom: 32, paddingHorizontal: 8 },
+  title: { fontSize: 34, fontWeight: "bold", color: "#000", marginBottom: 8 },
+  description: { fontSize: 15, color: "#8E8E93" },
+  sectionTitle: { fontSize: 13, color: "#8E8E93", marginLeft: 16, marginBottom: 8, textTransform: "uppercase" },
+  sectionFooter: { fontSize: 13, color: "#8E8E93", marginLeft: 16, marginTop: 8, marginBottom: 24 },
+  section: { backgroundColor: "#FFFFFF", borderRadius: 10, overflow: "hidden", marginBottom: 24 },
+  row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12, paddingHorizontal: 16, backgroundColor: "#FFFFFF", minHeight: 44 },
+  borderBottom: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#C6C6C8" },
+  label: { fontSize: 17, color: "#000" },
+  input: { flex: 1, fontSize: 17, color: "#8E8E93", textAlign: "right", marginLeft: 16 },
+  button: { backgroundColor: "#4285F4", borderRadius: 10, paddingVertical: 14, alignItems: "center", marginTop: 16 },
+  buttonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
 });

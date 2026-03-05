@@ -305,11 +305,31 @@ export default function App() {
         case "jira":
           await processJiraAction();
           break;
+        case "gitlab":
+          await processGitlabAction({
+            title: `MR: ${prompt.substring(0, 50)}`,
+            description: prompt,
+            projectId: "79990056",
+            sourceBranch: "main",
+            targetBranch: "feat/integration",
+          });
+          break;
+        case "notion":
+          const notionResult = await handleCreateNotion({
+            title: `Nova Nota - ${new Date().toLocaleString()}`,
+            content: prompt,
+          });
+
+          if (notionResult) {
+            Alert.alert("Sucesso", "Nota salva no Notion com sucesso!");
+            setPrompt(""); // Limpa o input após enviar
+          }
+          break;
+        case "gmail":
+          await handleSendEmail();
+          break;
         default:
-          Alert.alert(
-            "Aviso",
-            "Ação não implementada para esta ferramenta ainda.",
-          );
+          Alert.alert("Attention", "Action not implemented for this tool yet.");
       }
     } catch (error) {
       console.error(error);
@@ -465,6 +485,53 @@ export default function App() {
     setPrompt("");
   };
 
+  const handleCreateNotion = async ({ title, content }: any) => {
+    const notionToken = process.env.EXPO_PUBLIC_NOTION_TOKEN;
+    const databaseId = process.env.EXPO_PUBLIC_NOTION_DATABASE_ID;
+
+    if (!notionToken || !databaseId) {
+      Alert.alert(
+        "Erro",
+        "As credenciais do Notion (Token ou Database ID) estão faltando.",
+      );
+      return null;
+    }
+
+    const response = await fetch("https://api.notion.com/v1/pages", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        properties: {
+          // "Name" é o identificador padrão da coluna de título no Notion
+          Name: {
+            title: [{ text: { content: title } }],
+          },
+        },
+        // O corpo da página deve ir como blocos dentro de "children"
+        children: [
+          {
+            object: "block",
+            type: "paragraph",
+            paragraph: {
+              rich_text: [
+                {
+                  type: "text",
+                  text: { content: content },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+
+    console.log("Notion API response:", await response.json());
+  };
+
   // --- MEMÓRIA E CHAT ---
   const saveMemoryToVectorDB = async (text: string) => {
     if (!embeddingModel.current) return;
@@ -480,6 +547,40 @@ export default function App() {
     } catch (error) {
       console.error("Erro ao salvar vetor:", error);
     }
+  };
+
+  const handleSendEmail = async () => {
+    const tokenGmail = "AIzaSyDl3hLKCgAeG81SuH2JMWbgaGDx8xh6JMQ";
+
+    // Aqui você implementaria a lógica para enviar o e-mail usando o appPassword
+    //implementar chamada a API da google pra ter acesso a minha caixa de email e enviar o email usando o prompt como corpo da mensagem
+
+    const response = await fetch(
+      "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${tokenGmail}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          raw: btoa(
+            `To: its_juniordias1997@icloud.com
+            Subject: Mensagem do Assistente Virtual
+
+            ${prompt}`,
+          ),
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      Alert.alert("Error", "Failed to send email.");
+      return;
+    }
+
+    Alert.alert("Success", "Email sent successfully!");
+    setPrompt("");
   };
 
   const searchLongTermMemory = async (
@@ -653,6 +754,106 @@ export default function App() {
           await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
     } catch (e) {}
+  };
+
+  const processGitlabAction = async ({
+    title,
+    description,
+    projectId,
+    sourceBranch,
+    targetBranch,
+  }: {
+    title: string;
+    description: string;
+    projectId: string;
+    sourceBranch: string;
+    targetBranch: string;
+  }) => {
+    try {
+      // 1. Recuperar as credenciais salvas
+      const savedUrl = await AsyncStorage.getItem("@gitlab_url");
+      const savedToken = await AsyncStorage.getItem("@gitlab_token");
+
+      if (!savedUrl || !savedToken) {
+        Alert.alert(
+          "Atenção",
+          "Por favor, configure sua URL e Token do GitLab primeiro.",
+        );
+        return;
+      }
+
+      // Formatar a URL base da API (remove barra no final se houver)
+      const apiBaseUrl = `${savedUrl.replace(/\/$/, "")}/api/v4`;
+      const headers = {
+        "PRIVATE-TOKEN": savedToken,
+        "Content-Type": "application/json",
+      };
+
+      // 2. Criar o Merge Request
+      const mrResponse = await fetch(
+        `${apiBaseUrl}/projects/${projectId}/merge_requests`,
+        {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify({
+            source_branch: sourceBranch,
+            target_branch: targetBranch,
+            title: title,
+          }),
+        },
+      );
+
+      const responseText = await mrResponse.text();
+
+      console.log("Resposta bruta da API do GitLab:", responseText);
+
+      let mrData;
+      try {
+        // 2. Tentamos converter esse texto para JSON
+        mrData = JSON.parse(responseText);
+      } catch (parseError) {
+        // 3. Se quebrar aqui, nós mostramos o que realmente veio do servidor!
+        console.log("RESPOSTA HTML QUE CAUSOU O ERRO:", responseText);
+        throw new Error(
+          "A API não retornou um JSON válido. Verifique o console para ver o HTML retornado (pode ser tela de login ou erro 404).",
+        );
+      }
+
+      if (!mrResponse.ok) {
+        const errorMsg = mrData.message
+          ? Array.isArray(mrData.message)
+            ? mrData.message.join(", ")
+            : mrData.message
+          : "Erro desconhecido";
+        throw new Error(`Erro na API (${mrResponse.status}): ${errorMsg}`);
+      }
+
+      // 3. Fazer o Code Review (Adicionar um comentário/nota)
+      const reviewResponse = await fetch(
+        `${apiBaseUrl}/projects/${projectId}/merge_requests/${mrData.iid}/notes`,
+        {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify({
+            body:
+              description ||
+              "Revisão automática: O código atende aos padrões. Aprovado! ✅",
+          }),
+        },
+      );
+
+      if (!reviewResponse.ok) {
+        throw new Error("MR criado, mas falhou ao adicionar a revisão.");
+      }
+
+      Alert.alert(
+        "Sucesso!",
+        "Merge Request criado e revisado com sucesso no GitLab.",
+      );
+    } catch (error) {
+      Alert.alert("Falha na Integração", error.message);
+      console.error(error);
+    }
   };
 
   return (
