@@ -77,6 +77,20 @@ const INTEGRATION_CATEGORIES = [
     ],
   },
   {
+    id: "excel",
+    title: "Data & Spreadsheets",
+    options: [
+      {
+        id: "excel",
+        title: "Excel",
+        icon: "file-excel",
+        lib: "FontAwesome6",
+        desc: "Spreadsheets & data analysis",
+        color: "#217346",
+      },
+    ],
+  },
+  {
     id: "communication",
     title: "Communication",
     options: [

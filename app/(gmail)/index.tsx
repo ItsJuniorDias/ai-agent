@@ -41,28 +41,28 @@ export default function GmailScreen() {
 
   const handleSave = async () => {
     if (!email || !appPassword) {
-      Alert.alert("Erro", "O E-mail e a Senha de App são obrigatórios.");
+      Alert.alert("Error", "Email and App Password are required.");
       return;
     }
 
     try {
-      // Salva os dados no AsyncStorage
+      // Save data to AsyncStorage
       await AsyncStorage.setItem("@gmail_email", email);
       await AsyncStorage.setItem("@gmail_app_password", appPassword);
       await AsyncStorage.setItem("@gmail_sync_emails", JSON.stringify(syncEmails));
       await AsyncStorage.setItem("@gmail_sync_drafts", JSON.stringify(syncDrafts));
 
-      Alert.alert("Sucesso", "Configurações do Gmail salvas com sucesso!");
+      Alert.alert("Success", "Gmail settings saved successfully!");
       
-      // Aqui você faria a chamada para o seu Backend iniciar a sincronização
+      // Here you would make a call to your Backend to start the synchronization
       // fetchEmailsFromBackend(email, appPassword);
 
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível salvar as configurações.");
+      Alert.alert("Error", "Failed to save Gmail settings.");
     }
   };
 
-  // ... (O restante do seu return e styles permanece exatamente igual)
+  // ... (The rest of your return and styles remain exactly the same)
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView

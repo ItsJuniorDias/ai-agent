@@ -166,6 +166,13 @@ const INTEGRATION_CONFIG = {
     lib: "FontAwesome6",
     route: "/(whatsapp)",
   },
+  excel: {
+    icon: "file-excel",
+    color: "#217346",
+    actionText: "Open Excel",
+    lib: "FontAwesome6",
+    route: "/(excel)",
+  },
 
   chat: null, // Chat não renderiza botão extra
 };
@@ -220,8 +227,6 @@ export default function App() {
     activeIntegration !== "chat"
       ? INTEGRATION_CONFIG[activeIntegration as keyof typeof INTEGRATION_CONFIG]
       : null;
-
-  console.log(currentTool, "CURRENT TOOL");
 
   // Carrega a integração selecionada
   useFocusEffect(
@@ -351,6 +356,9 @@ export default function App() {
           break;
         case "discord":
           await processDiscordAction();
+          break;
+        case "excel":
+          await processExcelAction();
           break;
         case "whatsapp":
           await processWhatsAppAction();
@@ -1062,6 +1070,36 @@ export default function App() {
     } catch (error) {
       Alert.alert("Erro no WhatsApp", error.message);
       console.error(error);
+    }
+  };
+
+  const processExcelAction = async () => {
+    try {
+      const excelToken = await AsyncStorage.getItem("@excel_agent_token");
+      const excelFileId = await AsyncStorage.getItem("@excel_agent_fileid");
+
+      console.log("🔍 Buscando informações do arquivo...");
+
+      // Faz um GET apenas para ler o nome e o tipo do arquivo
+      const checkFile = await fetch(
+        `https://graph.microsoft.com/v1.0/me/drive/items/${excelFileId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${excelToken}`,
+          },
+        },
+      );
+
+      const fileData = await checkFile.json();
+
+      // Me envie o resultado desse console.log!
+      console.log(
+        "📂 METADADOS DO ARQUIVO:",
+        JSON.stringify(fileData, null, 2),
+      );
+    } catch (error) {
+      console.error("Erro:", error);
     }
   };
 

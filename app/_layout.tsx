@@ -35,6 +35,7 @@ export default function RootLayout() {
         <Stack.Screen name="(teams)/index" options={{ headerShown: false }} />
         <Stack.Screen name="(figma)/index" options={{ headerShown: false }} />
         <Stack.Screen name="(discord)/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(excel)/index" options={{ headerShown: false }} />
         <Stack.Screen
           name="(whatsapp)/index"
           options={{ headerShown: false }}

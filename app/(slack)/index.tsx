@@ -45,7 +45,7 @@ export default function SlackScreen() {
         if (storedNotifs !== null)
           setNotificationsEnabled(JSON.parse(storedNotifs));
       } catch (error) {
-        Alert.alert("Erro", "Não foi possível carregar as configurações.");
+        Alert.alert("Error", "Failed to load Slack settings.");
         console.error("Failed to load Slack settings:", error);
       } finally {
         setIsLoading(false);
@@ -55,7 +55,7 @@ export default function SlackScreen() {
     loadSettings();
   }, []);
 
-  // Salvar dados
+  // Save data to AsyncStorage and handle connection logic
   const handleSave = async () => {
     if (!botToken) {
       Alert.alert("Error", "The Bot Token is required.");

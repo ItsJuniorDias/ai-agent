@@ -13,7 +13,6 @@ import {
   ScrollView,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 const STORAGE_KEYS = {

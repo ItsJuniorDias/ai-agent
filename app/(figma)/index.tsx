@@ -26,7 +26,7 @@ export default function FigmaScreen() {
         if (savedToken) setPersonalAccessToken(savedToken);
         if (savedFileKey) setFileKey(savedFileKey);
       } catch (error) {
-        console.error("Erro ao carregar dados do AsyncStorage:", error);
+        console.error("Error loading Figma data:", error);
       }
     };
 
@@ -35,23 +35,23 @@ export default function FigmaScreen() {
 
   const handleConnect = async () => {
     if (!personalAccessToken || !fileKey) {
-      Alert.alert("Erro", "Por favor, preencha todos os campos.");
+      Alert.alert("Error", "Please fill in all fields.");
       return;
     }
 
     try {
-      // Salva os dados localmente no dispositivo
+      // Save the data locally on the device
       await AsyncStorage.setItem("@figma_token", personalAccessToken);
       await AsyncStorage.setItem("@figma_file_key", fileKey);
 
-      // Lógica de integração com a API do Figma entraria aqui
+      // Figma API integration logic would go here
       Alert.alert(
-        "Conectando...",
-        "Dados salvos com sucesso. Iniciando integração.",
+        "Connecting...",
+        "Data saved successfully. Starting integration.",
       );
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível salvar os dados.");
-      console.error("Erro ao salvar no AsyncStorage:", error);
+      Alert.alert("Error", "Failed to save data.");
+      console.error("Error saving to AsyncStorage:", error);
     }
   };
 

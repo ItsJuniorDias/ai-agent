@@ -30,7 +30,7 @@ export default function GitlabScreen() {
       if (savedUrl) setUrl(savedUrl);
       if (savedToken) setToken(savedToken);
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível carregar as informações salvas.");
+      Alert.alert("Error", "Failed to load saved information.");
     } finally {
       setIsLoading(false);
     }
@@ -40,9 +40,9 @@ export default function GitlabScreen() {
     try {
       await AsyncStorage.setItem("@gitlab_url", url);
       await AsyncStorage.setItem("@gitlab_token", token);
-      Alert.alert("Sucesso", "Configurações salvas no dispositivo!");
+      Alert.alert("Success", "Settings saved on the device!");
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível salvar as configurações.");
+      Alert.alert("Error", "Failed to save settings.");
     }
   };
 
@@ -67,7 +67,7 @@ export default function GitlabScreen() {
         </Text>
       </View>
 
-      <Text style={styles.sectionTitle}>CREDENCIAIS</Text>
+      <Text style={styles.sectionTitle}>CREDENTIALS</Text>
 
       <View style={styles.inputGroup}>
         <TextInput

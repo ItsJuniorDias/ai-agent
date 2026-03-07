@@ -37,14 +37,14 @@ export default function GitHubScreen() {
         const saved = await AsyncStorage.getItem("@github_config");
         if (saved) setConfig(JSON.parse(saved));
       } catch (e) {
-        console.error("Erro ao carregar config", e);
+        console.error("Error loading GitHub config:", e);
       }
     };
     loadConfig();
   }, []);
 
   const saveConfig = async () => {
-    // Validação básica para os campos do GitHub
+    // Basic validation for GitHub fields
     if (
       !config.accessToken ||
       !config.repoOwner ||
@@ -55,8 +55,8 @@ export default function GitHubScreen() {
       !config.title
     ) {
       Alert.alert(
-        "Campos obrigatórios",
-        "Por favor, preencha todas as informações essenciais para continuar.",
+        "Required Fields",
+        "Please fill in all essential information to continue.",
       );
       return;
     }
@@ -71,7 +71,7 @@ export default function GitHubScreen() {
       }
       router.back();
     } catch (e) {
-      Alert.alert("Erro", "Não foi possível salvar as configurações.");
+      Alert.alert("Error", "Failed to save configuration.");
     } finally {
       setLoading(false);
     }
@@ -98,7 +98,7 @@ export default function GitHubScreen() {
             </Text>
           </View>
 
-          {/* Grupo 1: Conexão */}
+          {/* Group 1: Connection */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>CONNECTION SETTINGS</Text>
             <View style={styles.inputGroup}>
@@ -193,7 +193,7 @@ export default function GitHubScreen() {
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Título do PR"
+                  placeholder="PR Title"
                   placeholderTextColor="#C7C7CC"
                   value={config.title}
                   onChangeText={(txt) => setConfig({ ...config, title: txt })}
@@ -203,7 +203,7 @@ export default function GitHubScreen() {
               <View style={[styles.inputWrapper, styles.textAreaWrapper]}>
                 <TextInput
                   style={[styles.input, styles.textArea]}
-                  placeholder="Descrição do PR"
+                  placeholder="PR Description"
                   placeholderTextColor="#C7C7CC"
                   value={config.description}
                   onChangeText={(txt) =>

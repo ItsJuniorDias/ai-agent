@@ -48,8 +48,8 @@ export default function DiscordScreen() {
   const handleSave = async () => {
     if (!agentName.trim() || !systemPrompt.trim() || !discordWebhook.trim()) {
       Alert.alert(
-        "Atenção",
-        "Por favor, preencha o nome, o comportamento e a URL do Webhook.",
+        "Attention Required",
+        "Please fill in the agent name, behavior, and Webhook URL.",
       );
       return;
     }
@@ -65,9 +65,9 @@ export default function DiscordScreen() {
       const jsonValue = JSON.stringify(agentData);
       await AsyncStorage.setItem(STORAGE_KEY, jsonValue);
 
-      Alert.alert("Sucesso", "Configurações do Agente e Discord salvas!");
+      Alert.alert("Success", "Agent and Discord settings saved!");
     } catch (e) {
-      Alert.alert("Erro", "Não foi possível salvar as configurações.");
+      Alert.alert("Error", "Failed to save settings.");
     }
   };
 
@@ -86,13 +86,13 @@ export default function DiscordScreen() {
             </Text>
           </View>
 
-          {/* SEÇÃO 1: IDENTIFICAÇÃO */}
+          {/* SECTION 1: IDENTIFICATION */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>IDENTIFICAÇÃO DA IA</Text>
+            <Text style={styles.sectionTitle}>AGENT IDENTIFICATION</Text>
             <View style={styles.card}>
               <TextInput
                 style={styles.input}
-                placeholder="Nome do Agente"
+                placeholder="Agent Name"
                 placeholderTextColor="#C7C7CC"
                 value={agentName}
                 onChangeText={setAgentName}
@@ -100,7 +100,7 @@ export default function DiscordScreen() {
               <View style={styles.separator} />
               <TextInput
                 style={styles.input}
-                placeholder="Temperatura (ex: 0.7)"
+                placeholder="Temperature (e.g., 0.7)"
                 placeholderTextColor="#C7C7CC"
                 keyboardType="numeric"
                 value={temperature}
@@ -109,9 +109,9 @@ export default function DiscordScreen() {
             </View>
           </View>
 
-          {/* SEÇÃO 2: DISCORD (NOVA) */}
+          {/* SECTION 2: DISCORD (NEW) */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>INTEGRAÇÃO DISCORD</Text>
+            <Text style={styles.sectionTitle}>DISCORD INTEGRATION</Text>
             <View style={styles.card}>
               <TextInput
                 style={styles.input}
@@ -125,7 +125,7 @@ export default function DiscordScreen() {
               <View style={styles.separator} />
               <TextInput
                 style={styles.input}
-                placeholder="Bot Token (Opcional)"
+                placeholder="Bot Token (Optional)"
                 placeholderTextColor="#C7C7CC"
                 secureTextEntry={true} // Esconde o token por segurança
                 value={botToken}
@@ -134,20 +134,17 @@ export default function DiscordScreen() {
               />
             </View>
             <Text style={styles.footerText}>
-              O Webhook permite que a IA envie mensagens para um canal
-              específico.
+              The Webhook allows the AI to send messages to a specific channel.
             </Text>
           </View>
 
-          {/* SEÇÃO 3: COMPORTAMENTO */}
+          {/* SECTION 3: BEHAVIOR */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              COMPORTAMENTO (SYSTEM PROMPT)
-            </Text>
+            <Text style={styles.sectionTitle}>BEHAVIOR (SYSTEM PROMPT)</Text>
             <View style={styles.card}>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Instruções de personalidade..."
+                placeholder="Personality instructions..."
                 placeholderTextColor="#C7C7CC"
                 value={systemPrompt}
                 onChangeText={setSystemPrompt}
@@ -158,7 +155,7 @@ export default function DiscordScreen() {
           </View>
 
           <TouchableOpacity style={styles.primaryButton} onPress={handleSave}>
-            <Text style={styles.primaryButtonText}>Salvar e Conectar</Text>
+            <Text style={styles.primaryButtonText}>Save and Connect</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -169,7 +166,7 @@ export default function DiscordScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F2F2F7", // Cor de fundo clássica do iOS
+    backgroundColor: "#F2F2F7", // Classic iOS background color
   },
   keyboardAvoid: {
     flex: 1,
