@@ -12,9 +12,15 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.alexandrejunior.agentgemini",
       "infoPlist": {
-        "NSPhotoLibraryAddUsageDescription": "This app needs permission to save generated story images to your photo library."
+        "NSPhotoLibraryAddUsageDescription": "This app needs permission to save generated story images to your photo library.",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "CFBundleURLTypes": [
+        {
+          "CFBundleURLSchemes": [
+            "482652111919-rf1smagh2da9adn247c21d7q226qp712.apps.googleusercontent.com"
+          ]
+        },
         {
           "CFBundleURLSchemes": [
             "482652111919-rf1smagh2da9adn247c21d7q226qp712.apps.googleusercontent.com"
@@ -31,7 +37,16 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.alexandrejunior.agentgemini"
+      "package": "com.alexandrejunior.agentgemini",
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "static",
@@ -70,6 +85,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "761f377c-0626-4620-a03d-f0ddd44b826a"
+      }
     }
   }
 }
