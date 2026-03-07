@@ -65,6 +65,10 @@ export default function FileAnalyzer() {
     }
   };
 
+  useEffect(() => {
+    saveApiKey(process.env.EXPO_PUBLIC_GOOGLE_API_KEY);
+  }, []);
+
   const saveSummary = async (value) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, value);
@@ -185,24 +189,6 @@ export default function FileAnalyzer() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Settings Card - API Key */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Settings</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Paste your Gemini API Key here"
-            placeholderTextColor="#8E8E93"
-            value={apiKeyInput}
-            onChangeText={saveApiKey}
-            secureTextEntry={true} // Oculta a chave como se fosse senha
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          <Text style={styles.helperText}>
-            Your key is safely stored only on your device.
-          </Text>
-        </View>
-
         {/* Upload Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Document</Text>
