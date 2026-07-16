@@ -121,7 +121,7 @@ export default function SlackScreen() {
         </View>
         <Text style={styles.sectionFooter}>
           You can generate a Bot Token in your Slack App configuration under
-          "OAuth & Permissions".
+          &quot;OAuth &amp; Permissions&quot;.
         </Text>
 
         {/* Workspace Configuration Section */}

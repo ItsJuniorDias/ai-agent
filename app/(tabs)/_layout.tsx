@@ -1,33 +1,51 @@
+/**
+ * Tab bar.
+ *
+ * Duas correções em relação ao original:
+ *
+ *  1. `Settings` ganhou trigger. A tela existia em `(tabs)/settings.tsx` desde
+ *     sempre, mas nenhuma rota apontava para ela — era inalcançável. Agora é
+ *     onde se escolhe o modelo, o teto de passos, aprovação de tools e memória,
+ *     então precisa estar no ar.
+ *  2. Saiu o prop `md` dos ícones. Ele não existe no `Icon` do expo-router 6 —
+ *     as combinações válidas são `sf` (iOS) com `drawable` ou `androidSrc`
+ *     (Android). O `md="smart_toy"` era erro de tipo e nunca desenhou nada.
+ *     `drawable` exigiria resources nativos no projeto Android; como o app é
+ *     iOS-first, ficou só o `sf`.
+ */
+
 import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 
 export default function TabLayout() {
   return (
-    <NativeTabs
-      // Optional: Set a global tint color for active tabs
-      tintColor="#007AFF"
-    >
-      {/* 1. Central AI Agent (The primary CTA) */}
+    <NativeTabs tintColor="#007AFF">
+      {/* Conversa com o agente — a tela principal. */}
       <NativeTabs.Trigger name="index">
         <Label>Ask AI</Label>
-        <Icon sf="sparkles.2" md="smart_toy" />
+        <Icon sf="sparkles" />
       </NativeTabs.Trigger>
 
-      {/* 4. History / Saved Items (NOVA SEÇÃO) */}
+      {/* Conversas salvas. */}
       <NativeTabs.Trigger name="history">
         <Label>History</Label>
-        <Icon sf="clock.fill" md="history" />
+        <Icon sf="clock.fill" />
       </NativeTabs.Trigger>
 
-      {/* 2. Image Generation */}
+      {/* Geração de imagem. */}
       <NativeTabs.Trigger name="generate-image">
         <Label>Studio</Label>
-        <Icon sf="paintbrush.fill" md="palette" />
+        <Icon sf="paintbrush.fill" />
       </NativeTabs.Trigger>
 
-      {/* 3. PDF/Document Processing */}
+      {/* Análise de documentos. */}
       <NativeTabs.Trigger name="convert-pdf">
         <Label>Files</Label>
-        <Icon sf="doc.text.magnifyingglass" md="description" />
+        <Icon sf="doc.text.magnifyingglass" />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="settings">
+        <Label>Settings</Label>
+        <Icon sf="gearshape.fill" />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

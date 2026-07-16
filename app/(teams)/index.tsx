@@ -103,7 +103,7 @@ export default function TeamsScreen() {
             . Crie uma nova aplicação para obter o{" "}
             <Text style={{ fontStyle: "italic" }}>Client ID</Text> e o{" "}
             <Text style={{ fontStyle: "italic" }}>Tenant ID</Text>. Depois, vá a
-            "Certificados e segredos" para gerar o seu{" "}
+            &quot;Certificados e segredos&quot; para gerar o seu{" "}
             <Text style={{ fontStyle: "italic" }}>Client Secret</Text>.
           </Text>
         </View>

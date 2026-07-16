@@ -1,78 +1,122 @@
-import React, { useState } from "react";
+/**
+ * Onboarding / gerenciador de integrações.
+ *
+ * Antes: escolha **única**. Você elegia "sua ferramenta principal" e o app
+ * salvava em `@primary_integration`; a tela de chat lia isso e mostrava um
+ * botão que disparava uma ação fixa daquele serviço. Só dava para usar uma
+ * integração por vez, e trocar exigia voltar ao onboarding.
+ *
+ * Agora: seleção **múltipla** → `@enabled_integrations`. O agente enxerga todas
+ * de uma vez e decide qual usar por conta própria. Ler um PR do GitHub e postar
+ * o resumo no Slack, na mesma mensagem, virou possível.
+ *
+ * O modal falso de "Sign in with Google" também saiu: ele não fazia OAuth
+ * nenhum, só chamava `proceedToNextScreen("gmail")`. A tela do Gmail explica
+ * o que realmente é necessário.
+ */
+
+import React, { useCallback, useState } from "react";
 import {
-  View,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  Alert,
-  ScrollView,
-  Modal,
+  View,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  Feather,
-  FontAwesome6,
-  MaterialCommunityIcons,
-} from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 
-const INTEGRATION_CATEGORIES = [
+import {
+  loadEnabledIntegrations,
+  saveEnabledIntegrations,
+} from "@/services/config";
+import { ALL_TOOLS } from "@/agent/tools";
+import type { IntegrationId } from "@/agent/types";
+
+type Option = {
+  id: IntegrationId;
+  title: string;
+  desc: string;
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  color: string;
+  /** Rota da tela de credenciais. */
+  route: string;
+};
+
+const CATEGORIES: { id: string; title: string; options: Option[] }[] = [
   {
-    id: "dev_tools",
+    id: "dev",
     title: "Development & Code",
     options: [
       {
         id: "github",
         title: "GitHub",
+        desc: "Read diffs, review and open PRs, file issues",
         icon: "github",
-        lib: "MaterialCommunityIcons",
-        desc: "Pull Requests & Issues",
         color: "#181717",
+        route: "/(github)",
       },
       {
         id: "gitlab",
         title: "GitLab",
+        desc: "Merge requests, diffs and comments",
         icon: "gitlab",
-        lib: "MaterialCommunityIcons",
-        desc: "CI/CD & Repositories",
         color: "#FC6D26",
+        route: "/(gitlab)",
       },
       {
         id: "vercel",
         title: "Vercel",
-        icon: "triangle",
-        lib: "Feather",
-        desc: "Deployments & Edge Logs",
+        desc: "Check deployments, trigger a redeploy",
+        icon: "triangle-outline",
         color: "#000000",
+        route: "/(vercel)",
       },
     ],
   },
   {
-    id: "project_mgmt",
+    id: "planning",
     title: "Management & Planning",
     options: [
       {
         id: "jira",
         title: "Jira",
+        desc: "Search with JQL, create issues, comment",
         icon: "jira",
-        lib: "MaterialCommunityIcons",
-        desc: "Enterprise Agile workflows",
         color: "#0052CC",
+        route: "/(jira)",
+      },
+      {
+        id: "linear",
+        title: "Linear",
+        desc: "List and create issues",
+        icon: "vector-triangle",
+        color: "#5E6AD2",
+        route: "/(linear)",
+      },
+      {
+        id: "notion",
+        title: "Notion",
+        desc: "Search the workspace, create pages",
+        icon: "notebook-outline",
+        color: "#000000",
+        route: "/(notion)",
       },
     ],
   },
   {
-    id: "design_docs",
-    title: "Design & Knowledge",
+    id: "design",
+    title: "Design",
     options: [
       {
         id: "figma",
         title: "Figma",
-        icon: "figma",
-        lib: "Feather",
-        desc: "Design files & prototypes",
+        desc: "Inspect a file's structure, leave comments",
+        icon: "vector-square",
         color: "#F24E1E",
+        route: "/(figma)",
       },
     ],
   },
@@ -81,78 +125,108 @@ const INTEGRATION_CATEGORIES = [
     title: "Communication",
     options: [
       {
-        id: "whatsapp",
-        title: "WhatsApp",
-        icon: "whatsapp",
-        lib: "MaterialCommunityIcons",
-        desc: "Personal & Business messages",
-        color: "#25D366",
+        id: "slack",
+        title: "Slack",
+        desc: "List channels, post messages",
+        icon: "slack",
+        color: "#4A154B",
+        route: "/(slack)",
       },
       {
         id: "discord",
         title: "Discord",
-        icon: "discord",
-        lib: "FontAwesome6",
-        desc: "Server communities & voice",
+        desc: "Post to a channel via webhook",
+        icon: "chat-processing",
         color: "#5865F2",
+        route: "/(discord)",
       },
       {
-        id: "slack",
-        title: "Slack",
-        icon: "slack",
-        lib: "MaterialCommunityIcons",
-        desc: "Channels & Direct Messages",
-        color: "#4A154B",
+        id: "teams",
+        title: "Microsoft Teams",
+        desc: "Post to a channel",
+        icon: "microsoft-teams",
+        color: "#6264A7",
+        route: "/(teams)",
       },
       {
-        id: "chat",
-        title: "Chat",
-        icon: "chat",
-        lib: "MaterialCommunityIcons",
-        desc: "Chat messages & threads",
-        color: "#007AFF",
+        id: "whatsapp",
+        title: "WhatsApp",
+        desc: "Send messages via Cloud API",
+        icon: "whatsapp",
+        color: "#25D366",
+        route: "/(whatsapp)",
+      },
+      {
+        id: "gmail",
+        title: "Gmail",
+        desc: "Draft and send email",
+        icon: "gmail",
+        color: "#EA4335",
+        route: "/(gmail)",
       },
     ],
   },
 ];
 
-export default function OnboardingScreen() {
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [isGoogleModalVisible, setGoogleModalVisible] = useState(false);
-  const router = useRouter();
+const ALL_IDS = CATEGORIES.flatMap((c) => c.options.map((o) => o.id));
 
-  const proceedToNextScreen = async (optionId) => {
-    try {
-      await AsyncStorage.setItem("@primary_integration", optionId);
-      router.push("/(tabs)");
-    } catch (error) {
-      console.error("Storage Error:", error);
-    }
+/** Quantas tools cada integração traz — dado real, direto do catálogo. */
+const TOOL_COUNT = ALL_TOOLS.reduce<Record<string, number>>((acc, tool) => {
+  acc[tool.integration] = (acc[tool.integration] ?? 0) + 1;
+  return acc;
+}, {});
+
+export default function OnboardingScreen() {
+  const router = useRouter();
+  const [selected, setSelected] = useState<IntegrationId[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadEnabledIntegrations().then((saved) => {
+        setSelected((saved as IntegrationId[]) ?? []);
+      });
+    }, []),
+  );
+
+  const toggle = (id: IntegrationId) => {
+    setSelected((current) =>
+      current.includes(id)
+        ? current.filter((i) => i !== id)
+        : [...current, id],
+    );
   };
 
-  const handleContinue = () => {
-    if (!selectedOption) {
-      Alert.alert("Selection Required", "Please choose a primary tool.");
+  const handleContinue = async () => {
+    if (!selected.length) {
+      Alert.alert(
+        "Nothing selected",
+        "Pick at least one service, or skip — the agent can still chat, remember, search the web and generate images.",
+        [
+          { text: "Back", style: "cancel" },
+          {
+            text: "Skip",
+            onPress: async () => {
+              await saveEnabledIntegrations([]);
+              router.replace("/(tabs)");
+            },
+          },
+        ],
+      );
       return;
     }
-    if (selectedOption === "gmail") {
-      setGoogleModalVisible(true);
-    } else {
-      proceedToNextScreen(selectedOption);
-    }
+
+    await saveEnabledIntegrations(selected);
+    router.replace("/(tabs)");
   };
 
-  // Helper para renderizar o ícone correto baseado na biblioteca definida
-  const renderIcon = (option, isSelected) => {
-    const IconLib =
-      option.lib === "MaterialCommunityIcons"
-        ? MaterialCommunityIcons
-        : option.lib === "FontAwesome6"
-          ? FontAwesome6
-          : Feather;
-
-    return <IconLib name={option.icon} size={20} color={option.color} />;
+  const selectAll = () => {
+    setSelected(selected.length === ALL_IDS.length ? [] : ALL_IDS);
   };
+
+  const totalTools = selected.reduce(
+    (sum, id) => sum + (TOOL_COUNT[id] ?? 0),
+    ALL_TOOLS.filter((t) => t.integration === "core").length,
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -162,26 +236,42 @@ export default function OnboardingScreen() {
           contentContainerStyle={styles.scrollContent}
         >
           <View style={styles.header}>
-            <Text style={styles.title}>How do you want to start?</Text>
+            <Text style={styles.title}>What can the agent touch?</Text>
             <Text style={styles.subtitle}>
-              Choose your primary workspace to set up your AI Agent's context.
+              Pick every service you use. The agent decides on its own which one
+              to reach for — you are not choosing one primary tool.
             </Text>
+
+            <TouchableOpacity onPress={selectAll} style={styles.selectAll}>
+              <Text style={styles.selectAllText}>
+                {selected.length === ALL_IDS.length
+                  ? "Deselect all"
+                  : "Select all"}
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          {INTEGRATION_CATEGORIES.map((category) => (
+          {CATEGORIES.map((category) => (
             <View key={category.id} style={styles.categorySection}>
               <Text style={styles.categoryTitle}>{category.title}</Text>
+
               <View style={styles.optionsGrid}>
                 {category.options.map((option) => {
-                  const isSelected = selectedOption === option.id;
+                  const isSelected = selected.includes(option.id);
+
                   return (
                     <TouchableOpacity
                       key={option.id}
                       style={[styles.card, isSelected && styles.cardSelected]}
-                      onPress={() => setSelectedOption(option.id)}
+                      onPress={() => toggle(option.id)}
+                      activeOpacity={0.7}
                     >
                       <View style={styles.iconContainer}>
-                        {renderIcon(option, isSelected)}
+                        <MaterialCommunityIcons
+                          name={option.icon}
+                          size={20}
+                          color={option.color}
+                        />
                       </View>
 
                       <View style={styles.textContainer}>
@@ -197,12 +287,22 @@ export default function OnboardingScreen() {
                           {option.desc}
                         </Text>
                       </View>
-                      {isSelected && (
-                        <MaterialCommunityIcons
-                          name="check-circle"
-                          size={20}
-                          color="#007AFF"
-                        />
+
+                      {isSelected ? (
+                        <TouchableOpacity
+                          onPress={() => router.push(option.route as never)}
+                          style={styles.setupButton}
+                          hitSlop={8}
+                        >
+                          <Text style={styles.setupText}>Set up</Text>
+                          <Feather
+                            name="chevron-right"
+                            size={14}
+                            color="#007AFF"
+                          />
+                        </TouchableOpacity>
+                      ) : (
+                        <View style={styles.checkbox} />
                       )}
                     </TouchableOpacity>
                   );
@@ -210,45 +310,27 @@ export default function OnboardingScreen() {
               </View>
             </View>
           ))}
+
+          <Text style={styles.note}>
+            Selecting a service here just tells the agent it exists. It only
+            becomes usable once you save its credentials on its own screen —
+            tap “Set up”.
+          </Text>
         </ScrollView>
 
         <View style={styles.footer}>
+          <Text style={styles.footerCount}>
+            {totalTools} tools will be available to the agent
+          </Text>
           <TouchableOpacity
-            style={[styles.button, !selectedOption && styles.buttonDisabled]}
+            style={styles.button}
             onPress={handleContinue}
-            disabled={!selectedOption}
+            activeOpacity={0.8}
           >
             <Text style={styles.buttonText}>Continue</Text>
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* MODAL GMAIL */}
-      <Modal visible={isGoogleModalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <MaterialCommunityIcons name="gmail" size={40} color="#DB4437" />
-              <Text style={styles.modalTitle}>Connect Gmail</Text>
-              <Text style={styles.modalSubtitle}>
-                Allow the AI Agent to access your emails to assist you better.
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.googleButton}
-              onPress={() => proceedToNextScreen("gmail")}
-            >
-              <Text style={styles.googleButtonText}>Sign in with Google</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setGoogleModalVisible(false)}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -256,8 +338,8 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: 24, paddingTop: 40, paddingBottom: 120 },
-  header: { marginBottom: 32 },
+  scrollContent: { paddingHorizontal: 24, paddingTop: 40, paddingBottom: 140 },
+  header: { marginBottom: 28 },
   title: {
     fontSize: 28,
     fontWeight: "700",
@@ -266,6 +348,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   subtitle: { fontSize: 16, color: "#8E8E93", lineHeight: 22 },
+  selectAll: { marginTop: 14 },
+  selectAllText: { fontSize: 15, color: "#007AFF", fontWeight: "500" },
   categorySection: { marginBottom: 24 },
   categoryTitle: {
     fontSize: 13,
@@ -296,11 +380,25 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 12,
   },
-  iconContainerSelected: { backgroundColor: "#FFFFFF" },
   textContainer: { flex: 1 },
   cardTitle: { fontSize: 16, fontWeight: "600", color: "#1C1C1E" },
   cardDescription: { fontSize: 13, color: "#8E8E93" },
   textSelected: { color: "#007AFF" },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "#D1D1D6",
+  },
+  setupButton: { flexDirection: "row", alignItems: "center", gap: 2 },
+  setupText: { fontSize: 14, color: "#007AFF", fontWeight: "500" },
+  note: {
+    fontSize: 13,
+    color: "#8E8E93",
+    lineHeight: 19,
+    paddingHorizontal: 4,
+  },
   footer: {
     position: "absolute",
     bottom: 0,
@@ -308,9 +406,15 @@ const styles = StyleSheet.create({
     right: 0,
     padding: 24,
     paddingBottom: 34,
-    backgroundColor: "rgba(255,255,255,0.9)",
+    backgroundColor: "rgba(255,255,255,0.95)",
     borderTopWidth: 1,
     borderTopColor: "#F2F2F7",
+  },
+  footerCount: {
+    fontSize: 13,
+    color: "#8E8E93",
+    textAlign: "center",
+    marginBottom: 10,
   },
   button: {
     backgroundColor: "#007AFF",
@@ -318,64 +422,5 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
   },
-  buttonDisabled: { backgroundColor: "#D1D1D6" },
   buttonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
-
-  // Estilos do Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end", // Modal aparece na parte inferior
-  },
-  modalContent: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 40, // Espaço para a safe area do iPhone
-    alignItems: "center",
-  },
-  modalHeader: {
-    alignItems: "center",
-    marginBottom: 32,
-    marginTop: 8,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#1C1C1E",
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    fontSize: 15,
-    color: "#8E8E93",
-    textAlign: "center",
-    paddingHorizontal: 16,
-    lineHeight: 20,
-  },
-  googleButton: {
-    flexDirection: "row",
-    backgroundColor: "#4285F4", // Azul oficial do Google
-    width: "100%",
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 12,
-  },
-  googleButtonText: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    fontWeight: "600",
-  },
-  cancelButton: {
-    width: "100%",
-    paddingVertical: 16,
-    alignItems: "center",
-  },
-  cancelButtonText: {
-    color: "#8E8E93",
-    fontSize: 17,
-    fontWeight: "500",
-  },
 });

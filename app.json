@@ -12,15 +12,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.agentgemini",
       "infoPlist": {
-        "NSPhotoLibraryAddUsageDescription": "This app needs permission to save generated story images to your photo library."
-      },
-      "CFBundleURLTypes": [
-        {
-          "CFBundleURLSchemes": [
-            "482652111919-rf1smagh2da9adn247c21d7q226qp712.apps.googleusercontent.com"
-          ]
-        }
-      ]
+        "NSPhotoLibraryAddUsageDescription": "Permite salvar na sua galeria as imagens geradas pelo agente."
+      }
     },
     "android": {
       "adaptiveIcon": {

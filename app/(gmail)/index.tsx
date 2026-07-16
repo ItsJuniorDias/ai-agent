@@ -1,142 +1,232 @@
-import React, { useState, useEffect } from "react";
+/**
+ * Configuração do Gmail.
+ *
+ * A tela antiga pedia e-mail + "senha de app" para mandar e-mail por SMTP.
+ * Isso nunca teve como funcionar: SMTP precisa de socket TCP e o React Native
+ * não tem socket. O próprio código admitia — tinha um comentário
+ * `// Aqui você faria a chamada para o seu Backend iniciar a sincronização`
+ * apontando para um backend que não existe. Os toggles de "Sync Inbox" e
+ * "Sync Drafts" também não faziam nada.
+ *
+ * Agora a tela é honesta sobre os dois caminhos que realmente existem:
+ *
+ *  1. Sem access token → a tool `gmail_send_email` abre o app de e-mail do
+ *     celular já preenchido (`mailto:`). Você aperta enviar. Funciona sempre.
+ *  2. Com access token OAuth → o agente manda pela Gmail API sem você tocar.
+ *     O token é de vida curta (~1h), então serve para testar; para produção
+ *     o certo é refresh token, que exige client secret e portanto um backend.
+ */
+
+import React, { useCallback, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  Switch,
-  TouchableOpacity,
+  Alert,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   SafeAreaView,
-  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect, useRouter } from "expo-router";
+import { Feather } from "@expo/vector-icons";
+
+const EMAIL_KEY = "@gmail_email";
+const TOKEN_KEY = "@gmail_access_token";
+
+/** Chaves da tela antiga que não são mais lidas por ninguém. */
+const LEGACY_KEYS = [
+  "@gmail_app_password",
+  "@gmail_sync_emails",
+  "@gmail_sync_drafts",
+];
+
+const PLAYGROUND_URL = "https://developers.google.com/oauthplayground";
 
 export default function GmailScreen() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
-  const [appPassword, setAppPassword] = useState("");
-  const [syncEmails, setSyncEmails] = useState(true);
-  const [syncDrafts, setSyncDrafts] = useState(false);
+  const [token, setToken] = useState("");
+  const [checking, setChecking] = useState(false);
 
-  // Carrega os dados ao abrir a tela
-  useEffect(() => {
-    const carregarDados = async () => {
-      try {
-        const storedEmail = await AsyncStorage.getItem("@gmail_email");
-        const storedPassword = await AsyncStorage.getItem("@gmail_app_password");
-        const storedSyncEmails = await AsyncStorage.getItem("@gmail_sync_emails");
-        const storedSyncDrafts = await AsyncStorage.getItem("@gmail_sync_drafts");
+  useFocusEffect(
+    useCallback(() => {
+      AsyncStorage.multiGet([EMAIL_KEY, TOKEN_KEY]).then((pairs) => {
+        const map = Object.fromEntries(pairs);
+        setEmail(map[EMAIL_KEY] ?? "");
+        setToken(map[TOKEN_KEY] ?? "");
+      });
+      // Limpa a senha de app que a versão anterior possa ter guardado.
+      AsyncStorage.multiRemove(LEGACY_KEYS);
+    }, []),
+  );
 
-        if (storedEmail) setEmail(storedEmail);
-        if (storedPassword) setAppPassword(storedPassword);
-        if (storedSyncEmails !== null) setSyncEmails(JSON.parse(storedSyncEmails));
-        if (storedSyncDrafts !== null) setSyncDrafts(JSON.parse(storedSyncDrafts));
-      } catch (error) {
-        console.error("Erro ao carregar os dados", error);
-      }
-    };
-    carregarDados();
-  }, []);
+  /** Confere se o token ainda vale antes de o agente depender dele. */
+  const testToken = async () => {
+    if (!token.trim()) return;
 
-  const handleSave = async () => {
-    if (!email || !appPassword) {
-      Alert.alert("Erro", "O E-mail e a Senha de App são obrigatórios.");
-      return;
-    }
-
+    setChecking(true);
     try {
-      // Salva os dados no AsyncStorage
-      await AsyncStorage.setItem("@gmail_email", email);
-      await AsyncStorage.setItem("@gmail_app_password", appPassword);
-      await AsyncStorage.setItem("@gmail_sync_emails", JSON.stringify(syncEmails));
-      await AsyncStorage.setItem("@gmail_sync_drafts", JSON.stringify(syncDrafts));
+      const res = await fetch(
+        "https://gmail.googleapis.com/gmail/v1/users/me/profile",
+        { headers: { Authorization: `Bearer ${token.trim()}` } },
+      );
 
-      Alert.alert("Sucesso", "Configurações do Gmail salvas com sucesso!");
-      
-      // Aqui você faria a chamada para o seu Backend iniciar a sincronização
-      // fetchEmailsFromBackend(email, appPassword);
+      if (res.status === 401) {
+        Alert.alert(
+          "Token expirado",
+          "Access tokens do Google valem cerca de 1 hora. Gere outro no OAuth Playground.",
+        );
+        return;
+      }
 
-    } catch (error) {
-      Alert.alert("Erro", "Não foi possível salvar as configurações.");
+      if (!res.ok) {
+        Alert.alert("Falhou", `A Gmail API respondeu ${res.status}.`);
+        return;
+      }
+
+      const data = await res.json();
+      if (data.emailAddress && !email) setEmail(data.emailAddress);
+
+      Alert.alert(
+        "Conectado",
+        `Token válido para ${data.emailAddress}. O agente vai enviar e-mails direto pela API.`,
+      );
+    } catch {
+      Alert.alert("Erro de rede", "Não deu para falar com a Gmail API.");
+    } finally {
+      setChecking(false);
     }
   };
 
-  // ... (O restante do seu return e styles permanece exatamente igual)
+  const handleSave = async () => {
+    if (!email.trim()) {
+      Alert.alert("Falta o e-mail", "Informe o endereço da conta.");
+      return;
+    }
+
+    await AsyncStorage.setItem(EMAIL_KEY, email.trim());
+
+    if (token.trim()) await AsyncStorage.setItem(TOKEN_KEY, token.trim());
+    else await AsyncStorage.removeItem(TOKEN_KEY);
+
+    Alert.alert(
+      "Salvo",
+      token.trim()
+        ? "O agente vai enviar pela Gmail API enquanto o token valer."
+        : "O agente vai abrir seu app de e-mail com a mensagem pronta.",
+      [{ text: "OK", onPress: () => router.back() }],
+    );
+  };
+
+  const handleDisconnect = async () => {
+    await AsyncStorage.multiRemove([EMAIL_KEY, TOKEN_KEY, ...LEGACY_KEYS]);
+    setEmail("");
+    setToken("");
+    Alert.alert("Desconectado", "As credenciais do Gmail foram apagadas.");
+  };
+
+  const connected = !!email;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>Gmail</Text>
-          <Text style={styles.description}>
-            Connect your Gmail account to sync your emails and drafts directly
-            into the app
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 40 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.header}>
+            <Text style={styles.title}>Gmail</Text>
+            <Text style={styles.description}>
+              Let the agent draft and send email on your behalf.
+            </Text>
+          </View>
+
+          <Text style={styles.sectionTitle}>ACCOUNT</Text>
+          <View style={styles.section}>
+            <View style={styles.row}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="you@gmail.com"
+                placeholderTextColor="#C7C7CC"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+          </View>
+          <Text style={styles.sectionFooter}>
+            With just an email address, the agent opens your mail app with the
+            message already written — you tap send.
           </Text>
-        </View>
 
-        {/* Account Credentials Section */}
-        <Text style={styles.sectionTitle}>ACCOUNT CREDENTIALS</Text>
-        <View style={styles.section}>
-          <View style={[styles.row, styles.borderBottom]}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="example@gmail.com"
-              placeholderTextColor="#C7C7CC"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+          <Text style={styles.sectionTitle}>AUTOMATIC SENDING (OPTIONAL)</Text>
+          <View style={styles.section}>
+            <View style={styles.stackedRow}>
+              <Text style={styles.label}>OAuth access token</Text>
+              <TextInput
+                style={styles.stackedInput}
+                placeholder="ya29.…"
+                placeholderTextColor="#C7C7CC"
+                value={token}
+                onChangeText={setToken}
+                autoCapitalize="none"
+                autoCorrect={false}
+                multiline
+              />
+            </View>
           </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>App Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="xxxx xxxx xxxx xxxx"
-              placeholderTextColor="#C7C7CC"
-              value={appPassword}
-              onChangeText={setAppPassword}
-              secureTextEntry 
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
-        </View>
+          <Text style={styles.sectionFooter}>
+            Paste a token with the gmail.send scope and the agent sends without
+            asking. Google tokens expire in about an hour, so this is for
+            testing — surviving that needs a refresh token, which needs a client
+            secret, which needs a backend. This app never had one.
+          </Text>
 
-        <Text style={styles.sectionFooter}>
-          You can generate an App Password in your Google Account settings under "Security" > "App Passwords". This is required for third-party apps to access your Gmail account securely.
-        </Text>
+          <TouchableOpacity
+            style={styles.linkRow}
+            onPress={() => Linking.openURL(PLAYGROUND_URL)}
+          >
+            <Feather name="external-link" size={16} color="#007AFF" />
+            <Text style={styles.linkText}>Get a token in OAuth Playground</Text>
+          </TouchableOpacity>
 
-        {/* Sync Preferences Section */}
-        <Text style={styles.sectionTitle}>SYNC PREFERENCES</Text>
-        <View style={styles.section}>
-          <View style={[styles.row, styles.borderBottom]}>
-            <Text style={styles.label}>Sync Inbox</Text>
-            <Switch
-              value={syncEmails}
-              onValueChange={setSyncEmails}
-              trackColor={{ false: "#D1D1D6", true: "#34C759" }}
-            />
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Sync Drafts</Text>
-            <Switch
-              value={syncDrafts}
-              onValueChange={setSyncDrafts}
-              trackColor={{ false: "#D1D1D6", true: "#34C759" }}
-            />
-          </View>
-        </View>
+          {!!token.trim() && (
+            <TouchableOpacity
+              style={[styles.button, styles.secondaryButton]}
+              onPress={testToken}
+              disabled={checking}
+            >
+              <Text style={styles.secondaryButtonText}>
+                {checking ? "Checking…" : "Test token"}
+              </Text>
+            </TouchableOpacity>
+          )}
 
-        {/* Connect Button */}
-        <TouchableOpacity style={styles.button} onPress={handleSave}>
-          <Text style={styles.buttonText}>Connect to Gmail</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleSave}>
+            <Text style={styles.buttonText}>Save</Text>
+          </TouchableOpacity>
+
+          {connected && (
+            <TouchableOpacity
+              style={styles.disconnect}
+              onPress={handleDisconnect}
+            >
+              <Text style={styles.disconnectText}>Disconnect</Text>
+            </TouchableOpacity>
+          )}
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -148,13 +238,68 @@ const styles = StyleSheet.create({
   header: { marginBottom: 32, paddingHorizontal: 8 },
   title: { fontSize: 34, fontWeight: "bold", color: "#000", marginBottom: 8 },
   description: { fontSize: 15, color: "#8E8E93" },
-  sectionTitle: { fontSize: 13, color: "#8E8E93", marginLeft: 16, marginBottom: 8, textTransform: "uppercase" },
-  sectionFooter: { fontSize: 13, color: "#8E8E93", marginLeft: 16, marginTop: 8, marginBottom: 24 },
-  section: { backgroundColor: "#FFFFFF", borderRadius: 10, overflow: "hidden", marginBottom: 24 },
-  row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12, paddingHorizontal: 16, backgroundColor: "#FFFFFF", minHeight: 44 },
-  borderBottom: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#C6C6C8" },
+  sectionTitle: {
+    fontSize: 13,
+    color: "#8E8E93",
+    marginLeft: 16,
+    marginBottom: 8,
+    textTransform: "uppercase",
+  },
+  sectionFooter: {
+    fontSize: 13,
+    color: "#8E8E93",
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 24,
+    lineHeight: 18,
+  },
+  section: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    minHeight: 44,
+  },
+  stackedRow: { paddingVertical: 12, paddingHorizontal: 16 },
   label: { fontSize: 17, color: "#000" },
-  input: { flex: 1, fontSize: 17, color: "#8E8E93", textAlign: "right", marginLeft: 16 },
-  button: { backgroundColor: "#4285F4", borderRadius: 10, paddingVertical: 14, alignItems: "center", marginTop: 16 },
+  input: {
+    flex: 1,
+    fontSize: 17,
+    color: "#8E8E93",
+    textAlign: "right",
+    marginLeft: 16,
+  },
+  stackedInput: {
+    fontSize: 15,
+    color: "#3C3C43",
+    marginTop: 8,
+    minHeight: 44,
+    textAlignVertical: "top",
+  },
+  linkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginLeft: 16,
+    marginBottom: 24,
+  },
+  linkText: { fontSize: 15, color: "#007AFF" },
+  button: {
+    backgroundColor: "#007AFF",
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 8,
+  },
   buttonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
+  secondaryButton: { backgroundColor: "#E5E5EA" },
+  secondaryButtonText: { color: "#007AFF", fontSize: 17, fontWeight: "600" },
+  disconnect: { alignItems: "center", paddingVertical: 16, marginTop: 8 },
+  disconnectText: { fontSize: 17, color: "#FF3B30" },
 });

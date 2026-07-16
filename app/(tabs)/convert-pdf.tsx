@@ -1,5 +1,19 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+/**
+ * Insights — análise de documentos.
+ *
+ * Mudanças:
+ *  - Gemini SDK → OpenRouter (`analyzeFile`). PDF vai como `type: "file"` com o
+ *    plugin `file-parser`, então funciona em qualquer modelo do catálogo, não
+ *    só nos que têm suporte nativo a PDF.
+ *  - `react-native-fs` → `expo-file-system`. Some uma dependência nativa que
+ *    exigia rebuild e que já não é mantida ativamente; o Expo SDK 54 já traz
+ *    `readAsStringAsync` fazendo exatamente a mesma coisa.
+ *  - Escolha do tipo de análise, em vez do prompt de resumo único e fixo.
+ */
+
 import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system/legacy";
+import * as Clipboard from "expo-clipboard";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -12,85 +26,121 @@ import {
   View,
 } from "react-native";
 import Markdown from "react-native-markdown-display";
+import { Feather } from "@expo/vector-icons";
 
-import RNFS from "react-native-fs";
+import { analyzeFile as runAnalysis } from "@/services/openrouter";
+import { loadConfig } from "@/services/config";
 
-const API_KEY = process?.env?.EXPO_PUBLIC_GOOGLE_API_KEY;
-const genAI = new GoogleGenerativeAI(API_KEY);
+type Mode = {
+  id: string;
+  label: string;
+  prompt: string;
+};
+
+const MODES: Mode[] = [
+  {
+    id: "summary",
+    label: "Summary",
+    prompt:
+      "Analyze this file and produce a structured summary in Markdown: the main points, the key takeaways, and the conclusions. Be specific — cite the actual numbers, names and claims in the document rather than describing them in the abstract.",
+  },
+  {
+    id: "extract",
+    label: "Key data",
+    prompt:
+      "Extract every concrete data point from this file — figures, dates, names, amounts, deadlines — and present them as a Markdown table. If the document has no tabular data, use a bulleted list grouped by theme. Do not summarize prose; extract facts.",
+  },
+  {
+    id: "questions",
+    label: "Critique",
+    prompt:
+      "Read this file critically. List: (1) claims that are unsupported or weakly supported, (2) internal contradictions, (3) important information that is missing, (4) the questions someone should ask before acting on this. Be direct.",
+  },
+  {
+    id: "actions",
+    label: "Action items",
+    prompt:
+      "Pull every action item, decision, commitment and deadline out of this file. Present as a Markdown checklist, with the owner and the due date where the document states them. If something is implied but not stated, mark it as inferred.",
+  },
+];
+
+/**
+ * PDF escaneado não tem camada de texto — o parser gratuito devolve vazio.
+ * Nesse caso o `mistral-ocr` resolve, mas custa. Deixamos o usuário decidir.
+ */
+const OCR_HINT =
+  "The parser found no text layer. This is usually a scanned PDF — turn on OCR and try again.";
 
 export default function FileAnalyzer() {
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState<DocumentPicker.DocumentPickerAsset | null>(
+    null,
+  );
+  const [mode, setMode] = useState<Mode>(MODES[0]);
+  const [ocr, setOcr] = useState(false);
   const [summary, setSummary] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const pickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        // Aceitando os 5 tipos mais comuns compatíveis com a API do Gemini
         type: [
-          "application/pdf", // PDFs
-          "text/plain", // Arquivos de texto (.txt)
-          "text/csv", // Planilhas e dados (.csv)
-          "image/jpeg", // Imagens JPG/JPEG
-          "image/png", // Imagens PNG
+          "application/pdf",
+          "text/plain",
+          "text/csv",
+          "text/markdown",
+          "image/jpeg",
+          "image/png",
         ],
         copyToCacheDirectory: true,
       });
 
-      if (!result.canceled) {
-        setFile(result.assets[0]);
-        setSummary("");
-      }
-    } catch (err) {
+      if (result.canceled) return;
+
+      setFile(result.assets[0]);
+      setSummary("");
+    } catch {
       Alert.alert("Error", "Could not select the document. Please try again.");
     }
   };
 
-  const analyzeFile = async () => {
-    if (!file) return;
+  const analyze = async () => {
+    if (!file || isLoading) return;
 
     setIsLoading(true);
+    setSummary("");
 
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+      const config = await loadConfig();
 
-      const base64Data = await RNFS.readFile(file.uri, "base64");
+      const base64 = await FileSystem.readAsStringAsync(file.uri, {
+        encoding: "base64",
+      });
 
-      // Prompt atualizado para ser genérico e focado em resumo
-      const prompt =
-        "Analise este arquivo detalhadamente e gere um resumo estruturado com os pontos mais importantes e principais aprendizados ou conclusões.";
+      const { text } = await runAnalysis({
+        model: config.documentModel,
+        prompt: mode.prompt,
+        filename: file.name,
+        mimeType: file.mimeType ?? "application/octet-stream",
+        base64,
+        pdfEngine: ocr ? "mistral-ocr" : "pdf-text",
+      });
 
-      // Pegando o mimeType dinamicamente do arquivo selecionado
-      const filePart = {
-        inlineData: {
-          data: base64Data,
-          mimeType: file.mimeType || "application/octet-stream",
-        },
-      };
-
-      const result = await model.generateContent([prompt, filePart]);
-      const response = result.response;
-      const text = response.text();
-
-      console.log("Resumo Gerado:", text);
-
-      setSummary(text);
-    } catch (error) {
-      console.error(error);
-      Alert.alert(
-        "Error",
-        "Please try again. Ensure the file is supported and not corrupted.",
-      );
+      setSummary(text || OCR_HINT);
+    } catch (err: any) {
+      Alert.alert("Analysis failed", err?.message ?? String(err));
     } finally {
       setIsLoading(false);
     }
   };
 
+  const copy = async () => {
+    await Clipboard.setStringAsync(summary);
+  };
+
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Header Estilo Apple */}
       <View style={styles.header}>
         <Text style={styles.dateText}>
           {new Date()
@@ -108,27 +158,65 @@ export default function FileAnalyzer() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Upload Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Document</Text>
+
           <TouchableOpacity
-            style={[styles.dropZone, file && styles.dropZoneActive]}
+            style={[styles.dropZone, !!file && styles.dropZoneActive]}
             onPress={pickDocument}
             activeOpacity={0.7}
           >
             <Text
-              style={[styles.dropZoneText, file && styles.dropZoneTextActive]}
+              style={[styles.dropZoneText, !!file && styles.dropZoneTextActive]}
+              numberOfLines={1}
             >
-              {/* Texto atualizado para abranger mais arquivos */}
               {file ? file.name : "Tap to select a file (PDF, TXT, CSV, IMG)"}
             </Text>
           </TouchableOpacity>
 
-          {file && (
+          <View style={styles.modeRow}>
+            {MODES.map((m) => (
+              <TouchableOpacity
+                key={m.id}
+                style={[styles.modeChip, mode.id === m.id && styles.modeChipActive]}
+                onPress={() => setMode(m)}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.modeText,
+                    mode.id === m.id && styles.modeTextActive,
+                  ]}
+                >
+                  {m.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {file?.mimeType === "application/pdf" && (
+            <TouchableOpacity
+              style={styles.ocrRow}
+              onPress={() => setOcr((v) => !v)}
+              activeOpacity={0.7}
+            >
+              <Feather
+                name={ocr ? "check-square" : "square"}
+                size={18}
+                color={ocr ? "#007AFF" : "#C7C7CC"}
+              />
+              <Text style={styles.ocrText}>
+                Scanned PDF (use OCR — slower, costs more)
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {!!file && (
             <TouchableOpacity
               style={styles.mainButton}
-              onPress={analyzeFile}
+              onPress={analyze}
               disabled={isLoading}
+              activeOpacity={0.8}
             >
               {isLoading ? (
                 <ActivityIndicator color="#fff" />
@@ -139,10 +227,12 @@ export default function FileAnalyzer() {
           )}
         </View>
 
-        {/* Result Area */}
         <View style={styles.resultContainer}>
           {summary ? (
             <View style={styles.summaryCard}>
+              <TouchableOpacity style={styles.copyButton} onPress={copy}>
+                <Feather name="copy" size={15} color="#8E8E93" />
+              </TouchableOpacity>
               <Markdown style={markdownStyles}>{summary}</Markdown>
             </View>
           ) : (
@@ -155,15 +245,12 @@ export default function FileAnalyzer() {
           )}
         </View>
       </ScrollView>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F2F2F7",
-  },
+  container: { flex: 1, backgroundColor: "#F2F2F7" },
   header: {
     paddingHorizontal: 20,
     paddingTop: 20,
@@ -182,9 +269,7 @@ const styles = StyleSheet.create({
     color: "#000",
     letterSpacing: -0.5,
   },
-  scrollContent: {
-    padding: 20,
-  },
+  scrollContent: { padding: 20, paddingBottom: 60 },
   card: {
     backgroundColor: "#FFF",
     borderRadius: 20,
@@ -198,110 +283,86 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "600",
+    color: "#000",
     marginBottom: 15,
-    color: "#1C1C1E",
   },
   dropZone: {
-    backgroundColor: "#F2F2F7",
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: "#E5E5EA",
+    borderStyle: "dashed",
+    borderRadius: 14,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",
   },
-  dropZoneActive: {
-    backgroundColor: "#E8F2FF",
-    borderColor: "#007AFF",
+  dropZoneActive: { borderColor: "#007AFF", backgroundColor: "#007AFF0D" },
+  dropZoneText: { fontSize: 15, color: "#8E8E93" },
+  dropZoneTextActive: { color: "#007AFF", fontWeight: "500" },
+  modeRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 16 },
+  modeChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 9,
+    backgroundColor: "#F2F2F7",
   },
-  dropZoneText: {
-    color: "#8E8E93",
-    fontWeight: "500",
+  modeChipActive: { backgroundColor: "#007AFF" },
+  modeText: { fontSize: 14, color: "#3C3C43", fontWeight: "500" },
+  modeTextActive: { color: "#FFFFFF" },
+  ocrRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 16,
   },
-  dropZoneTextActive: {
-    color: "#007AFF",
-    fontWeight: "600",
-  },
+  ocrText: { fontSize: 13, color: "#8E8E93" },
   mainButton: {
     backgroundColor: "#007AFF",
+    height: 50,
     borderRadius: 14,
-    paddingVertical: 16,
-    marginTop: 20,
+    justifyContent: "center",
     alignItems: "center",
+    marginTop: 20,
   },
-  mainButtonText: {
-    color: "#FFF",
-    fontSize: 17,
-    fontWeight: "600",
-  },
-  resultContainer: {
-    marginTop: 5,
-  },
+  mainButtonText: { color: "#FFF", fontSize: 17, fontWeight: "600" },
+  resultContainer: { flex: 1 },
   summaryCard: {
     backgroundColor: "#FFF",
     borderRadius: 20,
     padding: 20,
-    minHeight: 200,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
+  copyButton: { alignSelf: "flex-end", padding: 4 },
   placeholderText: {
-    textAlign: "center",
-    color: "#8E8E93",
     fontSize: 15,
-    marginTop: 40,
-    paddingHorizontal: 40,
-    lineHeight: 22,
+    color: "#8E8E93",
+    textAlign: "center",
+    paddingHorizontal: 30,
+    lineHeight: 21,
   },
 });
 
-const markdownStyles = {
-  body: {
-    color: "#2C2C2E",
-    fontSize: 16,
-    lineHeight: 24,
-    letterSpacing: -0.3,
-  },
-  heading1: {
-    color: "#000",
-    fontWeight: "800",
-    fontSize: 32,
-    marginTop: 24,
-    marginBottom: 12,
-  },
-  heading2: {
-    color: "#1C1C1E",
-    fontWeight: "700",
-    fontSize: 24,
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  strong: {
-    fontWeight: "700",
-    color: "#000",
-  },
-  bullet_list: {
-    marginVertical: 12,
-  },
-  list_item: {
-    marginVertical: 4,
-  },
-  link: {
-    color: "#007AFF",
-    fontWeight: "600",
-    textDecorationLine: "underline",
-  },
+const markdownStyles = StyleSheet.create({
+  body: { fontSize: 16, color: "#000000", lineHeight: 23 },
+  heading1: { fontSize: 22, fontWeight: "700", marginTop: 8, marginBottom: 6 },
+  heading2: { fontSize: 19, fontWeight: "600", marginTop: 8, marginBottom: 4 },
   code_inline: {
-    backgroundColor: "#F2F2F7",
+    backgroundColor: "rgba(0,0,0,0.05)",
     color: "#D70015",
     borderRadius: 4,
-    paddingHorizontal: 4,
-    fontFamily: "Courier",
   },
-  blockquote: {
-    backgroundColor: "#F9F9F9",
-    borderLeftColor: "#C7C7CC",
-    borderLeftWidth: 4,
-    paddingHorizontal: 12,
-    marginVertical: 10,
+  fence: {
+    backgroundColor: "#1C1C1E",
+    color: "#FFFFFF",
+    borderRadius: 10,
+    padding: 12,
   },
-};
+  table: { borderColor: "#E5E5EA", borderRadius: 8 },
+  th: { padding: 6 },
+  td: { padding: 6 },
+});

@@ -1,6 +1,25 @@
+/**
+ * Conversas salvas.
+ *
+ * Correções em relação à versão anterior:
+ *
+ *  1. Perda de dados no delete. O estado guardava só `parsedHistory.slice(0, 10)`
+ *     e o `handleDelete` filtrava esse recorte e gravava o resultado por cima do
+ *     `@chat_history` inteiro. Ou seja: apagar uma conversa apagava junto tudo
+ *     da 11ª em diante, sem aviso. Agora o delete relê a lista completa do
+ *     storage, tira só o id pedido e devolve o resto.
+ *  2. O `.slice(0, 10)` também escondia as conversas mais antigas sem nenhuma
+ *     forma de chegar nelas. A FlatList é virtualizada, então renderizar tudo
+ *     não custa nada.
+ *  3. `router.push` mandava `params: { screen: "index", ... }`. Esse `screen` é
+ *     sintaxe de navegação aninhada do React Navigation e o expo-router ignora.
+ *     Só o `conversationId` importa — é o que a tela de chat lê.
+ *  4. Estado tipado. `useState([])` virava `never[]` e todo acesso a `item.id`
+ *     era erro de tipo silenciado pelo `any` implícito.
+ */
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect } from "@react-navigation/native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
   Alert,
@@ -12,28 +31,28 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { STORAGE_KEYS } from "@/services/config";
+import type { StoredConversation } from "@/agent/types";
+
+/** Primeira resposta do agente na conversa, para o preview do card. */
+function previewOf(conversation: StoredConversation): string {
+  const reply = conversation.messages.find((m) => m.role !== "user");
+  return reply?.text?.trim() || "No response yet";
+}
+
 export default function History() {
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState<StoredConversation[]>([]);
   const router = useRouter();
 
-  console.log("History screen rendered with history:", history);
-
-  // Loads data whenever the screen gains focus
   useFocusEffect(
     useCallback(() => {
       const loadHistory = async () => {
         try {
-          const storedHistory = await AsyncStorage.getItem("@chat_history");
-
-          if (storedHistory) {
-            const parsedHistory = JSON.parse(storedHistory);
-            // Fixed: Now correctly renders only the 10 most recent items
-            setHistory(parsedHistory.slice(0, 10));
-          } else {
-            setHistory([]);
-          }
-        } catch (e) {
-          console.error("Error loading history:", e);
+          const stored = await AsyncStorage.getItem(STORAGE_KEYS.chatHistory);
+          setHistory(stored ? JSON.parse(stored) : []);
+        } catch (err) {
+          console.log("Error loading history:", err);
+          setHistory([]);
         }
       };
 
@@ -41,8 +60,7 @@ export default function History() {
     }, []),
   );
 
-  // Function to delete a specific item
-  const handleDelete = (id) => {
+  const handleDelete = (id: string) => {
     Alert.alert(
       "Delete conversation",
       "Are you sure you want to delete this conversation from your history?",
@@ -50,22 +68,24 @@ export default function History() {
         { text: "Cancel", style: "cancel" },
         {
           text: "Delete",
-          style: "destructive", // Makes the text red on iOS
+          style: "destructive",
           onPress: async () => {
             try {
-              // 1. Filters the list, removing the item with the matching ID
-              const updatedHistory = history.filter((item) => item.id !== id);
-
-              // 2. Updates the state visually right away
-              setHistory(updatedHistory);
-
-              // 3. Saves the newly updated list to AsyncStorage
-              await AsyncStorage.setItem(
-                "@chat_history",
-                JSON.stringify(updatedHistory),
+              // Relê do storage em vez de confiar no estado da tela — assim o
+              // que não está renderizado não some junto.
+              const stored = await AsyncStorage.getItem(
+                STORAGE_KEYS.chatHistory,
               );
-            } catch (e) {
-              console.error("Error deleting history:", e);
+              const all: StoredConversation[] = stored ? JSON.parse(stored) : [];
+              const updated = all.filter((item) => item.id !== id);
+
+              await AsyncStorage.setItem(
+                STORAGE_KEYS.chatHistory,
+                JSON.stringify(updated),
+              );
+              setHistory(updated);
+            } catch (err) {
+              console.log("Error deleting history:", err);
               Alert.alert("Error", "Could not delete the conversation.");
             }
           },
@@ -74,15 +94,14 @@ export default function History() {
     );
   };
 
-  // Function that renders each list item (conversation)
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item }: { item: StoredConversation }) => (
     <TouchableOpacity
       style={styles.card}
       activeOpacity={0.7}
       onPress={() =>
         router.push({
           pathname: "/(tabs)",
-          params: { screen: "index", conversationId: item.id },
+          params: { conversationId: item.id },
         })
       }
     >
@@ -93,19 +112,15 @@ export default function History() {
           </Text>
 
           <Text style={styles.cardDescription} numberOfLines={2}>
-            {item.messages.some((msg) => msg.role === "user")
-              ? item.messages.find((msg) => msg.role !== "user")?.text ||
-                "No response"
-              : "No user message"}
+            {previewOf(item)}
           </Text>
 
           <Text style={styles.cardDate}>{item.date}</Text>
         </View>
 
-        {/* Delete button */}
         <TouchableOpacity
           onPress={() => handleDelete(item.id)}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} // Increases the touch area of the button
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Ionicons name="trash-outline" size={22} color="#FF3B30" />
         </TouchableOpacity>
@@ -120,7 +135,7 @@ export default function History() {
       ) : (
         <FlatList
           data={history}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.id}
           renderItem={renderItem}
           ListHeaderComponent={<Text style={styles.title}>History</Text>}
           contentContainerStyle={styles.listContainer}
@@ -185,12 +200,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#888",
     marginTop: 8,
-  },
-  cardResponse: {
-    fontSize: 14,
-    color: "#444",
-    marginTop: 4,
-    lineHeight: 20,
   },
   emptyText: {
     textAlign: "center",

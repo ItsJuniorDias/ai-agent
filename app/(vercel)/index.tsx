@@ -100,7 +100,10 @@ export default function VercelScreen() {
         `The process has started successfully!\n\nURL: ${data.url}`,
       );
     } catch (error) {
-      Alert.alert("Deployment Error", error.message);
+      Alert.alert(
+        "Deployment Error",
+        error instanceof Error ? error.message : "Unknown error.",
+      );
     } finally {
       setLoadingDeploy(false);
     }
