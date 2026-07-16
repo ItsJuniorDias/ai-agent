@@ -65,7 +65,9 @@
           "microphonePermission": "Permitir que o assistente ouça seus comandos de voz.",
           "speechRecognitionPermission": "Permitir que o assistente transforme sua fala em texto."
         }
-      ]
+      ],
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
