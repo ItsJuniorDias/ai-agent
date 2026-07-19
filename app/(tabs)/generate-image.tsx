@@ -21,6 +21,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -57,6 +58,7 @@ export default function ImageStudio() {
   const [reference, setReference] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [modelId, setModelId] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -66,6 +68,11 @@ export default function ImageStudio() {
 
   const modelName =
     IMAGE_MODELS.find((m) => m.id === modelId)?.name ?? "Image model";
+
+  // O botão só fica cinza (desabilitado) quando não há nada para gerar.
+  // Durante o loading ele continua azul e mostra o spinner — assim o clique
+  // sempre dá um retorno visual claro em vez de parecer que nada aconteceu.
+  const idleDisabled = !prompt.trim() && !loading;
 
   /** Imagem de referência → data URL, para o modelo poder editá-la. */
   const pickReference = async () => {
@@ -91,8 +98,19 @@ export default function ImageStudio() {
   const handleGenerate = async () => {
     if (!prompt.trim() || loading) return;
 
+    // Fecha o teclado antes de gerar. Some plataformas engolem o primeiro toque
+    // no botão só para dispensar o teclado; o `keyboardShouldPersistTaps` no
+    // ScrollView já entrega o toque, mas dispensar aqui evita o teclado tapar o
+    // resultado quando ele chega.
+    Keyboard.dismiss();
+    setError(null);
     setLoading(true);
     setImage(null);
+
+    // Timeout de segurança. Geração de imagem leva alguns segundos; se o provedor
+    // travar, o AbortController evita spinner eterno e vira um erro visível.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120000);
 
     try {
       const config = await loadConfig();
@@ -102,6 +120,7 @@ export default function ImageStudio() {
         prompt: prompt.trim(),
         referenceImage: reference ?? undefined,
         aspectRatio: ratio,
+        signal: controller.signal,
       });
 
       // A imagem chega como data URL. Gravar em disco e usar `file://` mantém a
@@ -114,8 +133,16 @@ export default function ImageStudio() {
 
       setImage(uri);
     } catch (err: any) {
-      Alert.alert("Generation failed", err?.message ?? String(err));
+      // Erro mostrado na própria tela, não só em Alert — no web o Alert do
+      // react-native é silencioso, e aí a falha vira "não acontece nada".
+      const message =
+        err?.name === "AbortError"
+          ? "A geração demorou demais e foi cancelada. Tente de novo ou troque o modelo em Ajustes."
+          : (err?.message ?? String(err));
+      setError(message);
+      Alert.alert("Generation failed", message);
     } finally {
+      clearTimeout(timeout);
       setLoading(false);
     }
   };
@@ -151,7 +178,11 @@ export default function ImageStudio() {
       style={styles.container}
     >
       <StatusBar style="dark" />
-      <ScrollView contentContainerStyle={styles.scrollContent} bounces={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        bounces={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.header}>
           <Text style={styles.title}>Image Studio</Text>
           <Text style={styles.subtitle}>{modelName} via OpenRouter</Text>
@@ -180,6 +211,22 @@ export default function ImageStudio() {
                 )}
               </TouchableOpacity>
             </View>
+          ) : error ? (
+            <View style={styles.errorState}>
+              <Ionicons
+                name="alert-circle-outline"
+                size={40}
+                color="#FF3B30"
+              />
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={handleGenerate}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.retryText}>Try again</Text>
+              </TouchableOpacity>
+            </View>
           ) : (
             <View style={styles.placeholderState}>
               <Text style={styles.placeholderIcon}>✨</Text>
@@ -191,12 +238,13 @@ export default function ImageStudio() {
         </View>
 
         <View style={styles.bottomBar}>
-          <View style={styles.ratioRow}>
+          <View style={[styles.ratioRow, loading && styles.controlsLocked]}>
             {RATIOS.map((r) => (
               <TouchableOpacity
                 key={r}
                 style={[styles.ratioChip, ratio === r && styles.ratioChipActive]}
                 onPress={() => setRatio(r)}
+                disabled={loading}
                 activeOpacity={0.7}
               >
                 <Text
@@ -217,7 +265,10 @@ export default function ImageStudio() {
               <Text style={styles.referenceText}>
                 Editing this image with your prompt
               </Text>
-              <TouchableOpacity onPress={() => setReference(null)}>
+              <TouchableOpacity
+                onPress={() => setReference(null)}
+                disabled={loading}
+              >
                 <Ionicons name="close-circle" size={22} color={colors.placeholder} />
               </TouchableOpacity>
             </View>
@@ -228,36 +279,45 @@ export default function ImageStudio() {
             placeholder="Describe the image — composition, lighting, style"
             placeholderTextColor={colors.placeholder}
             value={prompt}
-            onChangeText={setPrompt}
+            onChangeText={(t) => {
+              setPrompt(t);
+              if (error) setError(null);
+            }}
             multiline
             maxLength={800}
           />
 
           <View style={styles.actions}>
             <TouchableOpacity
-              style={styles.secondaryButton}
+              style={[styles.secondaryButton, loading && styles.controlsLocked]}
               onPress={pickReference}
+              disabled={loading}
               activeOpacity={0.7}
             >
               <Ionicons name="image-outline" size={20} color={colors.accent} />
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.button,
-                (!prompt.trim() || loading) && styles.buttonDisabled,
-              ]}
+              style={[styles.button, idleDisabled && styles.buttonDisabled]}
               onPress={handleGenerate}
               disabled={loading || !prompt.trim()}
+              activeOpacity={0.85}
             >
-              <Text
-                style={[
-                  styles.buttonText,
-                  (!prompt.trim() || loading) && styles.buttonTextDisabled,
-                ]}
-              >
-                {loading ? "Please wait…" : reference ? "Edit" : "Generate"}
-              </Text>
+              {loading ? (
+                <View style={styles.buttonBusy}>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Text style={styles.buttonText}>Generating…</Text>
+                </View>
+              ) : (
+                <Text
+                  style={[
+                    styles.buttonText,
+                    idleDisabled && styles.buttonTextDisabled,
+                  ]}
+                >
+                  {reference ? "Edit" : "Generate"}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -330,6 +390,21 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: 40,
   },
+  errorState: { alignItems: "center", paddingHorizontal: 28, gap: 12 },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 15,
+    textAlign: "center",
+    lineHeight: 21,
+  },
+  retryButton: {
+    marginTop: 4,
+    paddingHorizontal: 20,
+    paddingVertical: 9,
+    borderRadius: 10,
+    backgroundColor: colors.inputBg,
+  },
+  retryText: { color: colors.accent, fontSize: 15, fontWeight: "600" },
   bottomBar: { width: "100%", gap: 12 },
   ratioRow: { flexDirection: "row", gap: 8 },
   ratioChip: {
@@ -382,6 +457,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonDisabled: { backgroundColor: colors.inputBg },
+  buttonBusy: { flexDirection: "row", alignItems: "center", gap: 8 },
   buttonText: {
     color: colors.content,
     fontSize: 17,
@@ -389,4 +465,5 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
   },
   buttonTextDisabled: { color: colors.placeholder },
+  controlsLocked: { opacity: 0.4 },
 });

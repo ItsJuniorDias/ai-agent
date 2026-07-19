@@ -286,63 +286,72 @@ export async function createEmbedding(
 export type GeneratedImage = {
   /** data URL: `data:image/png;base64,...` */
   dataUrl: string;
-  /** Texto que o modelo escreveu junto da imagem, se houver. */
+  /** Mantido por compatibilidade — a Image API não devolve texto junto. */
   text: string | null;
   cost?: number;
 };
 
+/** Resposta da Image API. A imagem vem como base64 puro em `b64_json`. */
+type ORImageResponse = {
+  created?: number;
+  data?: { b64_json: string; media_type?: string }[];
+  usage?: ORUsage;
+};
+
 /**
- * Gera imagem via /chat/completions com `modalities: ["image", "text"]`.
- * A imagem volta em `choices[0].message.images[0].image_url.url` como data URL.
+ * Gera (ou edita) uma imagem via `POST /api/v1/images` — a Image API dedicada.
+ *
+ * Por que trocamos de `chat/completions` + `modalities` para esta rota:
+ * o OpenRouter unificou geração de imagem aqui e passou a adicionar os modelos
+ * novos exclusivamente nesta API. Modelos que só produzem imagem — Seedream 4.5,
+ * a família FLUX — nem aparecem na rota de chat, então a versão anterior gerava
+ * imagem só enquanto o modelo era um Gemini; trocar o modelo nos Ajustes deixava
+ * o Studio sem gerar nada. Por esta rota, `google/gemini-2.5-flash-image`,
+ * `google/gemini-3.1-flash-image-preview` e `bytedance-seed/seedream-4.5`
+ * funcionam pelo mesmo caminho.
+ *
+ * `aspect_ratio` é parâmetro de topo aqui (não mais `image_config`), e a imagem
+ * de referência para edição vai em `input_references`, aceitando data URL.
+ *
+ * Docs: https://openrouter.ai/docs/features/multimodal/image-generation
  */
 export async function generateImage(opts: {
   model: string;
   prompt: string;
-  /** Imagem de referência em data URL, para edição. */
+  /** Imagem-base em data URL (ou http(s)) para edição image-to-image. */
   referenceImage?: string;
+  /** Proporção normalizada: 1:1, 16:9, 9:16, 4:3, 3:4… ou `auto`. */
   aspectRatio?: string;
   signal?: AbortSignal;
 }): Promise<GeneratedImage> {
-  const content: ORContentPart[] = [{ type: "text", text: opts.prompt }];
-
-  if (opts.referenceImage) {
-    content.push({
-      type: "image_url",
-      image_url: { url: opts.referenceImage },
-    });
-  }
-
   const payload: Record<string, unknown> = {
     model: opts.model,
-    messages: [{ role: "user", content }],
-    modalities: ["image", "text"],
+    prompt: opts.prompt,
   };
 
-  if (opts.aspectRatio) {
-    payload.image_config = { aspect_ratio: opts.aspectRatio };
+  if (opts.aspectRatio) payload.aspect_ratio = opts.aspectRatio;
+
+  if (opts.referenceImage) {
+    payload.input_references = [
+      { type: "image_url", image_url: { url: opts.referenceImage } },
+    ];
   }
 
-  const res = await request<ORCompletion>(
-    "/chat/completions",
-    payload,
-    opts.signal,
-  );
+  const res = await request<ORImageResponse>("/images", payload, opts.signal);
 
-  const message = res.choices[0]?.message;
-  const dataUrl = message?.images?.[0]?.image_url?.url;
-
-  if (!dataUrl) {
+  const first = res.data?.[0];
+  if (!first?.b64_json) {
     throw new OpenRouterError(
-      message?.content
-        ? `O modelo respondeu com texto em vez de imagem: ${message.content.slice(0, 160)}`
-        : "Nenhuma imagem retornada. O prompt pode ter sido bloqueado por filtro de segurança.",
+      "Nenhuma imagem retornada. O prompt pode ter sido bloqueado por filtro de segurança, ou o modelo escolhido não gera imagens.",
       502,
     );
   }
 
+  const mediaType = first.media_type ?? "image/png";
+
   return {
-    dataUrl,
-    text: message?.content ?? null,
+    dataUrl: `data:${mediaType};base64,${first.b64_json}`,
+    text: null,
     cost: res.usage?.cost,
   };
 }

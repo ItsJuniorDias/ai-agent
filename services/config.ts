@@ -88,7 +88,7 @@ export const IMAGE_MODELS: ModelInfo[] = [
     price: "por token",
   },
   {
-    id: "google/gemini-3.1-flash-image",
+    id: "google/gemini-3.1-flash-image-preview",
     name: "Nano Banana 2",
     desc: "Qualidade Pro na velocidade Flash",
     color: "#EA4335",
