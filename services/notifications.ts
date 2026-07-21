@@ -75,14 +75,14 @@ async function ensureChannels(): Promise<void> {
     name: "Alertas do assistente",
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
-    lightColor: "#007AFF",
+    lightColor: "#010624",
   });
 
   await Notifications.setNotificationChannelAsync(CHANNEL_REMINDERS, {
     name: "Lembretes",
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
-    lightColor: "#5856D6",
+    lightColor: "#010624",
   });
 
   channelsSet = true;

@@ -355,7 +355,7 @@ export default function AssistantScreen() {
       <View style={styles.group}>
         <View style={styles.row}>
           <View style={styles.rowLeft}>
-            <View style={[styles.iconBox, { backgroundColor: "#5856D6" }]}>
+            <View style={[styles.iconBox, { backgroundColor: Color.accent }]}>
               <Ionicons name="moon" size={16} color="white" />
             </View>
             <Text style={styles.rowText}>Silenciar à noite</Text>

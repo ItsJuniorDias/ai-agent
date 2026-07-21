@@ -256,7 +256,7 @@ export default function Settings() {
 
         <View style={[styles.row, styles.noBorder]}>
           <View style={styles.rowLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: "#5856D6" }]}>
+            <View style={[styles.iconContainer, { backgroundColor: Color.accent }]}>
               <Ionicons name="finger-print" size={18} color={Palette.white} />
             </View>
             <Text style={styles.rowText}>Haptic feedback</Text>
@@ -306,7 +306,7 @@ export default function Settings() {
       <View style={styles.group}>
         <View style={styles.row}>
           <View style={styles.rowLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: "#AF52DE" }]}>
+            <View style={[styles.iconContainer, { backgroundColor: Color.accent }]}>
               <Ionicons name="library" size={17} color={Palette.white} />
             </View>
             <View style={{ flex: 1 }}>

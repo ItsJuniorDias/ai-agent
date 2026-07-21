@@ -46,7 +46,7 @@
           "image": "./assets/images/icon_nobg.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#010624"
+          "backgroundColor": "#F7F8FC"
         }
       ],
       [
@@ -69,7 +69,7 @@
         "expo-notifications",
         {
           "icon": "./assets/images/android-icon-monochrome.png",
-          "color": "#5364E8"
+          "color": "#010624"
         }
       ],
       "expo-background-task"

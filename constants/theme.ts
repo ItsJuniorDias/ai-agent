@@ -1,8 +1,8 @@
 /**
- * Design system — "Daylight Iris".
+ * Design system — "Daylight Navy".
  *
  * The application deliberately has one appearance: light mode. Surfaces use a
- * calm cool-white elevation ramp while iris and aurora remain the signature.
+ * calm blue-white elevation ramp while navy gradients remain the signature.
  * Every screen should consume these semantic tokens rather than hardcoding UI
  * colours, so the visual language remains consistent.
  */
@@ -20,18 +20,18 @@ export function alpha(hex: string, a: number): string {
 
 // -- Raw palette ------------------------------------------------------------
 export const Palette = {
-  // Cool-neutral elevation ramp for a crisp, calm light interface.
-  canvas: "#F7F8FC",
+  // Blue-tinted elevation ramp for a crisp, calm light interface.
+  canvas: "#F4F7FC",
   raised: "#FFFFFF",
   surface: "#FFFFFF",
-  surface2: "#F0F2F8",
-  surface3: "#E5E8F2",
+  surface2: "#EAF0F8",
+  surface3: "#DCE6F2",
 
-  // Iris accent + aurora signature.
-  iris: "#5364E8",
-  irisPressed: "#4654CB",
-  violet: "#8757E8",
-  cyan: "#149EAF",
+  // Dark navy taken from the app icon, with blue-only gradient companions.
+  iris: "#010624",
+  irisPressed: "#07194A",
+  violet: "#0B2D69",
+  cyan: "#1A5D9E",
 
   // Light-mode semantic colours with accessible contrast.
   green: "#16803B",
@@ -39,7 +39,7 @@ export const Palette = {
   orange: "#B85B00",
 
   white: "#FFFFFF",
-  black: "#101223",
+  black: "#010624",
 } as const;
 
 // -- Semantic color tokens --------------------------------------------------
@@ -50,17 +50,17 @@ export const Color = {
   surface2: Palette.surface2,
   surface3: Palette.surface3,
 
-  // Cool translucent separators work across all light surfaces.
-  hairline: alpha("#27304F", 0.12),
-  hairlineStrong: alpha("#27304F", 0.2),
-  border: alpha("#27304F", 0.14),
+  // Navy translucent separators work across all light surfaces.
+  hairline: alpha(Palette.iris, 0.12),
+  hairlineStrong: alpha(Palette.iris, 0.2),
+  border: alpha(Palette.iris, 0.14),
 
   // Text.
-  label: "#171A2C",
-  secondary: "#5D647A",
-  tertiary: "#7F879C",
-  quaternary: "#A2A8B8",
-  placeholder: "#7F879C",
+  label: "#010624",
+  secondary: "#30486E",
+  tertiary: "#647897",
+  quaternary: "#93A4BD",
+  placeholder: "#647897",
 
   // Accent.
   accent: Palette.iris,
@@ -76,20 +76,20 @@ export const Color = {
   dangerSoft: alpha(Palette.red, 0.12),
   warningSoft: alpha(Palette.orange, 0.12),
 
-  // Aurora gradient stops (iris → violet → cyan).
+  // Navy-blue gradient stops; `violet` remains as a backwards-compatible key.
   aurora: [Palette.iris, Palette.violet, Palette.cyan] as const,
-  auroraButton: [Palette.iris, "#6A5DE4", "#8654D8"] as const,
+  auroraButton: [Palette.iris, "#09235A", "#174D89"] as const,
 } as const;
 
 // -- Liquid glass -----------------------------------------------------------
 export const Glass = {
   tint: "light" as const,
   intensity: Platform.OS === "ios" ? 45 : 30,
-  fill: [alpha(Palette.white, 0.72), alpha("#EEF1FA", 0.82)] as const,
+  fill: [alpha(Palette.white, 0.72), alpha("#E6EFFA", 0.82)] as const,
   fillSolid: Palette.surface,
-  border: alpha("#27304F", 0.14),
+  border: alpha(Palette.iris, 0.14),
   highlight: alpha(Palette.white, 0.9),
-  shadow: "#36405F",
+  shadow: "#172C50",
 } as const;
 
 // -- Radius -----------------------------------------------------------------
