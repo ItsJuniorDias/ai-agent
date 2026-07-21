@@ -33,6 +33,7 @@ import {
   View,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
 import * as DocumentPicker from "expo-document-picker";
@@ -41,11 +42,18 @@ import { generateImage } from "@/services/openrouter";
 import { IMAGE_MODELS, loadConfig } from "@/services/config";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { AuroraGlow } from "@/components/ui/aurora";
+import { useKeyboardVisible } from "@/hooks/use-keyboard-visible";
 import { Color, Palette, Radius, Shadow, Spacing, Type, alpha } from "@/constants/theme";
 
 const RATIOS = ["1:1", "16:9", "9:16", "4:3", "3:4"];
 
+// NativeTabs overlap route content; reserve their full footprint rather than
+// relying solely on the smaller home-indicator safe-area inset.
+const NATIVE_TAB_BAR_CLEARANCE = Platform.OS === "ios" ? 96 : 80;
+
 export default function ImageStudio() {
+  const insets = useSafeAreaInsets();
+  const keyboardVisible = useKeyboardVisible();
   const [prompt, setPrompt] = useState("");
   const [ratio, setRatio] = useState("1:1");
   const [loading, setLoading] = useState(false);
@@ -161,7 +169,15 @@ export default function ImageStudio() {
     >
       <StatusBar style="dark" />
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingBottom:
+              (keyboardVisible
+                ? Spacing.md
+                : Math.max(insets.bottom, NATIVE_TAB_BAR_CLEARANCE)) + Spacing.lg,
+          },
+        ]}
         bounces={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -298,7 +314,13 @@ export default function ImageStudio() {
             >
               {canGenerate || loading ? (
                 <LinearGradient
-                  colors={Color.auroraButton as [string, string, ...string[]]}
+                  colors={
+                    Color.auroraButton as unknown as [
+                      string,
+                      string,
+                      ...string[],
+                    ]
+                  }
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={[styles.button, !loading && Shadow.glow]}

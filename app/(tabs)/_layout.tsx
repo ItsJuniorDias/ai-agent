@@ -1,73 +1,42 @@
 /**
- * Tabs shared by the main app screens.
+ * Native tab bar.
  *
- * JavaScript tabs deliberately replace the experimental native-tab layout
- * here. They make the tab-bar height part of each screen's layout and can hide
- * the bar while the IME is open, so a composer is never covered by a tab.
+ * Keep the platform-native, translucent tab treatment. Keyboard avoidance is
+ * handled by each screen's composer and Android's resize window mode rather
+ * than replacing this navigator with JavaScript tabs.
  */
 
-import { Feather } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 
 import { Color } from "@/constants/theme";
 
 export default function TabLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: Color.accent,
-        tabBarInactiveTintColor: Color.tertiary,
-        // Reclaim the tab-bar area while typing. The KeyboardAvoidingViews in
-        // the chat and Studio screens then place their composers above the IME.
-        tabBarHideOnKeyboard: true,
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Ask AI",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="zap" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: "History",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="clock" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="generate-image"
-        options={{
-          title: "Studio",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="image" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="convert-pdf"
-        options={{
-          title: "Files",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="file-text" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Settings",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="settings" color={color} size={size} />
-          ),
-        }}
-      />
-    </Tabs>
+    <NativeTabs tintColor={Color.accent} minimizeBehavior="onScrollDown">
+      <NativeTabs.Trigger name="index">
+        <Label>Ask AI</Label>
+        <Icon sf="sparkles" />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="history">
+        <Label>History</Label>
+        <Icon sf="clock.fill" />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="generate-image">
+        <Label>Studio</Label>
+        <Icon sf="paintbrush.fill" />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="convert-pdf">
+        <Label>Files</Label>
+        <Icon sf="doc.text.magnifyingglass" />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="settings">
+        <Label>Settings</Label>
+        <Icon sf="gearshape.fill" />
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }

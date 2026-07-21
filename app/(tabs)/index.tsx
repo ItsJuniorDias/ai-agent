@@ -45,6 +45,7 @@ import { AgentTrace, LiveTrace } from "@/components/agent-trace";
 import { ToolApprovalSheet } from "@/components/tool-approval-sheet";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { AuroraGlow } from "@/components/ui/aurora";
+import { useKeyboardVisible } from "@/hooks/use-keyboard-visible";
 import { hasApiKey } from "@/services/openrouter";
 import { loadConfig, STORAGE_KEYS } from "@/services/config";
 import {
@@ -65,6 +66,12 @@ const SUGGESTIONS = [
   "Generate an app icon: a fox reading a book, flat vector",
 ];
 
+// `NativeTabs` are rendered over the route content. The safe-area inset only
+// covers the home indicator, so it is not enough to keep a composer clear of
+// the translucent tab bar. These values include that safe area and leave a
+// small visual gap above the bar on compact and regular devices.
+const NATIVE_TAB_BAR_CLEARANCE = Platform.OS === "ios" ? 96 : 80;
+
 /** Encontra a imagem gerada num turno, se houver, para exibir na bolha. */
 function findGeneratedImage(steps?: AgentStep[]): string | null {
   const step = steps?.find(
@@ -79,6 +86,7 @@ export default function ChatScreen() {
   }>();
 
   const insets = useSafeAreaInsets();
+  const keyboardVisible = useKeyboardVisible();
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState(
@@ -397,7 +405,13 @@ export default function ChatScreen() {
         <View
           style={[
             styles.composerDock,
-            { paddingBottom: Math.max(insets.bottom, Spacing.md) },
+            {
+              paddingBottom: Math.max(
+                keyboardVisible
+                  ? Spacing.md
+                  : Math.max(insets.bottom, NATIVE_TAB_BAR_CLEARANCE),
+              ),
+            },
           ]}
         >
           <GlassSurface radius={Radius.xxl} style={styles.composer}>
@@ -446,7 +460,13 @@ export default function ChatScreen() {
               >
                 {canSend ? (
                   <LinearGradient
-                    colors={Color.auroraButton as [string, string, ...string[]]}
+                    colors={
+                      Color.auroraButton as unknown as [
+                        string,
+                        string,
+                        ...string[],
+                      ]
+                    }
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.sendButton}
