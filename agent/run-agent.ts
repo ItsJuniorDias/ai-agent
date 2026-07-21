@@ -99,22 +99,44 @@ function sumUsage(a: ORUsage | undefined, b: ORUsage | undefined): ORUsage {
 export async function runAgent(
   options: RunAgentOptions,
 ): Promise<RunAgentResult> {
-  const { input, history, onEvent, requestApproval, signal } = options;
+  const {
+    input,
+    history,
+    onEvent,
+    requestApproval,
+    signal,
+    toolFilter,
+    extraSystem,
+    maxStepsOverride,
+  } = options;
 
   const config = await loadConfig();
   const steps: AgentStep[] = [];
   let usage: ORUsage | undefined;
 
+  /** Teto efetivo de rounds — a varredura em background passa um valor menor. */
+  const maxSteps = maxStepsOverride ?? config.maxSteps;
+
   onEvent({ type: "status", text: "Pensando" });
 
   // -- Tools disponíveis agora ---------------------------------------------
-  const tools = await resolveTools(config);
+  // `resolveTools` já filtra por integração habilitada + credencial salva. O
+  // `toolFilter` opcional é uma segunda peneira: o modo background o usa para
+  // remover qualquer tool que escreva em sistema externo.
+  const resolved = await resolveTools(config);
+  const tools = toolFilter ? resolved.filter(toolFilter) : resolved;
   const toolPayload = buildToolPayload(tools, config);
   const systemPrompt = buildSystemPrompt(tools, config);
 
   const messages: ORMessage[] = [
     { role: "system", content: systemPrompt },
   ];
+
+  // Bloco de sistema extra (modo background). Vai depois do prompt base para
+  // sobrepor tom e objetivo sem reescrever a base inteira.
+  if (extraSystem?.trim()) {
+    messages.push({ role: "system", content: extraSystem.trim() });
+  }
 
   // -- RAG: memórias relevantes ---------------------------------------------
   // Leitura é automática; escrita é deliberada (tool memory_save). O app antigo
@@ -135,7 +157,7 @@ export async function runAgent(
   messages.push({ role: "user", content: input });
 
   // -- Loop ReAct -----------------------------------------------------------
-  for (let step = 0; step < config.maxSteps; step++) {
+  for (let step = 0; step < maxSteps; step++) {
     if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
 
     onEvent({ type: "status", text: step === 0 ? "Pensando" : "Analisando resultado" });
@@ -327,7 +349,7 @@ export async function runAgent(
 
   messages.push({
     role: "system",
-    content: `You have reached the maximum of ${config.maxSteps} tool rounds. Stop calling tools. Summarize for the user what you accomplished, what is still pending, and what they should do next.`,
+    content: `You have reached the maximum of ${maxSteps} tool rounds. Stop calling tools. Summarize for the user what you accomplished, what is still pending, and what they should do next.`,
   });
 
   try {
@@ -344,14 +366,14 @@ export async function runAgent(
     // depois de o agente ter executado N ações. Melhor dizer o que houve.
     const text =
       (completion.choices[0]?.message?.content ?? "").trim() ||
-      `Atingi o limite de ${config.maxSteps} passos. Executei ${steps.length} ${steps.length === 1 ? "ação" : "ações"}, mas não fechei a tarefa. Você pode subir esse limite em Ajustes ou quebrar o pedido em partes menores.`;
+      `Atingi o limite de ${maxSteps} passos. Executei ${steps.length} ${steps.length === 1 ? "ação" : "ações"}, mas não fechei a tarefa. Você pode subir esse limite em Ajustes ou quebrar o pedido em partes menores.`;
 
     onEvent({ type: "final", text, usage, steps: steps.length });
     return { text, steps, usage, transcript: messages };
   } catch (err: any) {
     if (err?.name === "AbortError") throw err;
 
-    const text = `Atingi o limite de ${config.maxSteps} passos sem concluir. Você pode aumentar esse limite em Ajustes ou dividir o pedido em partes menores.`;
+    const text = `Atingi o limite de ${maxSteps} passos sem concluir. Você pode aumentar esse limite em Ajustes ou dividir o pedido em partes menores.`;
     onEvent({ type: "final", text, usage, steps: steps.length });
     return { text, steps, usage, transcript: messages };
   }

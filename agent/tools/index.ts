@@ -7,6 +7,7 @@
 
 import type { AgentTool } from "@/agent/types";
 import { coreTools } from "./core";
+import { notificationTools } from "./notifications";
 import { githubTools } from "./github";
 import { gitlabTools } from "./gitlab";
 import { jiraTools } from "./jira";
@@ -15,6 +16,7 @@ import { productivityTools } from "./productivity";
 
 export const ALL_TOOLS: AgentTool[] = [
   ...coreTools,
+  ...notificationTools,
   ...githubTools,
   ...gitlabTools,
   ...jiraTools,
@@ -24,6 +26,7 @@ export const ALL_TOOLS: AgentTool[] = [
 
 export {
   coreTools,
+  notificationTools,
   githubTools,
   gitlabTools,
   jiraTools,

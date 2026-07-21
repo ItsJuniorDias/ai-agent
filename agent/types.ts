@@ -147,6 +147,20 @@ export type RunAgentOptions = {
   onEvent: (event: AgentEvent) => void;
   requestApproval: ApprovalHandler;
   signal?: AbortSignal;
+  /**
+   * Peneira extra sobre as tools resolvidas. Usada pelo assistente em background
+   * para expor só tools de leitura + notificação — nada que escreva num sistema
+   * externo roda sem um humano na frente da tela.
+   */
+  toolFilter?: (tool: AgentTool) => boolean;
+  /**
+   * Bloco de sistema adicional, injetado logo após o system prompt base. É por
+   * onde o modo background diz ao modelo que ele não está num chat ao vivo e que
+   * a única forma de alcançar o usuário é a tool notify_now.
+   */
+  extraSystem?: string;
+  /** Sobrescreve o teto de rounds do config (a varredura usa um número baixo). */
+  maxStepsOverride?: number;
 };
 
 export type RunAgentResult = {

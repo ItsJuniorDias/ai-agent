@@ -3,11 +3,17 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
+import * as Notifications from "expo-notifications";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { initNotifications } from "@/services/notifications";
+// Efeito colateral: registra o TaskManager.defineTask do assistente. Precisa
+// acontecer no escopo de módulo, antes de qualquer tela montar.
+import "@/services/background-tasks";
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -15,6 +21,25 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
+
+  // Handler + canais de notificação, uma vez, cedo.
+  useEffect(() => {
+    initNotifications();
+  }, []);
+
+  // Toque na notificação → abre a rota que veio no payload (data.route).
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const route = (response.notification.request.content.data as any)?.route;
+        if (typeof route === "string" && route) {
+          router.push(route as never);
+        }
+      },
+    );
+    return () => sub.remove();
+  }, [router]);
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -42,6 +67,11 @@ export default function RootLayout() {
 
         <Stack.Screen
           name="(ai-terms)/index"
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="(assistant)/index"
           options={{ headerShown: false }}
         />
 

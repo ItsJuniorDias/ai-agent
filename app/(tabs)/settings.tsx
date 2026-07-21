@@ -28,11 +28,13 @@ import {
   AgentConfig,
   DEFAULT_CONFIG,
   IMAGE_MODELS,
+  loadAssistantConfig,
   loadConfig,
   saveConfig,
 } from "@/services/config";
 import { resolveTools } from "@/agent/registry";
 import { clearMemory, countMemories } from "@/agent/memory";
+import { getPermissionStatus } from "@/services/notifications";
 import { hasApiKey } from "@/services/openrouter";
 import { INTEGRATION_META } from "@/components/agent-trace";
 import type { AgentTool } from "@/agent/types";
@@ -45,19 +47,25 @@ export default function Settings() {
   const [config, setConfig] = useState<AgentConfig>(DEFAULT_CONFIG);
   const [tools, setTools] = useState<AgentTool[]>([]);
   const [memoryCount, setMemoryCount] = useState(0);
+  const [assistantOn, setAssistantOn] = useState(false);
+  const [notifOn, setNotifOn] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     const cfg = await loadConfig();
     setConfig(cfg);
 
-    const [available, count] = await Promise.all([
+    const [available, count, assistant, perm] = await Promise.all([
       resolveTools(cfg),
       countMemories(),
+      loadAssistantConfig(),
+      getPermissionStatus(),
     ]);
 
     setTools(available);
     setMemoryCount(count);
+    setAssistantOn(assistant.enabled);
+    setNotifOn(perm === "granted");
     setLoading(false);
   }, []);
 
@@ -121,6 +129,37 @@ export default function Settings() {
           </Text>
         </View>
       )}
+
+      {/* -- Assistente pessoal ------------------------------------------ */}
+      <Text style={styles.sectionTitle}>PERSONAL ASSISTANT</Text>
+      <View style={styles.group}>
+        <TouchableOpacity
+          style={[styles.row, styles.noBorder]}
+          onPress={() => router.push("/(assistant)" as never)}
+          activeOpacity={0.6}
+        >
+          <View style={styles.rowLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: "#34C759" }]}>
+              <Ionicons name="notifications" size={17} color="white" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowText}>Proactive assistant</Text>
+              <Text style={styles.rowSubtext}>
+                {assistantOn
+                  ? notifOn
+                    ? "Ligado · vigiando seus serviços"
+                    : "Ligado · notificações bloqueadas"
+                  : "Desligado · toque para configurar"}
+              </Text>
+            </View>
+          </View>
+          <Feather name="chevron-right" size={18} color="#C7C7CC" />
+        </TouchableOpacity>
+      </View>
+      <Text style={styles.footerText}>
+        Alertas em segundo plano e lembretes agendados. O agente te avisa sobre
+        PRs esperando review, deploys quebrados e issues novas.
+      </Text>
 
       {/* -- Modelo do agente ------------------------------------------- */}
       <Text style={styles.sectionTitle}>AGENT MODEL</Text>

@@ -14,6 +14,12 @@ export const STORAGE_KEYS = {
   primaryIntegration: "@primary_integration", // legado do onboarding antigo
   chatHistory: "@chat_history",
   vectorMemory: "@vector_memory",
+  // -- Assistente pessoal / notificações ---------------------------------
+  assistantConfig: "@assistant_config",
+  /** Última varredura: timestamp, resumo e quantas notificações saíram. */
+  assistantState: "@assistant_state",
+  /** Log de dedupe do notify_now — evita pingar duas vezes pelo mesmo item. */
+  notifyLog: "@notify_log",
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -207,4 +213,134 @@ export async function saveEnabledIntegrations(ids: string[]): Promise<void> {
     STORAGE_KEYS.enabledIntegrations,
     JSON.stringify(ids),
   );
+}
+
+// ---------------------------------------------------------------------------
+// Assistente pessoal proativo
+// ---------------------------------------------------------------------------
+
+/**
+ * Integrações que fazem sentido *vigiar* em segundo plano. Precisam ter uma
+ * tool de leitura de verdade (a varredura só olha, nunca escreve) e produzir
+ * algo acionável: PR/MR esperando review, deploy quebrado, issue recém-atribuída.
+ *
+ * Slack/Discord/WhatsApp/Teams/Gmail são orientadas a *enviar* — não há o que
+ * monitorar — então ficam de fora do monitor, mesmo conectadas.
+ */
+export const MONITORABLE_INTEGRATIONS = [
+  "github",
+  "gitlab",
+  "jira",
+  "linear",
+  "vercel",
+] as const;
+
+export type MonitorableIntegration =
+  (typeof MONITORABLE_INTEGRATIONS)[number];
+
+/** Opções de intervalo mínimo (minutos) oferecidas na UI do assistente. */
+export const ASSISTANT_INTERVALS = [15, 30, 60, 240] as const;
+
+export type AssistantConfig = {
+  /** Chave-mestra: liga o monitor em background e as varreduras automáticas. */
+  enabled: boolean;
+  /**
+   * Intervalo mínimo entre varreduras, em minutos. É só uma dica — o SO decide
+   * quando de fato acordar o app (iOS costuma agrupar em janelas próprias).
+   */
+  frequencyMinutes: number;
+  /** Silencia varreduras automáticas dentro da janela. Lembretes explícitos
+   * agendados por você continuam disparando. */
+  quietHoursEnabled: boolean;
+  quietStartHour: number; // 0-23
+  quietEndHour: number; // 0-23
+  /**
+   * Quais integrações o monitor observa. Chave ausente = observa se estiver
+   * conectada. Só as de MONITORABLE_INTEGRATIONS entram aqui.
+   */
+  watch: Partial<Record<MonitorableIntegration, boolean>>;
+  /** Teto de rounds do loop durante uma varredura — mantém custo/latência baixos. */
+  scanStepBudget: number;
+};
+
+export const DEFAULT_ASSISTANT_CONFIG: AssistantConfig = {
+  enabled: false, // opt-in: nada de background sem o usuário ligar
+  frequencyMinutes: 60,
+  quietHoursEnabled: true,
+  quietStartHour: 22,
+  quietEndHour: 7,
+  watch: {},
+  scanStepBudget: 5,
+};
+
+let assistantCache: AssistantConfig | null = null;
+
+export async function loadAssistantConfig(): Promise<AssistantConfig> {
+  if (assistantCache) return assistantCache;
+
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEYS.assistantConfig);
+    assistantCache = raw
+      ? {
+          ...DEFAULT_ASSISTANT_CONFIG,
+          ...(JSON.parse(raw) as Partial<AssistantConfig>),
+        }
+      : { ...DEFAULT_ASSISTANT_CONFIG };
+  } catch {
+    assistantCache = { ...DEFAULT_ASSISTANT_CONFIG };
+  }
+
+  return assistantCache;
+}
+
+export async function saveAssistantConfig(
+  patch: Partial<AssistantConfig>,
+): Promise<AssistantConfig> {
+  const current = await loadAssistantConfig();
+  const next = { ...current, ...patch };
+  assistantCache = next;
+  await AsyncStorage.setItem(
+    STORAGE_KEYS.assistantConfig,
+    JSON.stringify(next),
+  );
+  return next;
+}
+
+/** Decide se uma integração está sendo observada, respeitando o default. */
+export function isWatched(
+  cfg: AssistantConfig,
+  id: MonitorableIntegration,
+): boolean {
+  return cfg.watch[id] ?? true;
+}
+
+// -- Estado da última varredura (não é configuração, é telemetria) ---------
+
+export type AssistantState = {
+  lastScanAt?: string;
+  lastScanSummary?: string;
+  lastScanNotified?: number;
+  /** 'background' | 'manual' — de onde veio a última varredura. */
+  lastScanReason?: string;
+};
+
+export async function loadAssistantState(): Promise<AssistantState> {
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEYS.assistantState);
+    return raw ? (JSON.parse(raw) as AssistantState) : {};
+  } catch {
+    return {};
+  }
+}
+
+export async function saveAssistantState(
+  patch: Partial<AssistantState>,
+): Promise<AssistantState> {
+  const current = await loadAssistantState();
+  const next = { ...current, ...patch };
+  await AsyncStorage.setItem(
+    STORAGE_KEYS.assistantState,
+    JSON.stringify(next),
+  );
+  return next;
 }
