@@ -34,16 +34,14 @@
     "splash": null,
     "plugins": [
       "expo-router",
-      [
-        "expo-localization"
-      ],
+      ["expo-localization"],
       [
         "expo-splash-screen",
         {
           "image": "./assets/images/icon_nobg.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#F7F8FC"
+          "backgroundColor": "#062B67"
         }
       ],
       [
