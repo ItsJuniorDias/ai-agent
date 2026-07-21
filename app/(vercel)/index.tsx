@@ -12,6 +12,7 @@ import {
   ScrollView,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Color } from "@/constants/theme";
 
 export default function VercelScreen() {
   const [token, setToken] = useState("");
@@ -129,7 +130,7 @@ export default function VercelScreen() {
             <TextInput
               style={styles.input}
               placeholder="e.g., m9H1..."
-              placeholderTextColor="#C7C7CC"
+              placeholderTextColor={Color.placeholder}
               value={token}
               onChangeText={setToken}
               secureTextEntry
@@ -145,7 +146,7 @@ export default function VercelScreen() {
             <TextInput
               style={styles.input}
               placeholder="e.g., prj_123..."
-              placeholderTextColor="#C7C7CC"
+              placeholderTextColor={Color.placeholder}
               value={projectId}
               onChangeText={setProjectId}
               autoCapitalize="none"
@@ -160,7 +161,7 @@ export default function VercelScreen() {
             <TextInput
               style={styles.input}
               placeholder="Optional"
-              placeholderTextColor="#C7C7CC"
+              placeholderTextColor={Color.placeholder}
               value={teamId}
               onChangeText={setTeamId}
               autoCapitalize="none"
@@ -201,7 +202,7 @@ export default function VercelScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F2F2F7", // Default iOS background color (Grouped Background)
+    backgroundColor: Color.bg, // Default iOS background color (Grouped Background)
     paddingTop: 40,
   },
   scrollContent: {
@@ -215,17 +216,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34, // Standard iOS "Large Title" size
     fontWeight: "bold",
-    color: "#000",
+    color: Color.label,
     letterSpacing: 0.41,
     marginBottom: 8,
   },
   description: {
     fontSize: 15,
-    color: "#8A8A8E", // iOS secondary gray
+    color: Color.secondary, // iOS secondary gray
     lineHeight: 20,
   },
   inputGroup: {
-    backgroundColor: "#FFF",
+    backgroundColor: Color.surface,
     borderRadius: 10,
     marginBottom: 30,
     overflow: "hidden", // Ensures inputs respect the container's border radius
@@ -240,39 +241,39 @@ const styles = StyleSheet.create({
   label: {
     width: 90, // Fixed width to align inputs
     fontSize: 17, // Standard iOS text size
-    color: "#000",
+    color: Color.label,
   },
   input: {
     flex: 1,
     fontSize: 17,
-    color: "#000",
+    color: Color.label,
     padding: 0, // Removes default Android padding
   },
   separator: {
     height: StyleSheet.hairlineWidth, // Exact 1-pixel line of the device
-    backgroundColor: "#C6C6C8",
+    backgroundColor: Color.hairline,
     marginLeft: 16, // The line doesn't go all the way to the left edge (Apple standard)
   },
   primaryButton: {
-    backgroundColor: "#007AFF", // Official iOS Blue
+    backgroundColor: Color.accent, // Official iOS Blue
     paddingVertical: 16,
     borderRadius: 14, // Modern iOS buttons use rounder corners
     alignItems: "center",
     marginBottom: 12,
   },
   primaryButtonText: {
-    color: "#FFF",
+    color: Color.onAccent,
     fontSize: 17,
     fontWeight: "600",
   },
   deployButton: {
-    backgroundColor: "#000", // Kept black as it's Vercel's visual identity
+    backgroundColor: Color.surface, // Kept black as it's Vercel's visual identity
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: "center",
   },
   deployButtonText: {
-    color: "#FFF",
+    color: Color.onAccent,
     fontSize: 17,
     fontWeight: "600",
   },

@@ -11,6 +11,7 @@
  *    imagem gerada pelos usuários para um bucket público de terceiro. Agora a
  *    imagem é escrita no cache local e exibida com `file://`.
  *  - Seletor de proporção e edição por imagem de referência.
+ *  - Painel de prompt em liquid glass.
  */
 
 import { Ionicons } from "@expo/vector-icons";
@@ -31,22 +32,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
 import * as DocumentPicker from "expo-document-picker";
 
 import { generateImage } from "@/services/openrouter";
 import { IMAGE_MODELS, loadConfig } from "@/services/config";
-
-const colors = {
-  background: "#F2F2F7",
-  content: "#FFFFFF",
-  text: "#000000",
-  textSecondary: "#8E8E93",
-  accent: "#007AFF",
-  placeholder: "#C7C7CC",
-  inputBg: "#E3E3E8",
-};
+import { GlassSurface } from "@/components/ui/glass-surface";
+import { AuroraGlow } from "@/components/ui/aurora";
+import { Color, Radius, Shadow, Spacing, Type, alpha } from "@/constants/theme";
 
 const RATIOS = ["1:1", "16:9", "9:16", "4:3", "3:4"];
 
@@ -69,10 +64,7 @@ export default function ImageStudio() {
   const modelName =
     IMAGE_MODELS.find((m) => m.id === modelId)?.name ?? "Image model";
 
-  // O botão só fica cinza (desabilitado) quando não há nada para gerar.
-  // Durante o loading ele continua azul e mostra o spinner — assim o clique
-  // sempre dá um retorno visual claro em vez de parecer que nada aconteceu.
-  const idleDisabled = !prompt.trim() && !loading;
+  const canGenerate = !!prompt.trim() && !loading;
 
   /** Imagem de referência → data URL, para o modelo poder editá-la. */
   const pickReference = async () => {
@@ -98,17 +90,11 @@ export default function ImageStudio() {
   const handleGenerate = async () => {
     if (!prompt.trim() || loading) return;
 
-    // Fecha o teclado antes de gerar. Some plataformas engolem o primeiro toque
-    // no botão só para dispensar o teclado; o `keyboardShouldPersistTaps` no
-    // ScrollView já entrega o toque, mas dispensar aqui evita o teclado tapar o
-    // resultado quando ele chega.
     Keyboard.dismiss();
     setError(null);
     setLoading(true);
     setImage(null);
 
-    // Timeout de segurança. Geração de imagem leva alguns segundos; se o provedor
-    // travar, o AbortController evita spinner eterno e vira um erro visível.
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120000);
 
@@ -123,9 +109,6 @@ export default function ImageStudio() {
         signal: controller.signal,
       });
 
-      // A imagem chega como data URL. Gravar em disco e usar `file://` mantém a
-      // string gigante fora do estado do React — data URLs de vários MB dentro
-      // de um `useState` travam a thread de JS a cada re-render.
       const base64 = result.dataUrl.split(",")[1] ?? "";
       const uri = `${FileSystem.cacheDirectory}studio-${Date.now()}.png`;
 
@@ -133,8 +116,6 @@ export default function ImageStudio() {
 
       setImage(uri);
     } catch (err: any) {
-      // Erro mostrado na própria tela, não só em Alert — no web o Alert do
-      // react-native é silencioso, e aí a falha vira "não acontece nada".
       const message =
         err?.name === "AbortError"
           ? "A geração demorou demais e foi cancelada. Tente de novo ou troque o modelo em Ajustes."
@@ -162,7 +143,6 @@ export default function ImageStudio() {
         return;
       }
 
-      // O arquivo já está local — nada para baixar, é só copiar para a galeria.
       await MediaLibrary.saveToLibraryAsync(image);
       Alert.alert("Saved", "The image is in your photo library.");
     } catch (err: any) {
@@ -177,21 +157,23 @@ export default function ImageStudio() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         bounces={false}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
+          <Text style={styles.kicker}>STUDIO</Text>
           <Text style={styles.title}>Image Studio</Text>
-          <Text style={styles.subtitle}>{modelName} via OpenRouter</Text>
+          <Text style={styles.subtitle}>{modelName} · via OpenRouter</Text>
         </View>
 
         <View style={styles.previewContainer}>
           {loading ? (
             <View style={styles.loadingState}>
-              <ActivityIndicator size="large" color={colors.accent} />
+              <AuroraGlow size={180} style={StyleSheet.absoluteFill as any} />
+              <ActivityIndicator size="large" color={Color.accent} />
               <Text style={styles.loadingText}>Generating…</Text>
             </View>
           ) : image ? (
@@ -205,9 +187,13 @@ export default function ImageStudio() {
                 activeOpacity={0.7}
               >
                 {downloading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={Color.label} />
                 ) : (
-                  <Ionicons name="download-outline" size={24} color="#FFFFFF" />
+                  <Ionicons
+                    name="download-outline"
+                    size={22}
+                    color={Color.label}
+                  />
                 )}
               </TouchableOpacity>
             </View>
@@ -216,7 +202,7 @@ export default function ImageStudio() {
               <Ionicons
                 name="alert-circle-outline"
                 size={40}
-                color="#FF3B30"
+                color={Color.danger}
               />
               <Text style={styles.errorText}>{error}</Text>
               <TouchableOpacity
@@ -229,7 +215,8 @@ export default function ImageStudio() {
             </View>
           ) : (
             <View style={styles.placeholderState}>
-              <Text style={styles.placeholderIcon}>✨</Text>
+              <AuroraGlow size={160} style={styles.placeholderGlow} />
+              <Ionicons name="sparkles" size={30} color={Color.accent} />
               <Text style={styles.placeholderText}>
                 Your creation will appear here
               </Text>
@@ -237,7 +224,7 @@ export default function ImageStudio() {
           )}
         </View>
 
-        <View style={styles.bottomBar}>
+        <GlassSurface radius={Radius.xxl} style={styles.bottomBar}>
           <View style={[styles.ratioRow, loading && styles.controlsLocked]}>
             {RATIOS.map((r) => (
               <TouchableOpacity
@@ -269,7 +256,11 @@ export default function ImageStudio() {
                 onPress={() => setReference(null)}
                 disabled={loading}
               >
-                <Ionicons name="close-circle" size={22} color={colors.placeholder} />
+                <Ionicons
+                  name="close-circle"
+                  size={22}
+                  color={Color.tertiary}
+                />
               </TouchableOpacity>
             </View>
           )}
@@ -277,7 +268,7 @@ export default function ImageStudio() {
           <TextInput
             style={styles.input}
             placeholder="Describe the image — composition, lighting, style"
-            placeholderTextColor={colors.placeholder}
+            placeholderTextColor={Color.placeholder}
             value={prompt}
             onChangeText={(t) => {
               setPrompt(t);
@@ -294,73 +285,78 @@ export default function ImageStudio() {
               disabled={loading}
               activeOpacity={0.7}
             >
-              <Ionicons name="image-outline" size={20} color={colors.accent} />
+              <Ionicons name="image-outline" size={20} color={Color.accent} />
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.button, idleDisabled && styles.buttonDisabled]}
+              style={styles.buttonWrap}
               onPress={handleGenerate}
               disabled={loading || !prompt.trim()}
               activeOpacity={0.85}
             >
-              {loading ? (
-                <View style={styles.buttonBusy}>
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                  <Text style={styles.buttonText}>Generating…</Text>
-                </View>
-              ) : (
-                <Text
-                  style={[
-                    styles.buttonText,
-                    idleDisabled && styles.buttonTextDisabled,
-                  ]}
+              {canGenerate || loading ? (
+                <LinearGradient
+                  colors={Color.auroraButton as [string, string, ...string[]]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[styles.button, !loading && Shadow.glow]}
                 >
-                  {reference ? "Edit" : "Generate"}
-                </Text>
+                  {loading ? (
+                    <View style={styles.buttonBusy}>
+                      <ActivityIndicator size="small" color={Color.onAccent} />
+                      <Text style={styles.buttonText}>Generating…</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.buttonText}>
+                      {reference ? "Edit" : "Generate"}
+                    </Text>
+                  )}
+                </LinearGradient>
+              ) : (
+                <View style={[styles.button, styles.buttonDisabled]}>
+                  <Text style={styles.buttonTextDisabled}>
+                    {reference ? "Edit" : "Generate"}
+                  </Text>
+                </View>
               )}
             </TouchableOpacity>
           </View>
-        </View>
+        </GlassSurface>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: Color.bg },
   scrollContent: {
     flexGrow: 1,
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 40,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: 60,
     paddingBottom: 30,
   },
-  header: { alignItems: "center", marginBottom: 24 },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    letterSpacing: 0.35,
-    color: colors.text,
+  header: { alignItems: "center", marginBottom: Spacing.xxl },
+  kicker: {
+    ...Type.caption2,
+    color: Color.accent,
+    letterSpacing: 1.4,
+    marginBottom: 4,
   },
-  subtitle: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    marginTop: 5,
-  },
+  title: { ...Type.title1, color: Color.label },
+  subtitle: { ...Type.subhead, color: Color.secondary, marginTop: 5 },
   previewContainer: {
     flex: 1,
-    backgroundColor: colors.content,
-    borderRadius: 22,
+    backgroundColor: Color.surface,
+    borderRadius: Radius.xxl,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
-    marginBottom: 24,
+    marginBottom: Spacing.xxl,
     minHeight: 300,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    ...Shadow.card,
   },
   imageWrapper: { width: "100%", height: "100%", position: "relative" },
   image: { width: "100%", height: "100%", resizeMode: "cover" },
@@ -368,32 +364,29 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 16,
     right: 16,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: alpha("#01030F", 0.55),
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairlineStrong,
     width: 44,
     height: 44,
     borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
   },
   loadingState: { alignItems: "center", gap: 10 },
-  loadingText: { fontSize: 14, color: colors.textSecondary, fontWeight: "500" },
-  placeholderState: { alignItems: "center" },
-  placeholderIcon: { fontSize: 40, marginBottom: 15 },
+  loadingText: { ...Type.footnote, color: Color.secondary, fontWeight: "500" },
+  placeholderState: { alignItems: "center", gap: Spacing.md },
+  placeholderGlow: { position: "absolute" },
   placeholderText: {
-    color: colors.textSecondary,
-    fontSize: 15,
+    color: Color.secondary,
+    ...Type.subhead,
     textAlign: "center",
     paddingHorizontal: 40,
   },
   errorState: { alignItems: "center", paddingHorizontal: 28, gap: 12 },
   errorText: {
-    color: "#FF3B30",
-    fontSize: 15,
+    color: Color.danger,
+    ...Type.subhead,
     textAlign: "center",
     lineHeight: 21,
   },
@@ -401,69 +394,69 @@ const styles = StyleSheet.create({
     marginTop: 4,
     paddingHorizontal: 20,
     paddingVertical: 9,
-    borderRadius: 10,
-    backgroundColor: colors.inputBg,
+    borderRadius: Radius.sm,
+    backgroundColor: Color.surface2,
   },
-  retryText: { color: colors.accent, fontSize: 15, fontWeight: "600" },
-  bottomBar: { width: "100%", gap: 12 },
-  ratioRow: { flexDirection: "row", gap: 8 },
+  retryText: { color: Color.accent, ...Type.subhead, fontWeight: "600" },
+  bottomBar: { width: "100%", gap: Spacing.md, padding: Spacing.md },
+  ratioRow: { flexDirection: "row", gap: Spacing.sm },
   ratioChip: {
     flex: 1,
     paddingVertical: 7,
-    borderRadius: 9,
-    backgroundColor: colors.inputBg,
+    borderRadius: Radius.sm,
+    backgroundColor: Color.surface2,
     alignItems: "center",
   },
-  ratioChipActive: { backgroundColor: colors.accent },
-  ratioText: { fontSize: 13, color: colors.text, fontWeight: "500" },
-  ratioTextActive: { color: "#FFFFFF" },
+  ratioChipActive: { backgroundColor: Color.accent },
+  ratioText: { ...Type.footnote, color: Color.secondary, fontWeight: "600" },
+  ratioTextActive: { color: Color.onAccent },
   referenceRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    backgroundColor: colors.content,
-    borderRadius: 12,
+    backgroundColor: Color.surface2,
+    borderRadius: Radius.md,
     padding: 8,
   },
   referenceThumb: { width: 34, height: 34, borderRadius: 6 },
-  referenceText: { flex: 1, fontSize: 13, color: colors.textSecondary },
+  referenceText: { flex: 1, ...Type.footnote, color: Color.secondary },
   input: {
     width: "100%",
     minHeight: 50,
     maxHeight: 100,
-    backgroundColor: colors.inputBg,
-    borderRadius: 14,
+    backgroundColor: alpha("#01030F", 0.35),
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
+    borderRadius: Radius.md,
     paddingHorizontal: 15,
-    paddingVertical: 15,
-    fontSize: 16,
-    color: colors.text,
+    paddingVertical: 14,
+    ...Type.callout,
+    color: Color.label,
     textAlignVertical: "top",
   },
   actions: { flexDirection: "row", gap: 10 },
   secondaryButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: colors.inputBg,
+    width: 52,
+    height: 52,
+    borderRadius: Radius.md,
+    backgroundColor: Color.surface2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
     justifyContent: "center",
     alignItems: "center",
   },
+  buttonWrap: { flex: 1 },
   button: {
     flex: 1,
-    backgroundColor: colors.accent,
-    height: 50,
-    borderRadius: 14,
+    height: 52,
+    borderRadius: Radius.md,
     justifyContent: "center",
     alignItems: "center",
+    overflow: "hidden",
   },
-  buttonDisabled: { backgroundColor: colors.inputBg },
+  buttonDisabled: { backgroundColor: Color.surface2 },
   buttonBusy: { flexDirection: "row", alignItems: "center", gap: 8 },
-  buttonText: {
-    color: colors.content,
-    fontSize: 17,
-    fontWeight: "600",
-    letterSpacing: -0.4,
-  },
-  buttonTextDisabled: { color: colors.placeholder },
+  buttonText: { color: Color.onAccent, ...Type.headline },
+  buttonTextDisabled: { color: Color.tertiary, ...Type.headline },
   controlsLocked: { opacity: 0.4 },
 });

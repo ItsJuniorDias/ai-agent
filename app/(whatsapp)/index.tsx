@@ -12,6 +12,7 @@ import {
   Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Color } from "@/constants/theme";
 
 const STORAGE_KEY = "@whatsapp_config";
 
@@ -59,7 +60,7 @@ export default function WhatsappScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="small" color="#007AFF" />
+        <ActivityIndicator size="small" color="#6E7BFF" />
       </View>
     );
   }
@@ -86,7 +87,7 @@ export default function WhatsappScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Permanent access token"
-                placeholderTextColor="#C7C7CD"
+                placeholderTextColor={Color.placeholder}
                 secureTextEntry // Esconde o token por segurança
                 autoCapitalize="none"
                 value={form.token}
@@ -102,7 +103,7 @@ export default function WhatsappScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Ex: 1045678901234"
-                placeholderTextColor="#C7C7CD"
+                placeholderTextColor={Color.placeholder}
                 keyboardType="numeric" // Teclado numérico
                 value={form.phoneId}
                 onChangeText={(val) => setForm({ ...form, phoneId: val })}
@@ -117,7 +118,7 @@ export default function WhatsappScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Ex: 5511999999999"
-                placeholderTextColor="#C7C7CD"
+                placeholderTextColor={Color.placeholder}
                 keyboardType="phone-pad" // Teclado otimizado para telefone
                 value={form.recipientNumber}
                 onChangeText={(val) =>
@@ -151,7 +152,7 @@ export default function WhatsappScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F2F2F7", // Cor de fundo padrão iOS
+    backgroundColor: Color.bg, // Cor de fundo padrão iOS
   },
   center: {
     flex: 1,
@@ -169,16 +170,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34,
     fontWeight: "800",
-    color: "#000",
+    color: Color.label,
     letterSpacing: 0.37,
   },
   subtitle: {
     fontSize: 15,
-    color: "#8E8E93",
+    color: Color.secondary,
     marginTop: 5,
   },
   group: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Color.surface,
     borderRadius: 12,
     overflow: "hidden", // Garante que o divider não vaze
     marginBottom: 25,
@@ -190,21 +191,21 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#8E8E93",
+    color: Color.secondary,
     marginBottom: 4,
   },
   input: {
     fontSize: 17,
-    color: "#000",
+    color: Color.label,
     paddingVertical: 5,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: "#C6C6C8",
+    backgroundColor: Color.hairline,
     marginLeft: 16,
   },
   button: {
-    backgroundColor: "#007AFF", // Azul Apple
+    backgroundColor: Color.accent, // Azul Apple
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
@@ -214,13 +215,13 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   buttonText: {
-    color: "#FFFFFF",
+    color: Color.onAccent,
     fontSize: 17,
     fontWeight: "600",
   },
   footerText: {
     textAlign: "center",
-    color: "#8E8E93",
+    color: Color.secondary,
     fontSize: 13,
     marginTop: 20,
     paddingHorizontal: 20,

@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Color } from "@/constants/theme";
 
 // Chaves para o AsyncStorage
 const STORAGE_KEYS = {
@@ -83,7 +84,7 @@ export default function SlackScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.safeArea, styles.center]}>
-        <ActivityIndicator size="large" color="#8E8E93" />
+        <ActivityIndicator size="large" color="#8B90B8" />
       </SafeAreaView>
     );
   }
@@ -110,7 +111,7 @@ export default function SlackScreen() {
             <TextInput
               style={styles.input}
               placeholder="xoxb-..."
-              placeholderTextColor="#C7C7CC"
+              placeholderTextColor={Color.placeholder}
               value={botToken}
               onChangeText={setBotToken}
               secureTextEntry // Hides the token
@@ -132,7 +133,7 @@ export default function SlackScreen() {
             <TextInput
               style={styles.input}
               placeholder="Ex: C01234567"
-              placeholderTextColor="#C7C7CC"
+              placeholderTextColor={Color.placeholder}
               value={channelId}
               onChangeText={setChannelId}
               autoCapitalize="characters"
@@ -169,7 +170,7 @@ export default function SlackScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F2F2F7", // Default iOS grouped background
+    backgroundColor: Color.bg, // Default iOS grouped background
   },
   center: {
     justifyContent: "center",
@@ -187,29 +188,29 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34, // iOS Large Title
     fontWeight: "bold",
-    color: "#000",
+    color: Color.label,
     marginBottom: 8,
   },
   description: {
     fontSize: 15,
-    color: "#8E8E93",
+    color: Color.secondary,
   },
   sectionTitle: {
     fontSize: 13,
-    color: "#8E8E93",
+    color: Color.secondary,
     marginLeft: 16,
     marginBottom: 8,
     textTransform: "uppercase",
   },
   sectionFooter: {
     fontSize: 13,
-    color: "#8E8E93",
+    color: Color.secondary,
     marginLeft: 16,
     marginTop: 8,
     marginBottom: 24,
   },
   section: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Color.surface,
     borderRadius: 10,
     overflow: "hidden",
     marginBottom: 24,
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Color.surface,
     minHeight: 44, // Minimum tap target size for iOS
   },
   borderBottom: {
@@ -229,12 +230,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 17,
-    color: "#000",
+    color: Color.label,
   },
   input: {
     flex: 1,
     fontSize: 17,
-    color: "#8E8E93",
+    color: Color.secondary,
     textAlign: "right",
     marginLeft: 16,
   },
@@ -251,7 +252,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   buttonText: {
-    color: "#FFFFFF",
+    color: Color.onAccent,
     fontSize: 17,
     fontWeight: "600",
   },

@@ -12,6 +12,7 @@ import {
   Alert, // <-- Importado para dar feedback de sucesso/erro
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // <-- Importação do AsyncStorage
+import { Color } from "@/constants/theme";
 
 export default function TeamsScreen() {
   const [clientId, setClientId] = useState("");
@@ -113,7 +114,7 @@ export default function TeamsScreen() {
           <TextInput
             style={styles.input}
             placeholder="Ex: 11111111-2222-3333-4444-555555555555"
-            placeholderTextColor="#999"
+            placeholderTextColor={Color.placeholder}
             value={clientId}
             onChangeText={setClientId}
             autoCapitalize="none"
@@ -124,7 +125,7 @@ export default function TeamsScreen() {
           <TextInput
             style={styles.input}
             placeholder="Ex: aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
-            placeholderTextColor="#999"
+            placeholderTextColor={Color.placeholder}
             value={tenantId}
             onChangeText={setTenantId}
             autoCapitalize="none"
@@ -135,7 +136,7 @@ export default function TeamsScreen() {
           <TextInput
             style={styles.input}
             placeholder="Insira o segredo do cliente"
-            placeholderTextColor="#999"
+            placeholderTextColor={Color.placeholder}
             value={clientSecret}
             onChangeText={setClientSecret}
             autoCapitalize="none"
@@ -157,57 +158,57 @@ export default function TeamsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F2F2F7" },
+  container: { flex: 1, backgroundColor: Color.bg },
   scrollContainer: { flexGrow: 1, padding: 24, justifyContent: "center" },
   header: { alignItems: "center", marginBottom: 24 },
   title: {
     fontSize: 28,
     fontWeight: "600",
-    color: "#000",
+    color: Color.label,
     marginBottom: 8,
     letterSpacing: 0.35,
   },
   description: {
     fontSize: 16,
     textAlign: "center",
-    color: "#8E8E93",
+    color: Color.secondary,
     lineHeight: 22,
   },
   tipContainer: {
-    backgroundColor: "#E5F0FF",
+    backgroundColor: Color.accentSoft,
     padding: 16,
     borderRadius: 12,
     marginBottom: 28,
     borderWidth: 1,
-    borderColor: "#CCE0FF",
+    borderColor: Color.hairline,
   },
   tipTitle: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#004080",
+    color: Color.secondary,
     marginBottom: 6,
   },
-  tipText: { fontSize: 14, color: "#004080", lineHeight: 20 },
+  tipText: { fontSize: 14, color: Color.secondary, lineHeight: 20 },
   linkText: {
     fontWeight: "bold",
     textDecorationLine: "underline",
-    color: "#0056b3",
+    color: Color.accent,
   },
   form: { width: "100%" },
   label: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#3A3A3C",
+    color: Color.secondary,
     marginBottom: 8,
     marginLeft: 4,
   },
   input: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Color.surface,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: "#000",
+    color: Color.label,
     marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
@@ -222,5 +223,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
   },
-  buttonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
+  buttonText: { color: Color.onAccent, fontSize: 17, fontWeight: "600" },
 });

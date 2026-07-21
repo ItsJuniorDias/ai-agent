@@ -27,6 +27,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
+import { Color } from "@/constants/theme";
 
 const STORAGE_KEY = "@notion_config";
 const NOTION_VERSION = "2022-06-28";
@@ -130,7 +131,7 @@ export default function NotionScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="ntn_… or secret_…"
-                placeholderTextColor="#C7C7CC"
+                placeholderTextColor={Color.placeholder}
                 value={token}
                 onChangeText={setToken}
                 secureTextEntry
@@ -151,7 +152,7 @@ export default function NotionScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Optional"
-                placeholderTextColor="#C7C7CC"
+                placeholderTextColor={Color.placeholder}
                 value={databaseId}
                 onChangeText={setDatabaseId}
                 autoCapitalize="none"
@@ -182,10 +183,10 @@ export default function NotionScreen() {
             disabled={!token.trim() || testing}
           >
             {testing ? (
-              <ActivityIndicator size="small" color="#007AFF" />
+              <ActivityIndicator size="small" color="#6E7BFF" />
             ) : (
               <>
-                <Feather name="zap" size={15} color="#007AFF" />
+                <Feather name="zap" size={15} color="#6E7BFF" />
                 <Text style={styles.secondaryText}>Test connection</Text>
               </>
             )}
@@ -203,21 +204,21 @@ export default function NotionScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#F2F2F7" },
+  safeArea: { flex: 1, backgroundColor: Color.bg },
   container: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 40 },
   header: { marginBottom: 32, paddingHorizontal: 8 },
-  title: { fontSize: 34, fontWeight: "bold", color: "#000", marginBottom: 8 },
-  description: { fontSize: 15, color: "#8E8E93" },
+  title: { fontSize: 34, fontWeight: "bold", color: Color.label, marginBottom: 8 },
+  description: { fontSize: 15, color: Color.secondary },
   sectionTitle: {
     fontSize: 13,
-    color: "#8E8E93",
+    color: Color.secondary,
     marginLeft: 16,
     marginBottom: 8,
     textTransform: "uppercase",
   },
   sectionFooter: {
     fontSize: 13,
-    color: "#8E8E93",
+    color: Color.secondary,
     marginLeft: 16,
     marginRight: 8,
     marginTop: 8,
@@ -225,7 +226,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   section: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Color.surface,
     borderRadius: 10,
     overflow: "hidden",
   },
@@ -235,26 +236,26 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Color.surface,
     minHeight: 44,
   },
-  label: { fontSize: 17, color: "#000" },
+  label: { fontSize: 17, color: Color.label },
   input: {
     flex: 1,
     fontSize: 17,
-    color: "#8E8E93",
+    color: Color.secondary,
     textAlign: "right",
     marginLeft: 16,
   },
   button: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Color.accent,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 8,
   },
-  buttonDisabled: { backgroundColor: "#D1D1D6" },
-  buttonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
+  buttonDisabled: { backgroundColor: Color.surface2 },
+  buttonText: { color: Color.onAccent, fontSize: 17, fontWeight: "600" },
   secondaryButton: {
     flexDirection: "row",
     justifyContent: "center",
@@ -263,7 +264,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginTop: 8,
   },
-  secondaryText: { color: "#007AFF", fontSize: 16, fontWeight: "500" },
+  secondaryText: { color: Color.accent, fontSize: 16, fontWeight: "500" },
   dangerButton: { paddingVertical: 12, alignItems: "center", marginTop: 8 },
-  dangerText: { color: "#FF3B30", fontSize: 16 },
+  dangerText: { color: Color.danger, fontSize: 16 },
 });

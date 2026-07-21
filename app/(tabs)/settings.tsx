@@ -22,6 +22,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   AGENT_MODELS,
@@ -37,12 +38,21 @@ import { clearMemory, countMemories } from "@/agent/memory";
 import { getPermissionStatus } from "@/services/notifications";
 import { hasApiKey } from "@/services/openrouter";
 import { INTEGRATION_META } from "@/components/agent-trace";
+import { Color, Palette, Radius, Spacing, Type } from "@/constants/theme";
 import type { AgentTool } from "@/agent/types";
 
 const STEP_OPTIONS = [4, 6, 8, 12, 16];
 
+/** Switch styling shared by every toggle — iris "on", quiet "off". */
+const switchProps = {
+  trackColor: { false: Color.surface3, true: Color.success },
+  ios_backgroundColor: Color.surface3,
+  thumbColor: Palette.white,
+};
+
 export default function Settings() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [config, setConfig] = useState<AgentConfig>(DEFAULT_CONFIG);
   const [tools, setTools] = useState<AgentTool[]>([]);
@@ -79,7 +89,6 @@ export default function Settings() {
   const update = async (patch: Partial<AgentConfig>) => {
     const next = await saveConfig(patch);
     setConfig(next);
-    // Ligar/desligar memória muda a lista de tools disponíveis.
     setTools(await resolveTools(next));
   };
 
@@ -102,27 +111,33 @@ export default function Settings() {
   };
 
   const connected = Array.from(
-    new Set(tools.filter((t) => t.integration !== "core").map((t) => t.integration)),
+    new Set(
+      tools.filter((t) => t.integration !== "core").map((t) => t.integration),
+    ),
   );
 
   if (loading) {
     return (
       <View style={[styles.container, styles.center]}>
-        <ActivityIndicator color="#8E8E93" />
+        <ActivityIndicator color={Color.secondary} />
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 48 }}>
-      <View style={styles.header}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 48 }}
+    >
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <Text style={styles.kicker}>PREFERENCES</Text>
         <Text style={styles.title}>Settings</Text>
       </View>
 
       {/* Chave ausente é a causa nº 1 de "o app não faz nada" */}
       {!hasApiKey() && (
         <View style={styles.banner}>
-          <Feather name="alert-triangle" size={18} color="#FF9500" />
+          <Feather name="alert-triangle" size={18} color={Color.warning} />
           <Text style={styles.bannerText}>
             No OpenRouter key found. Add EXPO_PUBLIC_OPENROUTER_API_KEY to your
             .env and restart with `npx expo start -c`.
@@ -139,8 +154,8 @@ export default function Settings() {
           activeOpacity={0.6}
         >
           <View style={styles.rowLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: "#34C759" }]}>
-              <Ionicons name="notifications" size={17} color="white" />
+            <View style={[styles.iconContainer, { backgroundColor: Color.success }]}>
+              <Ionicons name="notifications" size={17} color={Palette.white} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.rowText}>Proactive assistant</Text>
@@ -153,7 +168,7 @@ export default function Settings() {
               </Text>
             </View>
           </View>
-          <Feather name="chevron-right" size={18} color="#C7C7CC" />
+          <Feather name="chevron-right" size={18} color={Color.tertiary} />
         </TouchableOpacity>
       </View>
       <Text style={styles.footerText}>
@@ -176,7 +191,7 @@ export default function Settings() {
           >
             <View style={styles.rowLeft}>
               <View style={[styles.iconContainer, { backgroundColor: model.color }]}>
-                <Ionicons name="sparkles" size={16} color="white" />
+                <Ionicons name="sparkles" size={16} color={Palette.white} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowText}>{model.name}</Text>
@@ -186,7 +201,7 @@ export default function Settings() {
               </View>
             </View>
             {config.model === model.id && (
-              <Ionicons name="checkmark" size={22} color="#007AFF" />
+              <Ionicons name="checkmark" size={22} color={Color.accent} />
             )}
           </TouchableOpacity>
         ))}
@@ -201,8 +216,8 @@ export default function Settings() {
       <View style={styles.group}>
         <View style={styles.row}>
           <View style={styles.rowLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: "#FF9500" }]}>
-              <Ionicons name="shield-checkmark" size={17} color="white" />
+            <View style={[styles.iconContainer, { backgroundColor: Color.warning }]}>
+              <Ionicons name="shield-checkmark" size={17} color={Palette.white} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.rowText}>Ask before acting</Text>
@@ -212,8 +227,7 @@ export default function Settings() {
             </View>
           </View>
           <Switch
-            trackColor={{ false: "#767577", true: "#34C759" }}
-            ios_backgroundColor="#E9E9EA"
+            {...switchProps}
             onValueChange={(v) => update({ requireApproval: v })}
             value={config.requireApproval}
           />
@@ -221,8 +235,8 @@ export default function Settings() {
 
         <View style={styles.row}>
           <View style={styles.rowLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: "#007AFF" }]}>
-              <Ionicons name="globe" size={17} color="white" />
+            <View style={[styles.iconContainer, { backgroundColor: Color.accent }]}>
+              <Ionicons name="globe" size={17} color={Palette.white} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.rowText}>Web access</Text>
@@ -232,8 +246,7 @@ export default function Settings() {
             </View>
           </View>
           <Switch
-            trackColor={{ false: "#767577", true: "#34C759" }}
-            ios_backgroundColor="#E9E9EA"
+            {...switchProps}
             onValueChange={(v) => update({ webSearch: v })}
             value={config.webSearch}
           />
@@ -242,13 +255,12 @@ export default function Settings() {
         <View style={[styles.row, styles.noBorder]}>
           <View style={styles.rowLeft}>
             <View style={[styles.iconContainer, { backgroundColor: "#5856D6" }]}>
-              <Ionicons name="finger-print" size={18} color="white" />
+              <Ionicons name="finger-print" size={18} color={Palette.white} />
             </View>
             <Text style={styles.rowText}>Haptic feedback</Text>
           </View>
           <Switch
-            trackColor={{ false: "#767577", true: "#34C759" }}
-            ios_backgroundColor="#E9E9EA"
+            {...switchProps}
             onValueChange={(v) => update({ haptics: v })}
             value={config.haptics}
           />
@@ -267,10 +279,7 @@ export default function Settings() {
         {STEP_OPTIONS.map((n) => (
           <TouchableOpacity
             key={n}
-            style={[
-              styles.segment,
-              config.maxSteps === n && styles.segmentActive,
-            ]}
+            style={[styles.segment, config.maxSteps === n && styles.segmentActive]}
             onPress={() => update({ maxSteps: n })}
             activeOpacity={0.7}
           >
@@ -296,7 +305,7 @@ export default function Settings() {
         <View style={styles.row}>
           <View style={styles.rowLeft}>
             <View style={[styles.iconContainer, { backgroundColor: "#AF52DE" }]}>
-              <Ionicons name="library" size={17} color="white" />
+              <Ionicons name="library" size={17} color={Palette.white} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.rowText}>Long-term memory</Text>
@@ -306,8 +315,7 @@ export default function Settings() {
             </View>
           </View>
           <Switch
-            trackColor={{ false: "#767577", true: "#34C759" }}
-            ios_backgroundColor="#E9E9EA"
+            {...switchProps}
             onValueChange={(v) => update({ longTermMemory: v })}
             value={config.longTermMemory}
           />
@@ -320,13 +328,13 @@ export default function Settings() {
           activeOpacity={0.6}
         >
           <View style={styles.rowLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: "#FF3B30" }]}>
-              <Ionicons name="trash" size={17} color="white" />
+            <View style={[styles.iconContainer, { backgroundColor: Color.danger }]}>
+              <Ionicons name="trash" size={17} color={Palette.white} />
             </View>
             <Text
               style={[
                 styles.rowText,
-                { color: memoryCount === 0 ? "#C7C7CC" : "#FF3B30" },
+                { color: memoryCount === 0 ? Color.tertiary : Color.danger },
               ]}
             >
               Clear memory
@@ -350,7 +358,7 @@ export default function Settings() {
           >
             <View style={styles.rowLeft}>
               <View style={[styles.iconContainer, { backgroundColor: model.color }]}>
-                <Ionicons name="image" size={16} color="white" />
+                <Ionicons name="image" size={16} color={Palette.white} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowText}>{model.name}</Text>
@@ -360,7 +368,7 @@ export default function Settings() {
               </View>
             </View>
             {config.imageModel === model.id && (
-              <Ionicons name="checkmark" size={22} color="#007AFF" />
+              <Ionicons name="checkmark" size={22} color={Color.accent} />
             )}
           </TouchableOpacity>
         ))}
@@ -397,7 +405,7 @@ export default function Settings() {
                   <View
                     style={[styles.iconContainer, { backgroundColor: meta.color }]}
                   >
-                    <Feather name={meta.icon} size={16} color="white" />
+                    <Feather name={meta.icon} size={16} color={Palette.white} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.rowText}>{meta.label}</Text>
@@ -406,7 +414,7 @@ export default function Settings() {
                     </Text>
                   </View>
                 </View>
-                <Feather name="chevron-right" size={18} color="#C7C7CC" />
+                <Feather name="chevron-right" size={18} color={Color.tertiary} />
               </TouchableOpacity>
             );
           })
@@ -424,106 +432,114 @@ export default function Settings() {
         activeOpacity={0.6}
       >
         <Text style={styles.linkText}>Manage integrations</Text>
-        <Feather name="chevron-right" size={18} color="#007AFF" />
+        <Feather name="chevron-right" size={18} color={Color.accent} />
       </TouchableOpacity>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F2F2F7" },
+  container: { flex: 1, backgroundColor: Color.bg },
   center: { justifyContent: "center", alignItems: "center" },
-  header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 10 },
-  title: { fontSize: 34, fontWeight: "800", letterSpacing: -1 },
+  header: { paddingHorizontal: Spacing.xl, paddingBottom: Spacing.md },
+  kicker: {
+    ...Type.caption2,
+    color: Color.accent,
+    letterSpacing: 1.4,
+    marginBottom: 2,
+  },
+  title: { ...Type.largeTitle, color: Color.label },
   banner: {
     flexDirection: "row",
     gap: 10,
     alignItems: "flex-start",
-    backgroundColor: "#FFF4E5",
-    marginHorizontal: 16,
-    marginTop: 8,
+    backgroundColor: Color.warningSoft,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.warning,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.sm,
     padding: 14,
-    borderRadius: 12,
+    borderRadius: Radius.md,
   },
-  bannerText: { flex: 1, fontSize: 13, color: "#8A5A00", lineHeight: 18 },
+  bannerText: { flex: 1, ...Type.footnote, color: Color.label, lineHeight: 18 },
   sectionTitle: {
-    fontSize: 13,
-    color: "#6E6E73",
-    marginLeft: 36,
-    marginBottom: 8,
-    marginTop: 24,
-    fontWeight: "400",
+    ...Type.eyebrow,
+    color: Color.secondary,
+    marginLeft: Spacing.xxxl,
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.xxl,
   },
   group: {
-    backgroundColor: "white",
-    borderRadius: 12,
-    marginHorizontal: 16,
+    backgroundColor: Color.surface,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
+    marginHorizontal: Spacing.lg,
     overflow: "hidden",
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingVertical: 11,
+    paddingHorizontal: Spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#C6C6C8",
-    gap: 12,
+    borderBottomColor: Color.hairline,
+    gap: Spacing.md,
   },
   rowLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
   iconContainer: {
     width: 30,
     height: 30,
-    borderRadius: 7,
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: Spacing.md,
   },
-  rowText: { fontSize: 17, letterSpacing: -0.4, fontWeight: "400" },
-  rowSubtext: { fontSize: 12, color: "#8E8E93", marginTop: 1, lineHeight: 16 },
+  rowText: { ...Type.body, color: Color.label },
+  rowSubtext: { ...Type.caption, color: Color.secondary, marginTop: 1, lineHeight: 16 },
   noBorder: { borderBottomWidth: 0 },
   footerText: {
-    fontSize: 13,
-    color: "#8E8E93",
-    marginTop: 12,
-    paddingHorizontal: 36,
+    ...Type.footnote,
+    color: Color.secondary,
+    marginTop: Spacing.md,
+    paddingHorizontal: Spacing.xxxl,
     lineHeight: 18,
   },
-  warningText: { color: "#FF9500" },
+  warningText: { color: Color.warning },
   segmented: {
     flexDirection: "row",
-    backgroundColor: "#E3E3E8",
-    borderRadius: 9,
-    padding: 2,
-    marginHorizontal: 16,
-    gap: 2,
+    backgroundColor: Color.surface2,
+    borderRadius: Radius.sm,
+    padding: 3,
+    marginHorizontal: Spacing.lg,
+    gap: 3,
   },
   segment: {
     flex: 1,
-    paddingVertical: 7,
+    paddingVertical: 8,
     borderRadius: 7,
     alignItems: "center",
   },
   segmentActive: {
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
+    backgroundColor: Color.surface3,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairlineStrong,
   },
-  segmentText: { fontSize: 15, color: "#3C3C43", fontWeight: "500" },
-  segmentTextActive: { color: "#000000", fontWeight: "600" },
+  segmentText: { ...Type.subhead, color: Color.secondary, fontWeight: "500" },
+  segmentTextActive: { color: Color.label, fontWeight: "600" },
   linkRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "white",
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginTop: 24,
-    paddingHorizontal: 16,
+    backgroundColor: Color.surface,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.xxl,
+    paddingHorizontal: Spacing.lg,
     paddingVertical: 14,
   },
-  linkText: { fontSize: 17, color: "#007AFF" },
+  linkText: { ...Type.body, color: Color.accent },
 });

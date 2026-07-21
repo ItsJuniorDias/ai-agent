@@ -19,6 +19,9 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+
+import { GradientButton } from "@/components/ui/gradient-button";
+import { Color, MonoFont, Radius, Spacing, Type, alpha } from "@/constants/theme";
 import type { ApprovalDecision, ApprovalRequest } from "@/agent/types";
 import { INTEGRATION_META } from "./agent-trace";
 
@@ -26,9 +29,7 @@ import { INTEGRATION_META } from "./agent-trace";
 const LONG_FIELD_THRESHOLD = 60;
 
 function prettify(key: string): string {
-  return key
-    .replace(/_/g, " ")
-    .replace(/^./, (c) => c.toUpperCase());
+  return key.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
 }
 
 export function ToolApprovalSheet({
@@ -71,8 +72,10 @@ export function ToolApprovalSheet({
           <View style={styles.grabber} />
 
           <View style={styles.header}>
-            <View style={[styles.icon, { backgroundColor: `${meta.color}1A` }]}>
-              <Feather name={meta.icon} size={18} color={meta.color} />
+            <View
+              style={[styles.icon, { backgroundColor: alpha(meta.onDark, 0.16) }]}
+            >
+              <Feather name={meta.icon} size={18} color={meta.onDark} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.title}>{request.label}</Text>
@@ -82,9 +85,13 @@ export function ToolApprovalSheet({
             </View>
           </View>
 
-          <Text style={styles.warning}>
-            O agente quer executar esta ação. Ela é real e não dá para desfazer.
-          </Text>
+          <View style={styles.warning}>
+            <Feather name="alert-triangle" size={15} color={Color.warning} />
+            <Text style={styles.warningText}>
+              O agente quer executar esta ação. Ela é real e não dá para
+              desfazer.
+            </Text>
+          </View>
 
           <ScrollView
             style={styles.argsScroll}
@@ -120,21 +127,20 @@ export function ToolApprovalSheet({
 
           <View style={styles.actions}>
             <TouchableOpacity
-              style={[styles.button, styles.reject]}
+              style={styles.reject}
               onPress={() => decide("reject")}
               activeOpacity={0.7}
             >
               <Text style={styles.rejectText}>Recusar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.button, styles.approve]}
+            <GradientButton
+              label="Executar"
               onPress={() => decide("approve")}
-              activeOpacity={0.7}
-            >
-              <Feather name="check" size={17} color="#FFFFFF" />
-              <Text style={styles.approveText}>Executar</Text>
-            </TouchableOpacity>
+              icon={<Feather name="check" size={17} color={Color.onAccent} />}
+              height={50}
+              style={styles.approve}
+            />
           </View>
 
           <Text style={styles.footnote}>
@@ -149,27 +155,29 @@ export function ToolApprovalSheet({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: alpha("#01030F", 0.7),
     justifyContent: "flex-end",
   },
   sheet: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 20,
-    paddingBottom: Platform.OS === "ios" ? 34 : 20,
-    paddingTop: 8,
+    backgroundColor: Color.surface,
+    borderTopLeftRadius: Radius.xxl,
+    borderTopRightRadius: Radius.xxl,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairlineStrong,
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Platform.OS === "ios" ? 34 : Spacing.xl,
+    paddingTop: Spacing.sm,
     maxHeight: "82%",
   },
   grabber: {
     width: 36,
     height: 5,
     borderRadius: 3,
-    backgroundColor: "#D1D1D6",
+    backgroundColor: Color.hairlineStrong,
     alignSelf: "center",
-    marginBottom: 16,
+    marginBottom: Spacing.lg,
   },
-  header: { flexDirection: "row", alignItems: "center", gap: 12 },
+  header: { flexDirection: "row", alignItems: "center", gap: Spacing.md },
   icon: {
     width: 38,
     height: 38,
@@ -177,58 +185,66 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  title: { fontSize: 20, fontWeight: "600", color: "#000000" },
-  subtitle: { fontSize: 13, color: "#8E8E93", marginTop: 2 },
+  title: { ...Type.title3, color: Color.label },
+  subtitle: { ...Type.footnote, color: Color.secondary, marginTop: 2 },
   warning: {
-    fontSize: 14,
-    color: "#8E8E93",
-    marginTop: 14,
-    lineHeight: 19,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    backgroundColor: Color.warningSoft,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    marginTop: Spacing.lg,
   },
-  argsScroll: { marginTop: 14, maxHeight: 320 },
-  argsContent: { gap: 1 },
+  warningText: { flex: 1, ...Type.footnote, color: Color.label, lineHeight: 18 },
+  argsScroll: { marginTop: Spacing.lg, maxHeight: 320 },
+  argsContent: { gap: 1, borderRadius: Radius.md, overflow: "hidden" },
   argRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#F2F2F7",
+    backgroundColor: Color.surface2,
     paddingHorizontal: 14,
     paddingVertical: 11,
     gap: 12,
   },
   argRowLong: { flexDirection: "column", alignItems: "flex-start", gap: 4 },
-  argKey: { fontSize: 15, color: "#8E8E93" },
+  argKey: { ...Type.subhead, color: Color.secondary },
   argValue: {
-    fontSize: 15,
-    color: "#000000",
+    ...Type.subhead,
+    color: Color.label,
     flexShrink: 1,
     textAlign: "right",
   },
   argValueLong: {
     textAlign: "left",
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    fontFamily: MonoFont,
     fontSize: 12,
     lineHeight: 17,
   },
-  noArgs: { fontSize: 15, color: "#8E8E93", padding: 14 },
-  actions: { flexDirection: "row", gap: 12, marginTop: 20 },
-  button: {
-    flex: 1,
+  noArgs: { ...Type.subhead, color: Color.secondary, padding: 14 },
+  actions: {
     flexDirection: "row",
+    gap: Spacing.md,
+    marginTop: Spacing.xl,
+    alignItems: "stretch",
+  },
+  reject: {
+    flex: 1,
     height: 50,
-    borderRadius: 14,
+    borderRadius: Radius.lg,
+    backgroundColor: Color.surface2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
     justifyContent: "center",
     alignItems: "center",
-    gap: 6,
   },
-  reject: { backgroundColor: "#F2F2F7" },
-  rejectText: { fontSize: 17, fontWeight: "600", color: "#FF3B30" },
-  approve: { backgroundColor: "#007AFF" },
-  approveText: { fontSize: 17, fontWeight: "600", color: "#FFFFFF" },
+  rejectText: { ...Type.headline, color: Color.danger },
+  approve: { flex: 1 },
   footnote: {
-    fontSize: 12,
-    color: "#C7C7CC",
+    ...Type.caption,
+    color: Color.tertiary,
     textAlign: "center",
-    marginTop: 12,
+    marginTop: Spacing.md,
   },
 });

@@ -11,6 +11,7 @@ import {
   Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Color } from "@/constants/theme";
 
 export default function FigmaScreen() {
   const [personalAccessToken, setPersonalAccessToken] = useState("");
@@ -74,7 +75,7 @@ export default function FigmaScreen() {
             <TextInput
               style={styles.input}
               placeholder="Personal Access Token"
-              placeholderTextColor="#999"
+              placeholderTextColor={Color.placeholder}
               value={personalAccessToken}
               onChangeText={setPersonalAccessToken}
               secureTextEntry
@@ -90,7 +91,7 @@ export default function FigmaScreen() {
             <TextInput
               style={styles.input}
               placeholder="Ex: jF98xV..."
-              placeholderTextColor="#999"
+              placeholderTextColor={Color.placeholder}
               value={fileKey}
               onChangeText={setFileKey}
               autoCapitalize="none"
@@ -114,7 +115,7 @@ export default function FigmaScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F2F2F7",
+    backgroundColor: Color.bg,
   },
   container: {
     flex: 1,
@@ -127,16 +128,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34,
     fontWeight: "bold",
-    color: "#000",
+    color: Color.label,
     marginBottom: 8,
   },
   description: {
     fontSize: 16,
-    color: "#666",
+    color: Color.secondary,
     lineHeight: 22,
   },
   formGroup: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Color.surface,
     borderRadius: 10,
     marginHorizontal: 16,
     overflow: "hidden",
@@ -150,28 +151,28 @@ const styles = StyleSheet.create({
   label: {
     width: 80,
     fontSize: 16,
-    color: "#000",
+    color: Color.label,
     fontWeight: "400",
   },
   input: {
     flex: 1,
     fontSize: 16,
-    color: "#000",
+    color: Color.label,
   },
   separator: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: "#C6C6C8",
+    backgroundColor: Color.hairline,
     marginLeft: 16,
   },
   footerText: {
     fontSize: 13,
-    color: "#8E8E93",
+    color: Color.secondary,
     marginTop: 8,
     marginHorizontal: 32,
     textAlign: "center",
   },
   button: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Color.accent,
     borderRadius: 12,
     marginHorizontal: 16,
     marginTop: 32,
@@ -180,7 +181,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   buttonText: {
-    color: "#FFFFFF",
+    color: Color.onAccent,
     fontSize: 17,
     fontWeight: "600",
   },

@@ -1,16 +1,27 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import { DarkTheme, ThemeProvider, type Theme } from "@react-navigation/native";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import * as Notifications from "expo-notifications";
 import "react-native-reanimated";
 
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Color } from "@/constants/theme";
 import { initNotifications } from "@/services/notifications";
+
+// Single dark identity — the whole app lives on the #020625 canvas.
+const MidnightTheme: Theme = {
+  ...DarkTheme,
+  dark: true,
+  colors: {
+    ...DarkTheme.colors,
+    primary: Color.accent,
+    background: Color.bg,
+    card: Color.bg,
+    text: Color.label,
+    border: Color.hairline,
+    notification: Color.accent,
+  },
+};
 // Efeito colateral: registra o TaskManager.defineTask do assistente. Precisa
 // acontecer no escopo de módulo, antes de qualquer tela montar.
 import "@/services/background-tasks";
@@ -20,7 +31,6 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const router = useRouter();
 
   // Handler + canais de notificação, uma vez, cedo.
@@ -42,8 +52,10 @@ export default function RootLayout() {
   }, [router]);
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
+    <ThemeProvider value={MidnightTheme}>
+      <Stack
+        screenOptions={{ contentStyle: { backgroundColor: Color.bg } }}
+      >
         <Stack.Screen name="(app)/index" options={{ headerShown: false }} />
         <Stack.Screen name="(jira)/index" options={{ headerShown: false }} />
         <Stack.Screen name="(github)/index" options={{ headerShown: false }} />
@@ -77,7 +89,7 @@ export default function RootLayout() {
 
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
     </ThemeProvider>
   );
 }

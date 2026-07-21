@@ -15,6 +15,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { Color } from "@/constants/theme";
 
 const STORAGE_KEYS = {
   EMAIL: "@jira_email",
@@ -96,7 +97,7 @@ export default function JiraSettings() {
                   onChangeText={setEmail}
                   autoCapitalize="none"
                   keyboardType="email-address"
-                  placeholderTextColor="#C7C7CC"
+                  placeholderTextColor={Color.placeholder}
                 />
               </View>
 
@@ -107,7 +108,7 @@ export default function JiraSettings() {
                   value={token}
                   onChangeText={setToken}
                   secureTextEntry
-                  placeholderTextColor="#C7C7CC"
+                  placeholderTextColor={Color.placeholder}
                 />
               </View>
             </View>
@@ -129,7 +130,7 @@ export default function JiraSettings() {
                   value={domain}
                   onChangeText={setDomain}
                   autoCapitalize="none"
-                  placeholderTextColor="#C7C7CC"
+                  placeholderTextColor={Color.placeholder}
                 />
               </View>
             </View>
@@ -165,7 +166,7 @@ export default function JiraSettings() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F2F2F7", // iOS System Background
+    backgroundColor: Color.bg, // iOS System Background
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -177,12 +178,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34,
     fontWeight: "700",
-    color: "#000",
+    color: Color.label,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 15,
-    color: "#8E8E93",
+    color: Color.secondary,
     marginTop: 8,
     lineHeight: 20,
   },
@@ -191,13 +192,13 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 13,
-    color: "#6e6e73",
+    color: Color.secondary,
     marginLeft: 16,
     marginBottom: 8,
     fontWeight: "400",
   },
   group: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Color.surface,
     borderRadius: 12,
     overflow: "hidden", // Ensures children don't bleed out of radius
   },
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
   input: {
     height: 48,
     fontSize: 17,
-    color: "#000",
+    color: Color.label,
   },
   domainContainer: {
     flexDirection: "row",
@@ -220,17 +221,17 @@ const styles = StyleSheet.create({
     paddingRight: 16,
   },
   domainSuffix: {
-    color: "#8E8E93",
+    color: Color.secondary,
     fontSize: 17,
   },
   footerText: {
     fontSize: 13,
-    color: "#8E8E93",
+    color: Color.secondary,
     marginTop: 8,
     marginLeft: 16,
   },
   button: {
-    backgroundColor: "#007AFF", // San Francisco Blue
+    backgroundColor: Color.accent, // San Francisco Blue
     height: 52,
     borderRadius: 12,
     justifyContent: "center",
@@ -242,10 +243,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   buttonDisabled: {
-    backgroundColor: "#A2CFFE",
+    backgroundColor: Color.accentSoft,
   },
   buttonText: {
-    color: "#FFF",
+    color: Color.onAccent,
     fontSize: 17,
     fontWeight: "600",
   },
@@ -254,5 +255,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  secondaryButtonText: { color: "#007AFF", fontSize: 17, fontWeight: "400" },
+  secondaryButtonText: { color: Color.accent, fontSize: 17, fontWeight: "400" },
 });

@@ -1,5 +1,5 @@
 /**
- * Tela de chat — agora um front-end para o agente.
+ * Tela de chat — front-end do agente.
  *
  * O que saiu daqui:
  *  - Os polyfills globais no topo do arquivo (Buffer, TextEncoder,
@@ -10,7 +10,8 @@
  *  - O `switch (activeIntegration)` e o botão de ação fixa.
  *  - A memória vetorial inline.
  *
- * O que entrou: `useAgent()`. A tela só desenha.
+ * O que entrou: `useAgent()` e a barra de composição em liquid glass. A tela
+ * só desenha.
  */
 
 import Voice, {
@@ -25,7 +26,6 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -33,6 +33,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import Markdown from "react-native-markdown-display";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
@@ -41,8 +43,19 @@ import { Feather } from "@expo/vector-icons";
 import { useAgent } from "@/hooks/use-agent";
 import { AgentTrace, LiveTrace } from "@/components/agent-trace";
 import { ToolApprovalSheet } from "@/components/tool-approval-sheet";
+import { GlassSurface } from "@/components/ui/glass-surface";
+import { AuroraGlow } from "@/components/ui/aurora";
 import { hasApiKey } from "@/services/openrouter";
 import { loadConfig, STORAGE_KEYS } from "@/services/config";
+import {
+  Color,
+  MonoFont,
+  Palette,
+  Radius,
+  Spacing,
+  Type,
+  alpha,
+} from "@/constants/theme";
 import type { AgentStep, ChatMessage, StoredConversation } from "@/agent/types";
 
 const SUGGESTIONS = [
@@ -65,6 +78,7 @@ export default function ChatScreen() {
     conversationId?: string;
   }>();
 
+  const insets = useSafeAreaInsets();
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState(
@@ -157,7 +171,8 @@ export default function ChatScreen() {
         const raw = await AsyncStorage.getItem(STORAGE_KEYS.chatHistory);
         const all: StoredConversation[] = raw ? JSON.parse(raw) : [];
 
-        const firstUser = updated.find((m) => m.role === "user")?.text ?? "New Chat";
+        const firstUser =
+          updated.find((m) => m.role === "user")?.text ?? "New Chat";
         const title =
           firstUser.length > 30 ? `${firstUser.slice(0, 30)}...` : firstUser;
 
@@ -220,10 +235,7 @@ export default function ChatScreen() {
       }
     } catch (err: any) {
       if (err?.name === "AbortError") {
-        setMessages([
-          ...withUser,
-          { role: "model", text: "_Cancelado._" },
-        ]);
+        setMessages([...withUser, { role: "model", text: "_Cancelado._" }]);
         return;
       }
 
@@ -272,16 +284,21 @@ export default function ChatScreen() {
     );
   };
 
+  const canSend = !!prompt.trim() && !agent.running;
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <View style={styles.header}>
-          <Text style={styles.largeTitle}>Agent</Text>
+        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+          <View>
+            <Text style={styles.kicker}>ON DUTY</Text>
+            <Text style={styles.largeTitle}>Agent</Text>
+          </View>
           {messages.length > 0 && (
-            <TouchableOpacity onPress={clearChat}>
+            <TouchableOpacity onPress={clearChat} hitSlop={8}>
               <Text style={styles.clearButtonText}>Clear</Text>
             </TouchableOpacity>
           )}
@@ -290,11 +307,12 @@ export default function ChatScreen() {
         <ScrollView
           ref={scrollRef}
           style={styles.chatBox}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{ paddingBottom: 24, paddingTop: 8 }}
           onContentSizeChange={() =>
             scrollRef.current?.scrollToEnd({ animated: true })
           }
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           {messages.length > 0 ? (
             messages.map((msg, index) => {
@@ -307,7 +325,9 @@ export default function ChatScreen() {
                   onLongPress={() => copyToClipboard(msg.text)}
                   style={[
                     styles.bubble,
-                    msg.role === "user" ? styles.userBubble : styles.modelBubble,
+                    msg.role === "user"
+                      ? styles.userBubble
+                      : styles.modelBubble,
                   ]}
                 >
                   {msg.role === "user" ? (
@@ -332,12 +352,15 @@ export default function ChatScreen() {
             })
           ) : (
             <View style={styles.emptyState}>
-              <View style={styles.emptyIcon}>
-                <Feather name="cpu" size={26} color="#007AFF" />
+              <View style={styles.emptyMark}>
+                <AuroraGlow size={200} style={styles.emptyGlow} />
+                <View style={styles.emptyIcon}>
+                  <Feather name="command" size={26} color={Color.label} />
+                </View>
               </View>
               <Text style={styles.hintText}>What should I do for you?</Text>
               <Text style={styles.hintSub}>
-                I can use your connected tools on my own.
+                I can reason across your connected tools and act on my own.
               </Text>
 
               <View style={styles.suggestions}>
@@ -348,6 +371,11 @@ export default function ChatScreen() {
                     onPress={() => setPrompt(s)}
                     activeOpacity={0.7}
                   >
+                    <Feather
+                      name="arrow-up-right"
+                      size={15}
+                      color={Color.accent}
+                    />
                     <Text style={styles.chipText}>{s}</Text>
                   </TouchableOpacity>
                 ))}
@@ -355,26 +383,37 @@ export default function ChatScreen() {
             </View>
           )}
 
-          {/* Turno em andamento: trace ao vivo dentro de uma bolha */}
+          {/* Turno em andamento: trace ao vivo dentro de uma bolha destacada */}
           {agent.running && (
-            <View style={[styles.bubble, styles.modelBubble, styles.liveBubble]}>
+            <View style={[styles.bubble, styles.liveBubble]}>
               <LiveTrace steps={agent.steps} status={agent.status} />
             </View>
           )}
         </ScrollView>
 
-        <View style={styles.inputArea}>
-          <View style={styles.inputWrapper}>
+        {/* -- Barra de composição em liquid glass ------------------------- */}
+        <View
+          style={[
+            styles.composerDock,
+            { paddingBottom: Math.max(insets.bottom, Spacing.md) },
+          ]}
+        >
+          <GlassSurface radius={Radius.xxl} style={styles.composer}>
             <TouchableOpacity
               onPress={toggleListening}
               style={styles.voiceButton}
               disabled={agent.running}
+              activeOpacity={0.7}
             >
               <Feather
                 name="mic"
                 size={20}
                 color={
-                  agent.running ? "#C7C7CC" : isListening ? "#FF3B30" : "#007AFF"
+                  agent.running
+                    ? Color.quaternary
+                    : isListening
+                      ? Color.danger
+                      : Color.accent
                 }
               />
             </TouchableOpacity>
@@ -382,7 +421,7 @@ export default function ChatScreen() {
             <TextInput
               style={styles.input}
               placeholder="Ask the agent to do something"
-              placeholderTextColor="#A9A9AC"
+              placeholderTextColor={Color.placeholder}
               value={prompt}
               onChangeText={setPrompt}
               multiline
@@ -391,24 +430,35 @@ export default function ChatScreen() {
 
             {agent.running ? (
               <TouchableOpacity
-                style={[styles.sendButton, styles.stopButton]}
+                style={styles.stopButton}
                 onPress={agent.cancel}
+                activeOpacity={0.8}
               >
                 <View style={styles.stopIcon} />
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                style={[
-                  styles.sendButton,
-                  !prompt.trim() && styles.sendButtonDisabled,
-                ]}
                 onPress={send}
-                disabled={!prompt.trim()}
+                disabled={!canSend}
+                activeOpacity={0.85}
               >
-                <Text style={styles.sendIcon}>↑</Text>
+                {canSend ? (
+                  <LinearGradient
+                    colors={Color.auroraButton as [string, string, ...string[]]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.sendButton}
+                  >
+                    <Feather name="arrow-up" size={20} color={Color.onAccent} />
+                  </LinearGradient>
+                ) : (
+                  <View style={[styles.sendButton, styles.sendButtonDisabled]}>
+                    <Feather name="arrow-up" size={20} color={Color.tertiary} />
+                  </View>
+                )}
               </TouchableOpacity>
             )}
-          </View>
+          </GlassSurface>
         </View>
       </KeyboardAvoidingView>
 
@@ -417,163 +467,203 @@ export default function ChatScreen() {
         onDecide={agent.resolveApproval}
         haptics={haptics}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: Color.bg },
   container: { flex: 1 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    backgroundColor: "#FFFFFF",
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.sm,
   },
-  largeTitle: {
-    fontSize: 34,
-    fontWeight: "700",
-    color: "#000000",
-    letterSpacing: -0.5,
+  kicker: {
+    ...Type.caption2,
+    color: Color.accent,
+    letterSpacing: 1.4,
+    marginBottom: 2,
   },
-  clearButtonText: {
-    color: "#007AFF",
-    fontSize: 17,
-    fontWeight: "400",
-    marginBottom: 6,
-  },
-  chatBox: {
-    flex: 1,
-    paddingHorizontal: 12,
-    borderTopWidth: 0.5,
-    borderTopColor: "#C6C6C8",
-  },
+  largeTitle: { ...Type.largeTitle, color: Color.label },
+  clearButtonText: { ...Type.body, color: Color.accent, marginBottom: 4 },
+  chatBox: { flex: 1, paddingHorizontal: Spacing.lg },
+
   emptyState: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: "30%",
-    paddingHorizontal: 20,
+    marginTop: "24%",
+    paddingHorizontal: Spacing.xl,
   },
+  emptyMark: {
+    width: 200,
+    height: 120,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.sm,
+  },
+  emptyGlow: { position: "absolute" },
   emptyIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#007AFF1A",
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: Color.surface2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairlineStrong,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
   },
-  hintText: { fontSize: 22, fontWeight: "600", color: "#000000" },
+  hintText: { ...Type.title2, color: Color.label },
   hintSub: {
-    fontSize: 15,
-    color: "#8E8E93",
+    ...Type.subhead,
+    color: Color.secondary,
     marginTop: 6,
     textAlign: "center",
+    lineHeight: 21,
   },
-  suggestions: { marginTop: 28, gap: 8, alignSelf: "stretch" },
+  suggestions: { marginTop: 28, gap: Spacing.sm, alignSelf: "stretch" },
   chip: {
-    backgroundColor: "#F2F2F7",
-    borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: Color.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
+    borderRadius: Radius.lg,
+    paddingVertical: 13,
+    paddingHorizontal: Spacing.lg,
   },
-  chipText: { fontSize: 15, color: "#3C3C43" },
+  chipText: { ...Type.subhead, color: Color.label, flex: 1 },
+
   bubble: {
     maxWidth: "88%",
     paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    marginVertical: 4,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.xl,
+    marginVertical: 5,
   },
   userBubble: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Color.accent,
     alignSelf: "flex-end",
-    borderBottomRightRadius: 4,
-    maxWidth: "80%",
+    borderBottomRightRadius: 6,
+    maxWidth: "82%",
   },
   modelBubble: {
-    backgroundColor: "#E9E9EB",
+    backgroundColor: Color.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
     alignSelf: "flex-start",
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: 6,
   },
-  liveBubble: { paddingVertical: 6, minWidth: "60%" },
-  userText: { fontSize: 17, color: "#FFFFFF", lineHeight: 22 },
+  liveBubble: {
+    alignSelf: "flex-start",
+    backgroundColor: Color.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.accentSoft,
+    borderBottomLeftRadius: 6,
+    paddingVertical: 8,
+    minWidth: "62%",
+  },
+  userText: { ...Type.body, color: Color.onAccent, lineHeight: 23 },
   generatedImage: {
     width: "100%",
     aspectRatio: 1,
-    borderRadius: 12,
-    marginBottom: 8,
-    backgroundColor: "#D1D1D6",
+    borderRadius: Radius.md,
+    marginBottom: Spacing.sm,
+    backgroundColor: Color.surface3,
   },
-  inputArea: {
-    paddingHorizontal: 12,
-    paddingBottom: Platform.OS === "ios" ? 8 : 15,
-    paddingTop: 8,
-    borderTopWidth: 0.5,
-    borderTopColor: "#C6C6C8",
+
+  composerDock: {
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
   },
-  inputWrapper: { flexDirection: "row", alignItems: "flex-end" },
+  composer: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    gap: 4,
+  },
   input: {
     flex: 1,
-    backgroundColor: "#F2F2F7",
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 10,
-    fontSize: 17,
-    color: "#000000",
+    ...Type.body,
+    color: Color.label,
+    paddingHorizontal: 6,
+    paddingTop: Platform.OS === "ios" ? 10 : 6,
+    paddingBottom: Platform.OS === "ios" ? 10 : 6,
     minHeight: 40,
-    maxHeight: 150,
+    maxHeight: 140,
   },
   voiceButton: {
-    padding: 10,
+    width: 40,
+    height: 40,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 4,
   },
   sendButton: {
-    backgroundColor: "#007AFF",
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginLeft: 8,
-    marginBottom: 4,
+    width: 40,
+    height: 40,
+    borderRadius: Radius.pill,
     justifyContent: "center",
     alignItems: "center",
   },
-  sendButtonDisabled: { backgroundColor: "#E9E9EB" },
-  stopButton: { backgroundColor: "#3C3C43" },
-  stopIcon: {
-    width: 11,
-    height: 11,
-    borderRadius: 2,
-    backgroundColor: "#FFFFFF",
+  sendButtonDisabled: {
+    backgroundColor: Color.surface3,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
   },
-  sendIcon: { color: "#FFFFFF", fontSize: 20, fontWeight: "600" },
+  stopButton: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.pill,
+    backgroundColor: Color.surface3,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairlineStrong,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  stopIcon: {
+    width: 12,
+    height: 12,
+    borderRadius: 3,
+    backgroundColor: Color.label,
+  },
 });
 
 const markdownStyles = StyleSheet.create({
-  body: { fontSize: 17, color: "#000000", lineHeight: 22 },
+  body: { ...Type.body, color: Color.label, lineHeight: 23 },
+  strong: { fontWeight: "700", color: Color.label },
+  link: { color: Color.accent },
+  bullet_list_icon: { color: Color.accent },
   code_inline: {
-    backgroundColor: "rgba(0,0,0,0.05)",
-    color: "#D70015",
-    borderRadius: 4,
-    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    backgroundColor: Color.accentSoft,
+    color: Palette.cyan,
+    borderRadius: 5,
+    paddingHorizontal: 5,
+    fontFamily: MonoFont,
+    fontSize: 15,
   },
   code_block: {
-    backgroundColor: "#000000",
-    color: "#FFFFFF",
-    borderRadius: 10,
+    backgroundColor: alpha(Palette.black, 0.35),
+    color: Color.label,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
     padding: 12,
     marginVertical: 8,
+    fontFamily: MonoFont,
   },
   fence: {
-    backgroundColor: "#1C1C1E",
-    color: "#FFFFFF",
-    borderRadius: 10,
+    backgroundColor: alpha(Palette.black, 0.35),
+    color: Color.label,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
     padding: 12,
+    marginVertical: 8,
+    fontFamily: MonoFont,
   },
 });

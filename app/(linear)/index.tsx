@@ -26,6 +26,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
+import { Color } from "@/constants/theme";
 
 const STORAGE_KEY = "@linear_config";
 const LINEAR_API = "https://api.linear.app/graphql";
@@ -143,7 +144,7 @@ export default function LinearScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="lin_api_…"
-                placeholderTextColor="#C7C7CC"
+                placeholderTextColor={Color.placeholder}
                 value={apiKey}
                 onChangeText={setApiKey}
                 secureTextEntry
@@ -174,7 +175,7 @@ export default function LinearScreen() {
                     <Text style={styles.sublabel}>{team.key}</Text>
                   </View>
                   {teamId === team.id && (
-                    <Feather name="check" size={19} color="#007AFF" />
+                    <Feather name="check" size={19} color="#6E7BFF" />
                   )}
                 </TouchableOpacity>
               ))
@@ -184,7 +185,7 @@ export default function LinearScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Load teams below"
-                  placeholderTextColor="#C7C7CC"
+                  placeholderTextColor={Color.placeholder}
                   value={teamId}
                   onChangeText={setTeamId}
                   autoCapitalize="none"
@@ -205,10 +206,10 @@ export default function LinearScreen() {
             disabled={!apiKey.trim() || loading}
           >
             {loading ? (
-              <ActivityIndicator size="small" color="#007AFF" />
+              <ActivityIndicator size="small" color="#6E7BFF" />
             ) : (
               <>
-                <Feather name="download-cloud" size={15} color="#007AFF" />
+                <Feather name="download-cloud" size={15} color="#6E7BFF" />
                 <Text style={styles.secondaryText}>Load my teams</Text>
               </>
             )}
@@ -234,59 +235,59 @@ export default function LinearScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#F2F2F7" },
+  safeArea: { flex: 1, backgroundColor: Color.bg },
   container: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 40 },
   header: { marginBottom: 32, paddingHorizontal: 8 },
-  title: { fontSize: 34, fontWeight: "bold", color: "#000", marginBottom: 8 },
-  description: { fontSize: 15, color: "#8E8E93" },
+  title: { fontSize: 34, fontWeight: "bold", color: Color.label, marginBottom: 8 },
+  description: { fontSize: 15, color: Color.secondary },
   sectionTitle: {
     fontSize: 13,
-    color: "#8E8E93",
+    color: Color.secondary,
     marginLeft: 16,
     marginBottom: 8,
     textTransform: "uppercase",
   },
   sectionFooter: {
     fontSize: 13,
-    color: "#8E8E93",
+    color: Color.secondary,
     marginLeft: 16,
     marginRight: 8,
     marginTop: 8,
     marginBottom: 24,
     lineHeight: 18,
   },
-  section: { backgroundColor: "#FFFFFF", borderRadius: 10, overflow: "hidden" },
+  section: { backgroundColor: Color.surface, borderRadius: 10, overflow: "hidden" },
   row: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Color.surface,
     minHeight: 44,
   },
   borderBottom: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#C6C6C8",
   },
-  label: { fontSize: 17, color: "#000" },
-  sublabel: { fontSize: 13, color: "#8E8E93", marginTop: 1 },
+  label: { fontSize: 17, color: Color.label },
+  sublabel: { fontSize: 13, color: Color.secondary, marginTop: 1 },
   input: {
     flex: 1,
     fontSize: 17,
-    color: "#8E8E93",
+    color: Color.secondary,
     textAlign: "right",
     marginLeft: 16,
   },
   button: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Color.accent,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 8,
   },
-  buttonDisabled: { backgroundColor: "#D1D1D6" },
-  buttonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
+  buttonDisabled: { backgroundColor: Color.surface2 },
+  buttonText: { color: Color.onAccent, fontSize: 17, fontWeight: "600" },
   secondaryButton: {
     flexDirection: "row",
     justifyContent: "center",
@@ -294,7 +295,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 14,
   },
-  secondaryText: { color: "#007AFF", fontSize: 16, fontWeight: "500" },
+  secondaryText: { color: Color.accent, fontSize: 16, fontWeight: "500" },
   dangerButton: { paddingVertical: 12, alignItems: "center", marginTop: 8 },
-  dangerText: { color: "#FF3B30", fontSize: 16 },
+  dangerText: { color: Color.danger, fontSize: 16 },
 });

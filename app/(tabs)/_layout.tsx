@@ -18,7 +18,7 @@ import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 
 export default function TabLayout() {
   return (
-    <NativeTabs tintColor="#007AFF">
+    <NativeTabs tintColor="#6E7BFF">
       {/* Conversa com o agente — a tela principal. */}
       <NativeTabs.Trigger name="index">
         <Label>Ask AI</Label>

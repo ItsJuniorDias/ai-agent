@@ -16,6 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { Color } from "@/constants/theme";
 
 export default function GitHubScreen() {
   const router = useRouter();
@@ -90,7 +91,7 @@ export default function GitHubScreen() {
           {/* Header Minimalista */}
           <View style={styles.header}>
             <View style={styles.iconContainer}>
-              <Ionicons name="logo-github" size={44} color="#181717" />
+              <Ionicons name="logo-github" size={44} color="#E6EDF3" />
             </View>
             <Text style={styles.title}>GitHub Setup</Text>
             <Text style={styles.subtitle}>
@@ -106,7 +107,7 @@ export default function GitHubScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="API Base URL"
-                  placeholderTextColor="#C7C7CC"
+                  placeholderTextColor={Color.placeholder}
                   value={config.baseUrl}
                   onChangeText={(txt) => setConfig({ ...config, baseUrl: txt })}
                   autoCapitalize="none"
@@ -118,7 +119,7 @@ export default function GitHubScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Personal Access Token"
-                  placeholderTextColor="#C7C7CC"
+                  placeholderTextColor={Color.placeholder}
                   value={config.accessToken}
                   onChangeText={(txt) =>
                     setConfig({ ...config, accessToken: txt })
@@ -132,7 +133,7 @@ export default function GitHubScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Owner (ex: facebook)"
-                  placeholderTextColor="#C7C7CC"
+                  placeholderTextColor={Color.placeholder}
                   value={config.repoOwner}
                   onChangeText={(txt) =>
                     setConfig({ ...config, repoOwner: txt })
@@ -145,7 +146,7 @@ export default function GitHubScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Repository (ex: react-native)"
-                  placeholderTextColor="#C7C7CC"
+                  placeholderTextColor={Color.placeholder}
                   value={config.repoName}
                   onChangeText={(txt) =>
                     setConfig({ ...config, repoName: txt })
@@ -168,7 +169,7 @@ export default function GitHubScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Source Branch / Head (ex: feature/nova-tela)"
-                  placeholderTextColor="#C7C7CC"
+                  placeholderTextColor={Color.placeholder}
                   value={config.sourceBranch}
                   onChangeText={(txt) =>
                     setConfig({ ...config, sourceBranch: txt })
@@ -181,7 +182,7 @@ export default function GitHubScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Target Branch / Base (ex: main)"
-                  placeholderTextColor="#C7C7CC"
+                  placeholderTextColor={Color.placeholder}
                   value={config.targetBranch}
                   onChangeText={(txt) =>
                     setConfig({ ...config, targetBranch: txt })
@@ -194,7 +195,7 @@ export default function GitHubScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Título do PR"
-                  placeholderTextColor="#C7C7CC"
+                  placeholderTextColor={Color.placeholder}
                   value={config.title}
                   onChangeText={(txt) => setConfig({ ...config, title: txt })}
                 />
@@ -204,7 +205,7 @@ export default function GitHubScreen() {
                 <TextInput
                   style={[styles.input, styles.textArea]}
                   placeholder="Descrição do PR"
-                  placeholderTextColor="#C7C7CC"
+                  placeholderTextColor={Color.placeholder}
                   value={config.description}
                   onChangeText={(txt) =>
                     setConfig({ ...config, description: txt })
@@ -246,7 +247,7 @@ export default function GitHubScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#F2F2F7" },
+  safeArea: { flex: 1, backgroundColor: Color.bg },
   container: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingTop: 40 },
 
@@ -254,7 +255,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 80,
     height: 80,
-    backgroundColor: "#FFF",
+    backgroundColor: Color.surface,
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
@@ -268,12 +269,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#000",
+    color: Color.label,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 15,
-    color: "#636366",
+    color: Color.secondary,
     textAlign: "center",
     marginTop: 4,
   },
@@ -281,13 +282,13 @@ const styles = StyleSheet.create({
   section: { marginBottom: 32 },
   sectionLabel: {
     fontSize: 13,
-    color: "#6e6e73",
+    color: Color.secondary,
     marginLeft: 16,
     marginBottom: 8,
     fontWeight: "400",
   },
   inputGroup: {
-    backgroundColor: "#FFF",
+    backgroundColor: Color.surface,
     borderRadius: 12,
     overflow: "hidden",
   },
@@ -302,32 +303,32 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 12,
   },
-  input: { fontSize: 17, color: "#000" },
+  input: { fontSize: 17, color: Color.label },
   textArea: {
     height: "100%",
     width: "100%",
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: "#C6C6C8",
+    backgroundColor: Color.hairline,
     marginLeft: 16,
   },
-  footerText: { fontSize: 13, color: "#8E8E93", marginTop: 8, marginLeft: 16 },
+  footerText: { fontSize: 13, color: Color.secondary, marginTop: 8, marginLeft: 16 },
 
   actionContainer: { gap: 12 },
   primaryButton: {
-    backgroundColor: "#007AFF", // Azul estilo iOS
+    backgroundColor: Color.accent, // Azul estilo iOS
     height: 52,
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
   },
-  primaryButtonText: { color: "#FFF", fontSize: 17, fontWeight: "600" },
+  primaryButtonText: { color: Color.onAccent, fontSize: 17, fontWeight: "600" },
   buttonDisabled: { opacity: 0.5 },
   secondaryButton: {
     height: 52,
     justifyContent: "center",
     alignItems: "center",
   },
-  secondaryButtonText: { color: "#007AFF", fontSize: 17, fontWeight: "400" },
+  secondaryButtonText: { color: Color.accent, fontSize: 17, fontWeight: "400" },
 });

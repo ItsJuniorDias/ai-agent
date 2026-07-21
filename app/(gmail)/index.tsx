@@ -34,6 +34,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
+import { Color } from "@/constants/theme";
 
 const EMAIL_KEY = "@gmail_email";
 const TOKEN_KEY = "@gmail_access_token";
@@ -157,7 +158,7 @@ export default function GmailScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="you@gmail.com"
-                placeholderTextColor="#C7C7CC"
+                placeholderTextColor={Color.placeholder}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -178,7 +179,7 @@ export default function GmailScreen() {
               <TextInput
                 style={styles.stackedInput}
                 placeholder="ya29.…"
-                placeholderTextColor="#C7C7CC"
+                placeholderTextColor={Color.placeholder}
                 value={token}
                 onChangeText={setToken}
                 autoCapitalize="none"
@@ -198,7 +199,7 @@ export default function GmailScreen() {
             style={styles.linkRow}
             onPress={() => Linking.openURL(PLAYGROUND_URL)}
           >
-            <Feather name="external-link" size={16} color="#007AFF" />
+            <Feather name="external-link" size={16} color="#6E7BFF" />
             <Text style={styles.linkText}>Get a token in OAuth Playground</Text>
           </TouchableOpacity>
 
@@ -233,28 +234,28 @@ export default function GmailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#F2F2F7" },
+  safeArea: { flex: 1, backgroundColor: Color.bg },
   container: { flex: 1, paddingHorizontal: 16, paddingTop: 20 },
   header: { marginBottom: 32, paddingHorizontal: 8 },
-  title: { fontSize: 34, fontWeight: "bold", color: "#000", marginBottom: 8 },
-  description: { fontSize: 15, color: "#8E8E93" },
+  title: { fontSize: 34, fontWeight: "bold", color: Color.label, marginBottom: 8 },
+  description: { fontSize: 15, color: Color.secondary },
   sectionTitle: {
     fontSize: 13,
-    color: "#8E8E93",
+    color: Color.secondary,
     marginLeft: 16,
     marginBottom: 8,
     textTransform: "uppercase",
   },
   sectionFooter: {
     fontSize: 13,
-    color: "#8E8E93",
+    color: Color.secondary,
     marginHorizontal: 16,
     marginTop: 8,
     marginBottom: 24,
     lineHeight: 18,
   },
   section: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Color.surface,
     borderRadius: 10,
     overflow: "hidden",
   },
@@ -267,17 +268,17 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   stackedRow: { paddingVertical: 12, paddingHorizontal: 16 },
-  label: { fontSize: 17, color: "#000" },
+  label: { fontSize: 17, color: Color.label },
   input: {
     flex: 1,
     fontSize: 17,
-    color: "#8E8E93",
+    color: Color.secondary,
     textAlign: "right",
     marginLeft: 16,
   },
   stackedInput: {
     fontSize: 15,
-    color: "#3C3C43",
+    color: Color.secondary,
     marginTop: 8,
     minHeight: 44,
     textAlignVertical: "top",
@@ -289,17 +290,17 @@ const styles = StyleSheet.create({
     marginLeft: 16,
     marginBottom: 24,
   },
-  linkText: { fontSize: 15, color: "#007AFF" },
+  linkText: { fontSize: 15, color: Color.accent },
   button: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Color.accent,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 8,
   },
-  buttonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
-  secondaryButton: { backgroundColor: "#E5E5EA" },
-  secondaryButtonText: { color: "#007AFF", fontSize: 17, fontWeight: "600" },
+  buttonText: { color: Color.onAccent, fontSize: 17, fontWeight: "600" },
+  secondaryButton: { backgroundColor: Color.surface2 },
+  secondaryButtonText: { color: Color.accent, fontSize: 17, fontWeight: "600" },
   disconnect: { alignItems: "center", paddingVertical: 16, marginTop: 8 },
-  disconnectText: { fontSize: 17, color: "#FF3B30" },
+  disconnectText: { fontSize: 17, color: Color.danger },
 });

@@ -13,6 +13,7 @@ import {
 } from "react-native";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Color } from "@/constants/theme";
 
 export default function DiscordScreen() {
   const [agentName, setAgentName] = useState("");
@@ -93,7 +94,7 @@ export default function DiscordScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Nome do Agente"
-                placeholderTextColor="#C7C7CC"
+                placeholderTextColor={Color.placeholder}
                 value={agentName}
                 onChangeText={setAgentName}
               />
@@ -101,7 +102,7 @@ export default function DiscordScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Temperatura (ex: 0.7)"
-                placeholderTextColor="#C7C7CC"
+                placeholderTextColor={Color.placeholder}
                 keyboardType="numeric"
                 value={temperature}
                 onChangeText={setTemperature}
@@ -116,7 +117,7 @@ export default function DiscordScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Webhook URL (https://discord.com/api/webhooks/...)"
-                placeholderTextColor="#C7C7CC"
+                placeholderTextColor={Color.placeholder}
                 value={discordWebhook}
                 onChangeText={setDiscordWebhook}
                 autoCapitalize="none"
@@ -126,7 +127,7 @@ export default function DiscordScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Bot Token (Opcional)"
-                placeholderTextColor="#C7C7CC"
+                placeholderTextColor={Color.placeholder}
                 secureTextEntry={true} // Esconde o token por segurança
                 value={botToken}
                 onChangeText={setBotToken}
@@ -148,7 +149,7 @@ export default function DiscordScreen() {
               <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="Instruções de personalidade..."
-                placeholderTextColor="#C7C7CC"
+                placeholderTextColor={Color.placeholder}
                 value={systemPrompt}
                 onChangeText={setSystemPrompt}
                 multiline
@@ -169,7 +170,7 @@ export default function DiscordScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F2F2F7", // Cor de fundo clássica do iOS
+    backgroundColor: Color.bg, // Cor de fundo clássica do iOS
   },
   keyboardAvoid: {
     flex: 1,
@@ -185,12 +186,12 @@ const styles = StyleSheet.create({
   largeTitle: {
     fontSize: 34,
     fontWeight: "bold",
-    color: "#000000",
+    color: Color.label,
     letterSpacing: 0.3,
   },
   subtitle: {
     fontSize: 17,
-    color: "#8E8E93",
+    color: Color.secondary,
     marginTop: 8,
   },
   section: {
@@ -198,28 +199,28 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 13,
-    color: "#6D6D72",
+    color: Color.secondary,
     marginLeft: 36,
     marginBottom: 8,
     textTransform: "uppercase",
     letterSpacing: -0.1,
   },
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Color.surface,
     borderRadius: 10,
     marginHorizontal: 20,
     overflow: "hidden",
   },
   input: {
     fontSize: 17,
-    color: "#000000",
+    color: Color.label,
     paddingHorizontal: 16,
     paddingVertical: 14,
     minHeight: 50,
   },
   separator: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: "#C6C6C8",
+    backgroundColor: Color.hairline,
     marginLeft: 16, // Linha não encosta na borda esquerda (estilo iOS)
   },
   textArea: {
@@ -228,13 +229,13 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 13,
-    color: "#8E8E93",
+    color: Color.secondary,
     marginHorizontal: 36,
     marginTop: 8,
     textAlign: "justify",
   },
   primaryButton: {
-    backgroundColor: "#007AFF", // Azul da Apple
+    backgroundColor: Color.accent, // Azul da Apple
     borderRadius: 14,
     marginHorizontal: 20,
     marginTop: 40,
@@ -243,7 +244,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   primaryButtonText: {
-    color: "#FFFFFF",
+    color: Color.onAccent,
     fontSize: 17,
     fontWeight: "600",
     letterSpacing: -0.4,

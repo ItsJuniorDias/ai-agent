@@ -11,6 +11,7 @@ import {
   Platform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Color } from "@/constants/theme";
 
 export default function GitlabScreen() {
   const [url, setUrl] = useState("");
@@ -49,7 +50,7 @@ export default function GitlabScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#6E7BFF" />
       </View>
     );
   }
@@ -73,7 +74,7 @@ export default function GitlabScreen() {
         <TextInput
           style={styles.input}
           placeholder="https://gitlab.com"
-          placeholderTextColor="#C7C7CC"
+          placeholderTextColor={Color.placeholder}
           value={url}
           onChangeText={setUrl}
           autoCapitalize="none"
@@ -84,7 +85,7 @@ export default function GitlabScreen() {
         <TextInput
           style={styles.input}
           placeholder="Personal Access Token"
-          placeholderTextColor="#C7C7CC"
+          placeholderTextColor={Color.placeholder}
           value={token}
           onChangeText={setToken}
           autoCapitalize="none"
@@ -103,7 +104,7 @@ export default function GitlabScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F2F2F7", // Fundo padrão agrupado do iOS
+    backgroundColor: Color.bg, // Fundo padrão agrupado do iOS
     paddingTop: 40,
   },
   center: {
@@ -118,23 +119,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34,
     fontWeight: "bold",
-    color: "#000000",
+    color: Color.label,
     marginBottom: 8,
   },
   description: {
     fontSize: 16,
-    color: "#6C6C70",
+    color: Color.secondary,
     lineHeight: 22,
   },
   sectionTitle: {
     fontSize: 13,
-    color: "#6C6C70",
+    color: Color.secondary,
     marginLeft: 20,
     marginBottom: 8,
     marginTop: 10,
   },
   inputGroup: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Color.surface,
     borderRadius: 10,
     marginHorizontal: 16,
     overflow: "hidden", // Garante que o input respeite o border radius do container
@@ -143,16 +144,16 @@ const styles = StyleSheet.create({
     height: 50,
     paddingHorizontal: 16,
     fontSize: 17, // Tamanho de fonte padrão do iOS para inputs
-    color: "#000000",
+    color: Color.label,
   },
   separator: {
     height: StyleSheet.hairlineWidth, // Linha fina padrão do iOS
-    backgroundColor: "#C6C6C8",
+    backgroundColor: Color.hairline,
     marginLeft: 16, // A linha geralmente começa alinhada com o texto, não na borda
   },
   buttonContainer: {
     marginTop: 30,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Color.surface,
     borderRadius: 10,
     marginHorizontal: 16,
     paddingVertical: 14,
@@ -161,6 +162,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 17,
     fontWeight: "600",
-    color: "#007AFF", // Azul padrão do iOS
+    color: Color.accent, // Azul padrão do iOS
   },
 });

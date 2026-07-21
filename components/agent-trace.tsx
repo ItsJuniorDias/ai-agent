@@ -21,6 +21,7 @@ import {
   View,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { Color, MonoFont, Radius, Type, alpha } from "@/constants/theme";
 import type { AgentStep, IntegrationId } from "@/agent/types";
 
 if (
@@ -30,23 +31,34 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
+/**
+ * `color` is the vivid brand color — used as a solid tile background with a white
+ * glyph (Settings). `onDark` is the legible-on-dark variant — used as the glyph
+ * color when it sits on a faint tinted background (trace, approval), where a
+ * near-black brand like GitHub or Vercel would otherwise disappear.
+ */
 export const INTEGRATION_META: Record<
   IntegrationId,
-  { label: string; color: string; icon: keyof typeof Feather.glyphMap }
+  {
+    label: string;
+    color: string;
+    onDark: string;
+    icon: keyof typeof Feather.glyphMap;
+  }
 > = {
-  core: { label: "Agente", color: "#007AFF", icon: "cpu" },
-  github: { label: "GitHub", color: "#24292E", icon: "github" },
-  gitlab: { label: "GitLab", color: "#FC6D26", icon: "git-merge" },
-  jira: { label: "Jira", color: "#0052CC", icon: "trello" },
-  linear: { label: "Linear", color: "#5E6AD2", icon: "target" },
-  slack: { label: "Slack", color: "#4A154B", icon: "hash" },
-  discord: { label: "Discord", color: "#5865F2", icon: "message-circle" },
-  teams: { label: "Teams", color: "#6264A7", icon: "users" },
-  whatsapp: { label: "WhatsApp", color: "#25D366", icon: "message-square" },
-  gmail: { label: "Gmail", color: "#EA4335", icon: "mail" },
-  figma: { label: "Figma", color: "#F24E1E", icon: "figma" },
-  vercel: { label: "Vercel", color: "#000000", icon: "triangle" },
-  notion: { label: "Notion", color: "#000000", icon: "book-open" },
+  core: { label: "Agente", color: Color.accent, onDark: Color.accent, icon: "cpu" },
+  github: { label: "GitHub", color: "#24292E", onDark: "#E6EDF3", icon: "github" },
+  gitlab: { label: "GitLab", color: "#FC6D26", onDark: "#FC6D26", icon: "git-merge" },
+  jira: { label: "Jira", color: "#0052CC", onDark: "#4C9AFF", icon: "trello" },
+  linear: { label: "Linear", color: "#5E6AD2", onDark: "#8B92F0", icon: "target" },
+  slack: { label: "Slack", color: "#4A154B", onDark: "#CE93D8", icon: "hash" },
+  discord: { label: "Discord", color: "#5865F2", onDark: "#7A85FF", icon: "message-circle" },
+  teams: { label: "Teams", color: "#6264A7", onDark: "#8B8CC7", icon: "users" },
+  whatsapp: { label: "WhatsApp", color: "#25D366", onDark: "#25D366", icon: "message-square" },
+  gmail: { label: "Gmail", color: "#EA4335", onDark: "#FF6A5C", icon: "mail" },
+  figma: { label: "Figma", color: "#F24E1E", onDark: "#F98B6B", icon: "figma" },
+  vercel: { label: "Vercel", color: "#0B0B0B", onDark: "#EDEEFB", icon: "triangle" },
+  notion: { label: "Notion", color: "#141414", onDark: "#EDEEFB", icon: "book-open" },
 };
 
 /** Formata os argumentos em uma linha legível: `repo: ai-agent · number: 12` */
@@ -59,7 +71,7 @@ function formatArgs(args: Record<string, unknown>): string {
   return entries
     .map(([key, value]) => {
       const text =
-        typeof value === "string" ? value : JSON.stringify(value) ?? "";
+        typeof value === "string" ? value : (JSON.stringify(value) ?? "");
       const short = text.length > 60 ? `${text.slice(0, 60)}…` : text;
       return `${key}: ${short.replace(/\n/g, " ")}`;
     })
@@ -69,13 +81,13 @@ function formatArgs(args: Record<string, unknown>): string {
 function StatusIcon({ status }: { status: AgentStep["status"] }) {
   switch (status) {
     case "running":
-      return <ActivityIndicator size="small" color="#8E8E93" />;
+      return <ActivityIndicator size="small" color={Color.secondary} />;
     case "done":
-      return <Feather name="check-circle" size={15} color="#34C759" />;
+      return <Feather name="check-circle" size={15} color={Color.success} />;
     case "failed":
-      return <Feather name="alert-circle" size={15} color="#FF3B30" />;
+      return <Feather name="alert-circle" size={15} color={Color.danger} />;
     case "rejected":
-      return <Feather name="slash" size={15} color="#FF9500" />;
+      return <Feather name="slash" size={15} color={Color.warning} />;
   }
 }
 
@@ -96,8 +108,8 @@ function StepRow({ step }: { step: AgentStep }) {
         onPress={toggle}
         activeOpacity={0.6}
       >
-        <View style={[styles.dot, { backgroundColor: `${meta.color}1A` }]}>
-          <Feather name={meta.icon} size={12} color={meta.color} />
+        <View style={[styles.dot, { backgroundColor: alpha(meta.onDark, 0.16) }]}>
+          <Feather name={meta.icon} size={12} color={meta.onDark} />
         </View>
 
         <View style={styles.stepTitleWrap}>
@@ -142,7 +154,7 @@ function StepRow({ step }: { step: AgentStep }) {
               onPress={() => Linking.openURL(step.result!.url!)}
               style={styles.linkButton}
             >
-              <Feather name="external-link" size={12} color="#007AFF" />
+              <Feather name="external-link" size={12} color={Color.accent} />
               <Text style={styles.linkText}>Abrir</Text>
             </TouchableOpacity>
           )}
@@ -183,13 +195,13 @@ export function AgentTrace({ steps }: { steps: AgentStep[] }) {
         <Feather
           name={expanded ? "chevron-down" : "chevron-right"}
           size={13}
-          color="#8E8E93"
+          color={Color.secondary}
         />
         <Text style={styles.summaryText}>
           {steps.length} {steps.length === 1 ? "ação" : "ações"}
           {failed > 0 ? ` · ${failed} com erro` : ""}
         </Text>
-        {running && <ActivityIndicator size="small" color="#8E8E93" />}
+        {running && <ActivityIndicator size="small" color={Color.secondary} />}
       </TouchableOpacity>
 
       {expanded && (
@@ -219,7 +231,7 @@ export function LiveTrace({
 
       {!!status && (
         <View style={styles.statusRow}>
-          <ActivityIndicator size="small" color="#8E8E93" />
+          <ActivityIndicator size="small" color={Color.accent} />
           <Text style={styles.statusText}>{status}…</Text>
         </View>
       )}
@@ -231,11 +243,11 @@ const styles = StyleSheet.create({
   container: {
     marginTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#C6C6C8",
+    borderTopColor: Color.hairline,
     paddingTop: 6,
   },
   summary: { flexDirection: "row", alignItems: "center", gap: 6 },
-  summaryText: { fontSize: 13, color: "#8E8E93", flex: 1 },
+  summaryText: { ...Type.footnote, color: Color.secondary, flex: 1 },
   list: { marginTop: 4 },
   live: { paddingHorizontal: 4, paddingVertical: 2 },
   step: { marginVertical: 2 },
@@ -253,31 +265,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   stepTitleWrap: { flex: 1 },
-  stepTitle: { fontSize: 14, color: "#000000", fontWeight: "500" },
-  stepArgs: { fontSize: 12, color: "#8E8E93", marginTop: 1 },
+  stepTitle: { fontSize: 14, color: Color.label, fontWeight: "500" },
+  stepArgs: { ...Type.caption, color: Color.secondary, marginTop: 1 },
   stepBody: {
     marginLeft: 30,
     marginBottom: 6,
     padding: 10,
-    backgroundColor: "#F2F2F7",
-    borderRadius: 10,
+    backgroundColor: Color.surface2,
+    borderRadius: Radius.sm,
     gap: 6,
   },
-  mono: {
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    fontSize: 11,
-    color: "#007AFF",
-  },
-  monoDim: {
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    fontSize: 11,
-    color: "#3C3C43",
-  },
-  resultText: { fontSize: 13, color: "#3C3C43" },
-  resultError: { color: "#FF3B30" },
+  mono: { fontFamily: MonoFont, fontSize: 11, color: Color.accent },
+  monoDim: { fontFamily: MonoFont, fontSize: 11, color: Color.secondary },
+  resultText: { ...Type.footnote, color: Color.secondary },
+  resultError: { color: Color.danger },
   linkButton: { flexDirection: "row", alignItems: "center", gap: 4 },
-  linkText: { fontSize: 13, color: "#007AFF", fontWeight: "500" },
-  duration: { fontSize: 11, color: "#8E8E93" },
+  linkText: { ...Type.footnote, color: Color.accent, fontWeight: "500" },
+  duration: { ...Type.caption2, color: Color.tertiary },
   statusRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -285,5 +289,5 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingLeft: 4,
   },
-  statusText: { fontSize: 14, color: "#8E8E93", fontStyle: "italic" },
+  statusText: { fontSize: 14, color: Color.secondary, fontStyle: "italic" },
 });

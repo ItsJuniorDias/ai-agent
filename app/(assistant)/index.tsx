@@ -55,6 +55,7 @@ import {
 import { runAssistantScan, type ScanOutcome } from "@/services/assistant";
 import { hasApiKey } from "@/services/openrouter";
 import { INTEGRATION_META } from "@/components/agent-trace";
+import { Color, Radius, Shadow, Spacing, Type } from "@/constants/theme";
 
 function formatWhen(iso?: string): string {
   if (!iso) return "—";
@@ -233,7 +234,7 @@ export default function AssistantScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.center]}>
-        <ActivityIndicator color="#8E8E93" />
+        <ActivityIndicator color="#8B90B8" />
       </View>
     );
   }
@@ -252,7 +253,7 @@ export default function AssistantScreen() {
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.back}>
-          <Feather name="chevron-left" size={26} color="#007AFF" />
+          <Feather name="chevron-left" size={26} color="#6E7BFF" />
         </TouchableOpacity>
         <Text style={styles.title}>Personal Assistant</Text>
       </View>
@@ -267,7 +268,7 @@ export default function AssistantScreen() {
       {/* Chave ausente */}
       {!hasApiKey() && (
         <View style={styles.banner}>
-          <Feather name="alert-triangle" size={18} color="#FF9500" />
+          <Feather name="alert-triangle" size={18} color="#FF9F0A" />
           <Text style={styles.bannerText}>
             Sem chave do OpenRouter. A varredura não roda até definir
             EXPO_PUBLIC_OPENROUTER_API_KEY no .env.
@@ -278,7 +279,7 @@ export default function AssistantScreen() {
       {/* Permissão */}
       {permission !== "granted" && (
         <View style={styles.permCard}>
-          <Ionicons name="notifications" size={22} color="#007AFF" />
+          <Ionicons name="notifications" size={22} color="#6E7BFF" />
           <View style={{ flex: 1 }}>
             <Text style={styles.permTitle}>Ative as notificações</Text>
             <Text style={styles.permSub}>
@@ -298,7 +299,7 @@ export default function AssistantScreen() {
       <View style={styles.group}>
         <View style={[styles.row, styles.noBorder]}>
           <View style={styles.rowLeft}>
-            <View style={[styles.iconBox, { backgroundColor: "#34C759" }]}>
+            <View style={[styles.iconBox, { backgroundColor: "#30D158" }]}>
               <Ionicons name="pulse" size={17} color="white" />
             </View>
             <View style={{ flex: 1 }}>
@@ -309,8 +310,8 @@ export default function AssistantScreen() {
             </View>
           </View>
           <Switch
-            trackColor={{ false: "#767577", true: "#34C759" }}
-            ios_backgroundColor="#E9E9EA"
+            trackColor={{ false: "#1B2666", true: "#30D158" }}
+            ios_backgroundColor="#1B2666"
             onValueChange={toggleEnabled}
             value={config.enabled}
           />
@@ -360,8 +361,8 @@ export default function AssistantScreen() {
             <Text style={styles.rowText}>Silenciar à noite</Text>
           </View>
           <Switch
-            trackColor={{ false: "#767577", true: "#34C759" }}
-            ios_backgroundColor="#E9E9EA"
+            trackColor={{ false: "#1B2666", true: "#30D158" }}
+            ios_backgroundColor="#1B2666"
             onValueChange={toggleQuiet}
             value={config.quietHoursEnabled}
           />
@@ -375,7 +376,7 @@ export default function AssistantScreen() {
               disabled={!config.quietHoursEnabled}
               style={styles.stepBtn}
             >
-              <Feather name="minus" size={16} color="#007AFF" />
+              <Feather name="minus" size={16} color="#6E7BFF" />
             </TouchableOpacity>
             <Text style={styles.stepValue}>
               {String(config.quietStartHour).padStart(2, "0")}:00
@@ -385,7 +386,7 @@ export default function AssistantScreen() {
               disabled={!config.quietHoursEnabled}
               style={styles.stepBtn}
             >
-              <Feather name="plus" size={16} color="#007AFF" />
+              <Feather name="plus" size={16} color="#6E7BFF" />
             </TouchableOpacity>
           </View>
 
@@ -396,7 +397,7 @@ export default function AssistantScreen() {
               disabled={!config.quietHoursEnabled}
               style={styles.stepBtn}
             >
-              <Feather name="minus" size={16} color="#007AFF" />
+              <Feather name="minus" size={16} color="#6E7BFF" />
             </TouchableOpacity>
             <Text style={styles.stepValue}>
               {String(config.quietEndHour).padStart(2, "0")}:00
@@ -406,7 +407,7 @@ export default function AssistantScreen() {
               disabled={!config.quietHoursEnabled}
               style={styles.stepBtn}
             >
-              <Feather name="plus" size={16} color="#007AFF" />
+              <Feather name="plus" size={16} color="#6E7BFF" />
             </TouchableOpacity>
           </View>
         </View>
@@ -441,8 +442,8 @@ export default function AssistantScreen() {
                   <Text style={styles.rowText}>{meta.label}</Text>
                 </View>
                 <Switch
-                  trackColor={{ false: "#767577", true: "#34C759" }}
-                  ios_backgroundColor="#E9E9EA"
+                  trackColor={{ false: "#1B2666", true: "#30D158" }}
+                  ios_backgroundColor="#1B2666"
                   onValueChange={() => toggleWatch(id)}
                   value={isWatched(config, id)}
                 />
@@ -457,7 +458,7 @@ export default function AssistantScreen() {
         activeOpacity={0.6}
       >
         <Text style={styles.linkText}>Conectar mais serviços</Text>
-        <Feather name="chevron-right" size={18} color="#007AFF" />
+        <Feather name="chevron-right" size={18} color="#6E7BFF" />
       </TouchableOpacity>
 
       {/* Scan now */}
@@ -497,7 +498,7 @@ export default function AssistantScreen() {
               style={[styles.row, index === reminders.length - 1 && styles.noBorder]}
             >
               <View style={styles.rowLeft}>
-                <View style={[styles.iconBox, { backgroundColor: "#FF9500" }]}>
+                <View style={[styles.iconBox, { backgroundColor: "#FF9F0A" }]}>
                   <Ionicons name="alarm" size={16} color="white" />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -511,7 +512,7 @@ export default function AssistantScreen() {
                 onPress={() => removeReminder(r.id)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Feather name="x-circle" size={20} color="#FF3B30" />
+                <Feather name="x-circle" size={20} color="#FF453A" />
               </TouchableOpacity>
             </View>
           ))
@@ -531,21 +532,21 @@ export default function AssistantScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F2F2F7" },
+  container: { flex: 1, backgroundColor: Color.bg },
   center: { justifyContent: "center", alignItems: "center" },
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingTop: 60,
-    paddingHorizontal: 12,
+    paddingHorizontal: Spacing.md,
     paddingBottom: 6,
   },
   back: { padding: 4, marginRight: 2 },
-  title: { fontSize: 30, fontWeight: "800", letterSpacing: -0.8 },
+  title: { fontSize: 30, fontWeight: "800", letterSpacing: -0.8, color: Color.label },
   intro: {
-    fontSize: 14,
-    color: "#3C3C43",
-    paddingHorizontal: 20,
+    ...Type.footnote,
+    color: Color.secondary,
+    paddingHorizontal: Spacing.xl,
     lineHeight: 20,
     marginTop: 2,
     marginBottom: 4,
@@ -554,107 +555,110 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     alignItems: "flex-start",
-    backgroundColor: "#FFF4E5",
-    marginHorizontal: 16,
+    backgroundColor: Color.warningSoft,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.warning,
+    marginHorizontal: Spacing.lg,
     marginTop: 10,
     padding: 14,
-    borderRadius: 12,
+    borderRadius: Radius.md,
   },
-  bannerText: { flex: 1, fontSize: 13, color: "#8A5A00", lineHeight: 18 },
+  bannerText: { flex: 1, ...Type.footnote, color: Color.label, lineHeight: 18 },
   permCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    backgroundColor: "#EAF3FF",
-    marginHorizontal: 16,
-    marginTop: 12,
-    padding: 16,
-    borderRadius: 14,
+    gap: Spacing.md,
+    backgroundColor: Color.accentSoft,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.accent,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.md,
+    padding: Spacing.lg,
+    borderRadius: Radius.md,
   },
-  permTitle: { fontSize: 16, fontWeight: "600", color: "#000000" },
-  permSub: { fontSize: 13, color: "#3C3C43", marginTop: 2 },
+  permTitle: { ...Type.callout, fontWeight: "600", color: Color.label },
+  permSub: { ...Type.footnote, color: Color.secondary, marginTop: 2 },
   permBtn: {
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 16,
+    backgroundColor: Color.accent,
+    paddingHorizontal: Spacing.lg,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: Radius.pill,
   },
-  permBtnText: { color: "#FFFFFF", fontWeight: "600", fontSize: 14 },
+  permBtnText: { color: Color.onAccent, fontWeight: "600", fontSize: 14 },
   sectionTitle: {
-    fontSize: 13,
-    color: "#6E6E73",
-    marginLeft: 36,
-    marginBottom: 8,
-    marginTop: 24,
+    ...Type.eyebrow,
+    color: Color.secondary,
+    marginLeft: Spacing.xxxl,
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.xxl,
   },
   group: {
-    backgroundColor: "white",
-    borderRadius: 12,
-    marginHorizontal: 16,
+    backgroundColor: Color.surface,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
+    marginHorizontal: Spacing.lg,
     overflow: "hidden",
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingVertical: 11,
+    paddingHorizontal: Spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#C6C6C8",
+    borderBottomColor: Color.hairline,
     gap: 10,
   },
   rowLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
   iconBox: {
     width: 30,
     height: 30,
-    borderRadius: 7,
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: Spacing.md,
   },
-  rowText: { fontSize: 17, letterSpacing: -0.4 },
-  rowSubtext: { fontSize: 12, color: "#8E8E93", marginTop: 1, lineHeight: 16 },
+  rowText: { ...Type.body, color: Color.label },
+  rowSubtext: { ...Type.caption, color: Color.secondary, marginTop: 1, lineHeight: 16 },
   noBorder: { borderBottomWidth: 0 },
   dim: { opacity: 0.4 },
   footerText: {
-    fontSize: 13,
-    color: "#8E8E93",
-    marginTop: 12,
-    paddingHorizontal: 36,
+    ...Type.footnote,
+    color: Color.secondary,
+    marginTop: Spacing.md,
+    paddingHorizontal: Spacing.xxxl,
     lineHeight: 18,
   },
   segmented: {
     flexDirection: "row",
-    backgroundColor: "#E3E3E8",
-    borderRadius: 9,
-    padding: 2,
-    marginHorizontal: 16,
-    gap: 2,
+    backgroundColor: Color.surface2,
+    borderRadius: Radius.sm,
+    padding: 3,
+    marginHorizontal: Spacing.lg,
+    gap: 3,
   },
-  segment: { flex: 1, paddingVertical: 7, borderRadius: 7, alignItems: "center" },
+  segment: { flex: 1, paddingVertical: 8, borderRadius: 7, alignItems: "center" },
   segmentActive: {
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
+    backgroundColor: Color.surface3,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairlineStrong,
   },
-  segmentText: { fontSize: 15, color: "#3C3C43", fontWeight: "500" },
-  segmentTextActive: { color: "#000000", fontWeight: "600" },
+  segmentText: { ...Type.subhead, color: Color.secondary, fontWeight: "500" },
+  segmentTextActive: { color: Color.label, fontWeight: "600" },
   stepper: { flexDirection: "row", alignItems: "center", gap: 6 },
   stepBtn: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#EAF3FF",
+    backgroundColor: Color.accentSoft,
     justifyContent: "center",
     alignItems: "center",
   },
   stepValue: {
-    fontSize: 15,
+    ...Type.subhead,
     fontWeight: "600",
-    color: "#000000",
+    color: Color.label,
     minWidth: 46,
     textAlign: "center",
   },
@@ -662,43 +666,48 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "white",
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginTop: 12,
-    paddingHorizontal: 16,
+    backgroundColor: Color.surface,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.md,
+    paddingHorizontal: Spacing.lg,
     paddingVertical: 13,
   },
-  linkText: { fontSize: 16, color: "#007AFF" },
+  linkText: { ...Type.callout, color: Color.accent },
   scanBtn: {
     flexDirection: "row",
     gap: 8,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#007AFF",
-    marginHorizontal: 16,
-    marginTop: 28,
+    backgroundColor: Color.accent,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.xxl,
     paddingVertical: 15,
-    borderRadius: 14,
+    borderRadius: Radius.md,
+    ...Shadow.glow,
   },
   scanBtnBusy: { opacity: 0.7 },
-  scanBtnText: { color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
+  scanBtnText: { color: Color.onAccent, ...Type.headline },
   scanMsg: {
-    fontSize: 14,
-    color: "#3C3C43",
+    ...Type.footnote,
+    color: Color.secondary,
     textAlign: "center",
-    marginTop: 12,
-    paddingHorizontal: 24,
+    marginTop: Spacing.md,
+    paddingHorizontal: Spacing.xxl,
     lineHeight: 19,
   },
   clearRow: {
-    backgroundColor: "white",
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginTop: 12,
-    paddingHorizontal: 16,
+    backgroundColor: Color.surface,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.md,
+    paddingHorizontal: Spacing.lg,
     paddingVertical: 13,
     alignItems: "center",
   },
-  clearText: { fontSize: 16, color: "#FF3B30", fontWeight: "500" },
+  clearText: { ...Type.callout, color: Color.danger, fontWeight: "500" },
 });

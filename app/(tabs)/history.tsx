@@ -29,9 +29,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Feather, Ionicons } from "@expo/vector-icons";
 
 import { STORAGE_KEYS } from "@/services/config";
+import { Color, Radius, Shadow, Spacing, Type } from "@/constants/theme";
 import type { StoredConversation } from "@/agent/types";
 
 /** Primeira resposta do agente na conversa, para o preview do card. */
@@ -43,6 +45,7 @@ function previewOf(conversation: StoredConversation): string {
 export default function History() {
   const [history, setHistory] = useState<StoredConversation[]>([]);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   useFocusEffect(
     useCallback(() => {
@@ -71,8 +74,6 @@ export default function History() {
           style: "destructive",
           onPress: async () => {
             try {
-              // Relê do storage em vez de confiar no estado da tela — assim o
-              // que não está renderizado não some junto.
               const stored = await AsyncStorage.getItem(
                 STORAGE_KEYS.chatHistory,
               );
@@ -122,22 +123,35 @@ export default function History() {
           onPress={() => handleDelete(item.id)}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="trash-outline" size={22} color="#FF3B30" />
+          <Ionicons name="trash-outline" size={20} color={Color.danger} />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
       {history.length === 0 ? (
-        <Text style={styles.emptyText}>Nothing saved yet.</Text>
+        <View style={styles.emptyState}>
+          <View style={styles.emptyIcon}>
+            <Feather name="clock" size={24} color={Color.secondary} />
+          </View>
+          <Text style={styles.emptyText}>Nothing saved yet.</Text>
+          <Text style={styles.emptySub}>
+            Conversations you have with the agent show up here.
+          </Text>
+        </View>
       ) : (
         <FlatList
           data={history}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
-          ListHeaderComponent={<Text style={styles.title}>History</Text>}
+          ListHeaderComponent={
+            <View style={styles.listHeader}>
+              <Text style={styles.kicker}>ARCHIVE</Text>
+              <Text style={styles.title}>History</Text>
+            </View>
+          }
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
         />
@@ -147,64 +161,47 @@ export default function History() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F7F7F8",
-    paddingTop: 50,
+  container: { flex: 1, backgroundColor: Color.bg },
+  listHeader: { marginBottom: Spacing.xxl },
+  kicker: {
+    ...Type.caption2,
+    color: Color.accent,
+    letterSpacing: 1.4,
+    marginBottom: 2,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 32,
-  },
-  listContainer: {
-    paddingHorizontal: 24,
-    paddingBottom: 96,
-  },
+  title: { ...Type.largeTitle, color: Color.label },
+  listContainer: { paddingHorizontal: Spacing.xl, paddingBottom: 96 },
   card: {
-    backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    // Shadows for iOS
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    // Shadows for Android
-    elevation: 2,
+    backgroundColor: Color.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
+    padding: Spacing.lg,
+    borderRadius: Radius.lg,
+    marginBottom: Spacing.md,
+    ...Shadow.card,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: Spacing.md,
+  },
+  headerTextContainer: { flex: 1, gap: 4 },
+  cardTitle: { ...Type.headline, color: Color.label },
+  cardDescription: { ...Type.callout, color: Color.secondary, lineHeight: 21 },
+  cardDate: { ...Type.caption, color: Color.tertiary, marginTop: 6 },
+  emptyState: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: Spacing.xxxl, gap: Spacing.md },
+  emptyIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: Color.surface2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
     alignItems: "center",
-    marginBottom: 6,
+    justifyContent: "center",
+    marginBottom: 4,
   },
-  headerTextContainer: {
-    flex: 1,
-    marginRight: 10,
-    gap: 4,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1A1A1A",
-  },
-  cardDescription: {
-    fontSize: 16,
-    fontWeight: "400",
-    color: "#1A1A1A",
-  },
-  cardDate: {
-    fontSize: 12,
-    color: "#888",
-    marginTop: 8,
-  },
-  emptyText: {
-    textAlign: "center",
-    color: "#8E8E93",
-    marginTop: 40,
-    fontSize: 16,
-  },
+  emptyText: { ...Type.title3, color: Color.label },
+  emptySub: { ...Type.subhead, color: Color.secondary, textAlign: "center", lineHeight: 21 },
 });

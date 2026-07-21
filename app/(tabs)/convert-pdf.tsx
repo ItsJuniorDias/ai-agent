@@ -25,17 +25,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import Markdown from "react-native-markdown-display";
 import { Feather } from "@expo/vector-icons";
 
 import { analyzeFile as runAnalysis } from "@/services/openrouter";
 import { loadConfig } from "@/services/config";
+import { Color, MonoFont, Radius, Shadow, Spacing, Type, alpha } from "@/constants/theme";
 
-type Mode = {
-  id: string;
-  label: string;
-  prompt: string;
-};
+type Mode = { id: string; label: string; prompt: string };
 
 const MODES: Mode[] = [
   {
@@ -139,7 +137,7 @@ export default function FileAnalyzer() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
 
       <View style={styles.header}>
         <Text style={styles.dateText}>
@@ -166,6 +164,11 @@ export default function FileAnalyzer() {
             onPress={pickDocument}
             activeOpacity={0.7}
           >
+            <Feather
+              name={file ? "file-text" : "upload"}
+              size={20}
+              color={file ? Color.accent : Color.secondary}
+            />
             <Text
               style={[styles.dropZoneText, !!file && styles.dropZoneTextActive]}
               numberOfLines={1}
@@ -203,7 +206,7 @@ export default function FileAnalyzer() {
               <Feather
                 name={ocr ? "check-square" : "square"}
                 size={18}
-                color={ocr ? "#007AFF" : "#C7C7CC"}
+                color={ocr ? Color.accent : Color.tertiary}
               />
               <Text style={styles.ocrText}>
                 Scanned PDF (use OCR — slower, costs more)
@@ -213,16 +216,22 @@ export default function FileAnalyzer() {
 
           {!!file && (
             <TouchableOpacity
-              style={styles.mainButton}
               onPress={analyze}
               disabled={isLoading}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
             >
-              {isLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.mainButtonText}>Analyze Now</Text>
-              )}
+              <LinearGradient
+                colors={Color.auroraButton as [string, string, ...string[]]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.mainButton, !isLoading && Shadow.glow]}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color={Color.onAccent} />
+                ) : (
+                  <Text style={styles.mainButtonText}>Analyze now</Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           )}
         </View>
@@ -231,14 +240,14 @@ export default function FileAnalyzer() {
           {summary ? (
             <View style={styles.summaryCard}>
               <TouchableOpacity style={styles.copyButton} onPress={copy}>
-                <Feather name="copy" size={15} color="#8E8E93" />
+                <Feather name="copy" size={15} color={Color.secondary} />
               </TouchableOpacity>
               <Markdown style={markdownStyles}>{summary}</Markdown>
             </View>
           ) : (
             !isLoading && (
               <Text style={styles.placeholderText}>
-                Select a file and tap Analyze Now to see the insights summary
+                Select a file and tap Analyze now to see the insights summary
                 here.
               </Text>
             )
@@ -250,97 +259,77 @@ export default function FileAnalyzer() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F2F2F7" },
+  container: { flex: 1, backgroundColor: Color.bg },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
-    backgroundColor: "#F2F2F7",
+    paddingHorizontal: Spacing.xl,
+    paddingTop: 60,
+    paddingBottom: Spacing.md,
   },
-  dateText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#8E8E93",
-    letterSpacing: 0.5,
-  },
-  title: {
-    fontSize: 34,
-    fontWeight: "700",
-    color: "#000",
-    letterSpacing: -0.5,
-  },
-  scrollContent: { padding: 20, paddingBottom: 60 },
+  dateText: { ...Type.footnote, fontWeight: "600", color: Color.accent, letterSpacing: 0.8 },
+  title: { ...Type.largeTitle, color: Color.label },
+  scrollContent: { padding: Spacing.xl, paddingBottom: 60 },
   card: {
-    backgroundColor: "#FFF",
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-    marginBottom: 25,
+    backgroundColor: Color.surface,
+    borderRadius: Radius.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
+    padding: Spacing.xl,
+    ...Shadow.card,
+    marginBottom: Spacing.xxl,
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#000",
-    marginBottom: 15,
-  },
+  cardTitle: { ...Type.title3, color: Color.label, marginBottom: Spacing.lg },
   dropZone: {
-    borderWidth: 1.5,
-    borderColor: "#E5E5EA",
-    borderStyle: "dashed",
-    borderRadius: 14,
-    paddingVertical: 24,
-    paddingHorizontal: 16,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 10,
+    borderWidth: 1.5,
+    borderColor: Color.hairlineStrong,
+    borderStyle: "dashed",
+    borderRadius: Radius.md,
+    paddingVertical: 24,
+    paddingHorizontal: Spacing.lg,
   },
-  dropZoneActive: { borderColor: "#007AFF", backgroundColor: "#007AFF0D" },
-  dropZoneText: { fontSize: 15, color: "#8E8E93" },
-  dropZoneTextActive: { color: "#007AFF", fontWeight: "500" },
-  modeRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 16 },
+  dropZoneActive: {
+    borderColor: Color.accent,
+    backgroundColor: Color.accentSoft,
+  },
+  dropZoneText: { ...Type.subhead, color: Color.secondary, flexShrink: 1 },
+  dropZoneTextActive: { color: Color.accent, fontWeight: "500" },
+  modeRow: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.sm, marginTop: Spacing.lg },
   modeChip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 9,
-    backgroundColor: "#F2F2F7",
+    borderRadius: Radius.sm,
+    backgroundColor: Color.surface2,
   },
-  modeChipActive: { backgroundColor: "#007AFF" },
-  modeText: { fontSize: 14, color: "#3C3C43", fontWeight: "500" },
-  modeTextActive: { color: "#FFFFFF" },
-  ocrRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 16,
-  },
-  ocrText: { fontSize: 13, color: "#8E8E93" },
+  modeChipActive: { backgroundColor: Color.accent },
+  modeText: { fontSize: 14, color: Color.secondary, fontWeight: "500" },
+  modeTextActive: { color: Color.onAccent },
+  ocrRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: Spacing.lg },
+  ocrText: { ...Type.footnote, color: Color.secondary },
   mainButton: {
-    backgroundColor: "#007AFF",
-    height: 50,
-    borderRadius: 14,
+    height: 52,
+    borderRadius: Radius.md,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
+    marginTop: Spacing.xl,
+    overflow: "hidden",
   },
-  mainButtonText: { color: "#FFF", fontSize: 17, fontWeight: "600" },
+  mainButtonText: { color: Color.onAccent, ...Type.headline },
   resultContainer: { flex: 1 },
   summaryCard: {
-    backgroundColor: "#FFF",
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    backgroundColor: Color.surface,
+    borderRadius: Radius.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
+    padding: Spacing.xl,
+    ...Shadow.card,
   },
   copyButton: { alignSelf: "flex-end", padding: 4 },
   placeholderText: {
-    fontSize: 15,
-    color: "#8E8E93",
+    ...Type.subhead,
+    color: Color.secondary,
     textAlign: "center",
     paddingHorizontal: 30,
     lineHeight: 21,
@@ -348,21 +337,29 @@ const styles = StyleSheet.create({
 });
 
 const markdownStyles = StyleSheet.create({
-  body: { fontSize: 16, color: "#000000", lineHeight: 23 },
-  heading1: { fontSize: 22, fontWeight: "700", marginTop: 8, marginBottom: 6 },
-  heading2: { fontSize: 19, fontWeight: "600", marginTop: 8, marginBottom: 4 },
+  body: { ...Type.callout, color: Color.label, lineHeight: 24 },
+  heading1: { fontSize: 22, fontWeight: "700", color: Color.label, marginTop: 8, marginBottom: 6 },
+  heading2: { fontSize: 19, fontWeight: "600", color: Color.label, marginTop: 8, marginBottom: 4 },
+  strong: { fontWeight: "700", color: Color.label },
+  link: { color: Color.accent },
   code_inline: {
-    backgroundColor: "rgba(0,0,0,0.05)",
-    color: "#D70015",
-    borderRadius: 4,
+    backgroundColor: Color.accentSoft,
+    color: Color.accent,
+    borderRadius: 5,
+    paddingHorizontal: 5,
+    fontFamily: MonoFont,
   },
   fence: {
-    backgroundColor: "#1C1C1E",
-    color: "#FFFFFF",
-    borderRadius: 10,
+    backgroundColor: alpha("#000000", 0.35),
+    color: Color.label,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Color.hairline,
     padding: 12,
+    fontFamily: MonoFont,
   },
-  table: { borderColor: "#E5E5EA", borderRadius: 8 },
-  th: { padding: 6 },
-  td: { padding: 6 },
+  table: { borderColor: Color.hairlineStrong, borderRadius: 8 },
+  tr: { borderColor: Color.hairline },
+  th: { padding: 6, color: Color.label },
+  td: { padding: 6, color: Color.secondary },
 });
