@@ -37,51 +37,54 @@ import { GlassSurface } from "@/components/ui/glass-surface";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { Color, Palette, Radius, Spacing, Type } from "@/constants/theme";
 import type { IntegrationId } from "@/agent/types";
+import { useTranslation } from "@/i18n";
 
 type Option = {
   id: IntegrationId;
+  /** Nome da marca — literal, não traduzido. */
   title: string;
-  desc: string;
+  /** Chave i18n da descrição curta (namespace `onboarding`). */
+  descKey: string;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   color: string;
   route: string;
 };
 
-const CATEGORIES: { id: string; title: string; options: Option[] }[] = [
+const CATEGORIES: { id: string; titleKey: string; options: Option[] }[] = [
   {
     id: "dev",
-    title: "Development & Code",
+    titleKey: "onboarding.catDev",
     options: [
-      { id: "github", title: "GitHub", desc: "Read diffs, review and open PRs, file issues", icon: "github", color: "#181717", route: "/(github)" },
-      { id: "gitlab", title: "GitLab", desc: "Merge requests, diffs and comments", icon: "gitlab", color: "#FC6D26", route: "/(gitlab)" },
-      { id: "vercel", title: "Vercel", desc: "Check deployments, trigger a redeploy", icon: "triangle-outline", color: "#111111", route: "/(vercel)" },
+      { id: "github", title: "GitHub", descKey: "onboarding.descGithub", icon: "github", color: "#181717", route: "/(github)" },
+      { id: "gitlab", title: "GitLab", descKey: "onboarding.descGitlab", icon: "gitlab", color: "#FC6D26", route: "/(gitlab)" },
+      { id: "vercel", title: "Vercel", descKey: "onboarding.descVercel", icon: "triangle-outline", color: "#111111", route: "/(vercel)" },
     ],
   },
   {
     id: "planning",
-    title: "Management & Planning",
+    titleKey: "onboarding.catPlanning",
     options: [
-      { id: "jira", title: "Jira", desc: "Search with JQL, create issues, comment", icon: "jira", color: "#0052CC", route: "/(jira)" },
-      { id: "linear", title: "Linear", desc: "List and create issues", icon: "vector-triangle", color: "#5E6AD2", route: "/(linear)" },
-      { id: "notion", title: "Notion", desc: "Search the workspace, create pages", icon: "notebook-outline", color: "#111111", route: "/(notion)" },
+      { id: "jira", title: "Jira", descKey: "onboarding.descJira", icon: "jira", color: "#0052CC", route: "/(jira)" },
+      { id: "linear", title: "Linear", descKey: "onboarding.descLinear", icon: "vector-triangle", color: "#5E6AD2", route: "/(linear)" },
+      { id: "notion", title: "Notion", descKey: "onboarding.descNotion", icon: "notebook-outline", color: "#111111", route: "/(notion)" },
     ],
   },
   {
     id: "design",
-    title: "Design",
+    titleKey: "onboarding.catDesign",
     options: [
-      { id: "figma", title: "Figma", desc: "Inspect a file's structure, leave comments", icon: "vector-square", color: "#F24E1E", route: "/(figma)" },
+      { id: "figma", title: "Figma", descKey: "onboarding.descFigma", icon: "vector-square", color: "#F24E1E", route: "/(figma)" },
     ],
   },
   {
     id: "communication",
-    title: "Communication",
+    titleKey: "onboarding.catCommunication",
     options: [
-      { id: "slack", title: "Slack", desc: "List channels, post messages", icon: "slack", color: "#4A154B", route: "/(slack)" },
-      { id: "discord", title: "Discord", desc: "Post to a channel via webhook", icon: "chat-processing", color: "#5865F2", route: "/(discord)" },
-      { id: "teams", title: "Microsoft Teams", desc: "Post to a channel", icon: "microsoft-teams", color: "#6264A7", route: "/(teams)" },
-      { id: "whatsapp", title: "WhatsApp", desc: "Send messages via Cloud API", icon: "whatsapp", color: "#25D366", route: "/(whatsapp)" },
-      { id: "gmail", title: "Gmail", desc: "Draft and send email", icon: "gmail", color: "#EA4335", route: "/(gmail)" },
+      { id: "slack", title: "Slack", descKey: "onboarding.descSlack", icon: "slack", color: "#4A154B", route: "/(slack)" },
+      { id: "discord", title: "Discord", descKey: "onboarding.descDiscord", icon: "chat-processing", color: "#5865F2", route: "/(discord)" },
+      { id: "teams", title: "Microsoft Teams", descKey: "onboarding.descTeams", icon: "microsoft-teams", color: "#6264A7", route: "/(teams)" },
+      { id: "whatsapp", title: "WhatsApp", descKey: "onboarding.descWhatsapp", icon: "whatsapp", color: "#25D366", route: "/(whatsapp)" },
+      { id: "gmail", title: "Gmail", descKey: "onboarding.descGmail", icon: "gmail", color: "#EA4335", route: "/(gmail)" },
     ],
   },
 ];
@@ -95,6 +98,7 @@ const TOOL_COUNT = ALL_TOOLS.reduce<Record<string, number>>((acc, tool) => {
 }, {});
 
 export default function OnboardingScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<IntegrationId[]>([]);
@@ -118,12 +122,12 @@ export default function OnboardingScreen() {
   const handleContinue = async () => {
     if (!selected.length) {
       Alert.alert(
-        "Nothing selected",
-        "Pick at least one service, or skip — the agent can still chat, remember, search the web and generate images.",
+        t("onboarding.nothingSelectedTitle"),
+        t("onboarding.nothingSelectedBody"),
         [
-          { text: "Back", style: "cancel" },
+          { text: t("common.back"), style: "cancel" },
           {
-            text: "Skip",
+            text: t("onboarding.skip"),
             onPress: async () => {
               await saveEnabledIntegrations([]);
               router.replace("/(tabs)");
@@ -157,23 +161,22 @@ export default function OnboardingScreen() {
         ]}
       >
         <View style={styles.header}>
-          <Text style={styles.kicker}>SET UP</Text>
-          <Text style={styles.title}>What can the agent touch?</Text>
-          <Text style={styles.subtitle}>
-            Pick every service you use. The agent decides on its own which one to
-            reach for — you are not choosing one primary tool.
-          </Text>
+          <Text style={styles.kicker}>{t("onboarding.setup")}</Text>
+          <Text style={styles.title}>{t("onboarding.title")}</Text>
+          <Text style={styles.subtitle}>{t("onboarding.subtitle")}</Text>
 
           <TouchableOpacity onPress={selectAll} style={styles.selectAll}>
             <Text style={styles.selectAllText}>
-              {selected.length === ALL_IDS.length ? "Deselect all" : "Select all"}
+              {selected.length === ALL_IDS.length
+                ? t("onboarding.deselectAll")
+                : t("onboarding.selectAll")}
             </Text>
           </TouchableOpacity>
         </View>
 
         {CATEGORIES.map((category) => (
           <View key={category.id} style={styles.categorySection}>
-            <Text style={styles.categoryTitle}>{category.title}</Text>
+            <Text style={styles.categoryTitle}>{t(category.titleKey)}</Text>
 
             <View style={styles.optionsGrid}>
               {category.options.map((option) => {
@@ -204,7 +207,7 @@ export default function OnboardingScreen() {
                         {option.title}
                       </Text>
                       <Text style={styles.cardDescription} numberOfLines={1}>
-                        {option.desc}
+                        {t(option.descKey)}
                       </Text>
                     </View>
 
@@ -214,7 +217,7 @@ export default function OnboardingScreen() {
                         style={styles.setupButton}
                         hitSlop={8}
                       >
-                        <Text style={styles.setupText}>Set up</Text>
+                        <Text style={styles.setupText}>{t("onboarding.setUp")}</Text>
                         <Feather name="chevron-right" size={14} color={Color.accent} />
                       </TouchableOpacity>
                     ) : (
@@ -227,11 +230,7 @@ export default function OnboardingScreen() {
           </View>
         ))}
 
-        <Text style={styles.note}>
-          Selecting a service here just tells the agent it exists. It only
-          becomes usable once you save its credentials on its own screen — tap
-          “Set up”.
-        </Text>
+        <Text style={styles.note}>{t("onboarding.note")}</Text>
       </ScrollView>
 
       <View
@@ -242,9 +241,12 @@ export default function OnboardingScreen() {
       >
         <GlassSurface radius={Radius.xxl} style={styles.footer}>
           <Text style={styles.footerCount}>
-            {totalTools} tools will be available to the agent
+            {t("onboarding.toolsCount", { count: totalTools })}
           </Text>
-          <GradientButton label="Continue" onPress={handleContinue} />
+          <GradientButton
+            label={t("onboarding.continue")}
+            onPress={handleContinue}
+          />
         </GlassSurface>
       </View>
     </View>

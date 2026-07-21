@@ -16,27 +16,27 @@ export default function TabLayout() {
   return (
     <NativeTabs tintColor={Color.accent} minimizeBehavior="onScrollDown">
       <NativeTabs.Trigger name="index">
-        <Label>{t("askAI")}</Label>
+        <Label>{t("tabs.askAI")}</Label>
         <Icon sf="sparkles" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="history">
-        <Label>{t("history")}</Label>
+        <Label>{t("tabs.history")}</Label>
         <Icon sf="clock.fill" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="generate-image">
-        <Label>{t("studio")}</Label>
+        <Label>{t("tabs.studio")}</Label>
         <Icon sf="paintbrush.fill" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="convert-pdf">
-        <Label>{t("files")}</Label>
+        <Label>{t("tabs.files")}</Label>
         <Icon sf="doc.text.magnifyingglass" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="settings">
-        <Label>{t("settings")}</Label>
+        <Label>{t("tabs.settings")}</Label>
         <Icon sf="gearshape.fill" />
       </NativeTabs.Trigger>
     </NativeTabs>

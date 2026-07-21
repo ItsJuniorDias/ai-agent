@@ -58,14 +58,7 @@ import {
   alpha,
 } from "@/constants/theme";
 import type { AgentStep, ChatMessage, StoredConversation } from "@/agent/types";
-import { useTranslation } from "@/i18n";
-
-const SUGGESTIONS = [
-  "Review the open pull requests on my repo",
-  "Summarize what changed this week and post it to Slack",
-  "Create a Jira ticket for the login bug",
-  "Generate an app icon: a fox reading a book, flat vector",
-];
+import { localeTag, useTranslation } from "@/i18n";
 
 // `NativeTabs` are rendered over the route content. The safe-area inset only
 // covers the home indicator, so it is not enough to keep a composer clear of
@@ -110,10 +103,7 @@ export default function ChatScreen() {
   // -- Aviso de chave ausente -----------------------------------------------
   useEffect(() => {
     if (!hasApiKey()) {
-      Alert.alert(
-        t("missingKeyTitle"),
-        t("missingKey"),
-      );
+      Alert.alert(t("chat.missingKeyTitle"), t("chat.missingKey"));
     }
   }, []);
 
@@ -182,14 +172,14 @@ export default function ChatScreen() {
         const all: StoredConversation[] = raw ? JSON.parse(raw) : [];
 
         const firstUser =
-          updated.find((m) => m.role === "user")?.text ?? t("newChat");
+          updated.find((m) => m.role === "user")?.text ?? t("chat.newChat");
         const title =
           firstUser.length > 30 ? `${firstUser.slice(0, 30)}...` : firstUser;
 
         const data: StoredConversation = {
           id,
           title,
-          date: new Date().toLocaleDateString("en-US"),
+          date: new Date().toLocaleDateString(localeTag(language)),
           messages: updated,
         };
 
@@ -245,13 +235,13 @@ export default function ChatScreen() {
       }
     } catch (err: any) {
       if (err?.name === "AbortError") {
-        setMessages([...withUser, { role: "model", text: "_Cancelado._" }]);
+        setMessages([...withUser, { role: "model", text: `_${t("chat.cancelled")}_` }]);
         return;
       }
 
       setMessages([
         ...withUser,
-        { role: "model", text: `**Erro**\n\n${err?.message ?? String(err)}` },
+        { role: "model", text: `**${t("chat.errorLabel")}**\n\n${err?.message ?? String(err)}` },
       ]);
     }
   };
@@ -267,12 +257,12 @@ export default function ChatScreen() {
 
   const clearChat = () => {
     Alert.alert(
-      "Clear conversation",
-      "Delete the current conversation? Long-term memory is not affected.",
+      t("chat.clearTitle"),
+      t("chat.clearBody"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Clear",
+          text: t("chat.clear"),
           style: "destructive",
           onPress: async () => {
             try {
@@ -296,6 +286,14 @@ export default function ChatScreen() {
 
   const canSend = !!prompt.trim() && !agent.running;
 
+  // Sugestões de exemplo, traduzidas — recalculadas quando o idioma muda.
+  const suggestions = [
+    t("chat.s1"),
+    t("chat.s2"),
+    t("chat.s3"),
+    t("chat.s4"),
+  ];
+
   return (
     <View style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -306,12 +304,12 @@ export default function ChatScreen() {
       >
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <View>
-            <Text style={styles.kicker}>{t("onDuty")}</Text>
-            <Text style={styles.largeTitle}>{t("agent")}</Text>
+            <Text style={styles.kicker}>{t("chat.onDuty")}</Text>
+            <Text style={styles.largeTitle}>{t("chat.agent")}</Text>
           </View>
           {messages.length > 0 && (
             <TouchableOpacity onPress={clearChat} hitSlop={8}>
-              <Text style={styles.clearButtonText}>{t("clear")}</Text>
+              <Text style={styles.clearButtonText}>{t("chat.clear")}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -370,13 +368,11 @@ export default function ChatScreen() {
                   <Feather name="command" size={26} color={Color.label} />
                 </View>
               </View>
-              <Text style={styles.hintText}>{t("promptHint")}</Text>
-              <Text style={styles.hintSub}>
-                I can reason across your connected tools and act on my own.
-              </Text>
+              <Text style={styles.hintText}>{t("chat.promptHint")}</Text>
+              <Text style={styles.hintSub}>{t("chat.hintSub")}</Text>
 
               <View style={styles.suggestions}>
-                {SUGGESTIONS.map((s) => (
+                {suggestions.map((s) => (
                   <TouchableOpacity
                     key={s}
                     style={styles.chip}
@@ -438,7 +434,7 @@ export default function ChatScreen() {
 
             <TextInput
               style={styles.input}
-              placeholder="Ask the agent to do something"
+              placeholder={t("chat.askPlaceholder")}
               placeholderTextColor={Color.placeholder}
               value={prompt}
               onChangeText={setPrompt}

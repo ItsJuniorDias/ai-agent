@@ -14,8 +14,10 @@ import {
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Color } from "@/constants/theme";
+import { useTranslation } from "@/i18n";
 
 export default function DiscordScreen() {
+  const { t } = useTranslation();
   const [agentName, setAgentName] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
   const [temperature, setTemperature] = useState("0.7");
@@ -48,10 +50,7 @@ export default function DiscordScreen() {
 
   const handleSave = async () => {
     if (!agentName.trim() || !systemPrompt.trim() || !discordWebhook.trim()) {
-      Alert.alert(
-        "Atenção",
-        "Por favor, preencha o nome, o comportamento e a URL do Webhook.",
-      );
+      Alert.alert(t("common.attention"), t("conn.discord.fillRequired"));
       return;
     }
 
@@ -66,9 +65,9 @@ export default function DiscordScreen() {
       const jsonValue = JSON.stringify(agentData);
       await AsyncStorage.setItem(STORAGE_KEY, jsonValue);
 
-      Alert.alert("Sucesso", "Configurações do Agente e Discord salvas!");
+      Alert.alert(t("common.success"), t("conn.discord.savedBody"));
     } catch (e) {
-      Alert.alert("Erro", "Não foi possível salvar as configurações.");
+      Alert.alert(t("common.error"), t("common.saveError"));
     }
   };
 
@@ -80,20 +79,17 @@ export default function DiscordScreen() {
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.headerContainer}>
-            <Text style={styles.largeTitle}>Discord</Text>
-            <Text style={styles.subtitle}>
-              Connect your agent to a Discord channel using a Webhook URL.
-              Optionally, provide a Bot Token for enhanced features.
-            </Text>
+            <Text style={styles.largeTitle}>{t("conn.discord.title")}</Text>
+<Text style={styles.subtitle}>{t("conn.discord.subtitle")}</Text>
           </View>
 
           {/* SEÇÃO 1: IDENTIFICAÇÃO */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>IDENTIFICAÇÃO DA IA</Text>
+            <Text style={styles.sectionTitle}>{t("conn.discord.identity")}</Text>
             <View style={styles.card}>
               <TextInput
                 style={styles.input}
-                placeholder="Nome do Agente"
+                placeholder={t("conn.discord.agentName")}
                 placeholderTextColor={Color.placeholder}
                 value={agentName}
                 onChangeText={setAgentName}
@@ -101,7 +97,7 @@ export default function DiscordScreen() {
               <View style={styles.separator} />
               <TextInput
                 style={styles.input}
-                placeholder="Temperatura (ex: 0.7)"
+                placeholder={t("conn.discord.temperature")}
                 placeholderTextColor={Color.placeholder}
                 keyboardType="numeric"
                 value={temperature}
@@ -112,7 +108,7 @@ export default function DiscordScreen() {
 
           {/* SEÇÃO 2: DISCORD (NOVA) */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>INTEGRAÇÃO DISCORD</Text>
+            <Text style={styles.sectionTitle}>{t("conn.discord.integration")}</Text>
             <View style={styles.card}>
               <TextInput
                 style={styles.input}
@@ -126,7 +122,7 @@ export default function DiscordScreen() {
               <View style={styles.separator} />
               <TextInput
                 style={styles.input}
-                placeholder="Bot Token (Opcional)"
+                placeholder={t("conn.discord.botTokenOptional")}
                 placeholderTextColor={Color.placeholder}
                 secureTextEntry={true} // Esconde o token por segurança
                 value={botToken}
@@ -134,21 +130,16 @@ export default function DiscordScreen() {
                 autoCapitalize="none"
               />
             </View>
-            <Text style={styles.footerText}>
-              O Webhook permite que a IA envie mensagens para um canal
-              específico.
-            </Text>
+<Text style={styles.footerText}>{t("conn.discord.webhookHint")}</Text>
           </View>
 
           {/* SEÇÃO 3: COMPORTAMENTO */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              COMPORTAMENTO (SYSTEM PROMPT)
-            </Text>
+<Text style={styles.sectionTitle}>{t("conn.discord.behavior")}</Text>
             <View style={styles.card}>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Instruções de personalidade..."
+                placeholder={t("conn.discord.personalityPlaceholder")}
                 placeholderTextColor={Color.placeholder}
                 value={systemPrompt}
                 onChangeText={setSystemPrompt}
@@ -159,7 +150,7 @@ export default function DiscordScreen() {
           </View>
 
           <TouchableOpacity style={styles.primaryButton} onPress={handleSave}>
-            <Text style={styles.primaryButtonText}>Salvar e Conectar</Text>
+            <Text style={styles.primaryButtonText}>{t("conn.discord.saveConnect")}</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

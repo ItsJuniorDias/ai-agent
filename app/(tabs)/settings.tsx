@@ -40,7 +40,12 @@ import { hasApiKey } from "@/services/openrouter";
 import { INTEGRATION_META } from "@/components/agent-trace";
 import { Color, Palette, Radius, Spacing, Type } from "@/constants/theme";
 import type { AgentTool } from "@/agent/types";
-import { LANGUAGE_LABELS, SUPPORTED_LANGUAGES, useTranslation } from "@/i18n";
+import {
+  LANGUAGE_META,
+  SUPPORTED_LANGUAGES,
+  useTranslation,
+  type Language,
+} from "@/i18n";
 
 const STEP_OPTIONS = [4, 6, 8, 12, 16];
 
@@ -51,8 +56,13 @@ const switchProps = {
   thumbColor: Palette.white,
 };
 
+/** "$3 / $15" + "per 1M" → "$3 / $15 per 1M"; amount vazio → só a unidade. */
+function formatPrice(amount: string, unit: string): string {
+  return `${amount} ${unit}`.trim();
+}
+
 export default function Settings() {
-  const { t, language, changeLanguage } = useTranslation();
+  const { t, language, setLanguage } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -94,14 +104,23 @@ export default function Settings() {
     setTools(await resolveTools(next));
   };
 
+  /** Troca o idioma; se a direção (LTR<->RTL) virou, avisa que precisa reiniciar. */
+  const pickLanguage = async (lng: Language) => {
+    if (lng === language) return;
+    const needsRestart = await setLanguage(lng);
+    if (needsRestart) {
+      Alert.alert(t("settings.language"), t("settings.languageFooter"));
+    }
+  };
+
   const confirmClearMemory = () => {
     Alert.alert(
-      "Clear long-term memory",
-      `Delete all ${memoryCount} remembered facts? This cannot be undone.`,
+      t("settings.clearMemoryTitle"),
+      t("settings.clearMemoryBody", { count: memoryCount }),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("common.delete"),
           style: "destructive",
           onPress: async () => {
             await clearMemory();
@@ -132,42 +151,20 @@ export default function Settings() {
       contentContainerStyle={{ paddingBottom: 48 }}
     >
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={styles.kicker}>{t("preferences")}</Text>
-        <Text style={styles.title}>{t("settings")}</Text>
-      </View>
-
-      <View style={styles.group}>
-        {SUPPORTED_LANGUAGES.map((item, index) => (
-          <TouchableOpacity
-            key={item}
-            style={[styles.row, index === SUPPORTED_LANGUAGES.length - 1 && styles.noBorder]}
-            onPress={() => changeLanguage(item)}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: language === item }}
-            accessibilityLabel={LANGUAGE_LABELS[item]}
-            activeOpacity={0.6}
-          >
-            <Text style={styles.rowText}>{LANGUAGE_LABELS[item]}</Text>
-            {language === item && (
-              <Ionicons name="checkmark" size={22} color={Color.accent} />
-            )}
-          </TouchableOpacity>
-        ))}
+        <Text style={styles.kicker}>{t("settings.preferences")}</Text>
+        <Text style={styles.title}>{t("settings.title")}</Text>
       </View>
 
       {/* Chave ausente é a causa nº 1 de "o app não faz nada" */}
       {!hasApiKey() && (
         <View style={styles.banner}>
           <Feather name="alert-triangle" size={18} color={Color.warning} />
-          <Text style={styles.bannerText}>
-            No OpenRouter key found. Add EXPO_PUBLIC_OPENROUTER_API_KEY to your
-            .env and restart with `npx expo start -c`.
-          </Text>
+          <Text style={styles.bannerText}>{t("settings.missingKeyBanner")}</Text>
         </View>
       )}
 
       {/* -- Assistente pessoal ------------------------------------------ */}
-      <Text style={styles.sectionTitle}>{t("personalAssistant")}</Text>
+      <Text style={styles.sectionTitle}>{t("settings.personalAssistant")}</Text>
       <View style={styles.group}>
         <TouchableOpacity
           style={[styles.row, styles.noBorder]}
@@ -179,26 +176,45 @@ export default function Settings() {
               <Ionicons name="notifications" size={17} color={Palette.white} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowText}>{t("proactiveAssistant")}</Text>
+              <Text style={styles.rowText}>{t("settings.proactiveAssistant")}</Text>
               <Text style={styles.rowSubtext}>
                 {assistantOn
                   ? notifOn
-                    ? t("enabledWatching")
-                    : t("notificationsBlocked")
-                  : t("disabledConfigure")}
+                    ? t("settings.enabledWatching")
+                    : t("settings.notificationsBlocked")
+                  : t("settings.disabledConfigure")}
               </Text>
             </View>
           </View>
           <Feather name="chevron-right" size={18} color={Color.tertiary} />
         </TouchableOpacity>
       </View>
-      <Text style={styles.footerText}>
-        Alertas em segundo plano e lembretes agendados. O agente te avisa sobre
-        PRs esperando review, deploys quebrados e issues novas.
-      </Text>
+      <Text style={styles.footerText}>{t("settings.assistantFooter")}</Text>
+
+      {/* -- Idioma ------------------------------------------------------- */}
+      <Text style={styles.sectionTitle}>{t("settings.language")}</Text>
+      <View style={styles.group}>
+        {SUPPORTED_LANGUAGES.map((lng, index) => (
+          <TouchableOpacity
+            key={lng}
+            style={[
+              styles.row,
+              index === SUPPORTED_LANGUAGES.length - 1 && styles.noBorder,
+            ]}
+            onPress={() => pickLanguage(lng)}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.rowText}>{LANGUAGE_META[lng].native}</Text>
+            {language === lng && (
+              <Ionicons name="checkmark" size={22} color={Color.accent} />
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
+      <Text style={styles.footerText}>{t("settings.languageFooter")}</Text>
 
       {/* -- Modelo do agente ------------------------------------------- */}
-      <Text style={styles.sectionTitle}>{t("agentModel")}</Text>
+      <Text style={styles.sectionTitle}>{t("settings.agentModel")}</Text>
       <View style={styles.group}>
         {AGENT_MODELS.map((model, index) => (
           <TouchableOpacity
@@ -217,7 +233,8 @@ export default function Settings() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowText}>{model.name}</Text>
                 <Text style={styles.rowSubtext}>
-                  {model.desc} · {model.price}
+                  {t(model.descKey)} ·{" "}
+                  {formatPrice(model.priceAmount, t(model.priceUnitKey))}
                 </Text>
               </View>
             </View>
@@ -227,13 +244,10 @@ export default function Settings() {
           </TouchableOpacity>
         ))}
       </View>
-      <Text style={styles.footerText}>
-        Every model listed supports tool calling — without it the agent cannot
-        act at all. Pricing is input / output per 1M tokens.
-      </Text>
+      <Text style={styles.footerText}>{t("settings.modelFooter")}</Text>
 
       {/* -- Comportamento ----------------------------------------------- */}
-      <Text style={styles.sectionTitle}>{t("agentBehavior")}</Text>
+      <Text style={styles.sectionTitle}>{t("settings.agentBehavior")}</Text>
       <View style={styles.group}>
         <View style={styles.row}>
           <View style={styles.rowLeft}>
@@ -241,10 +255,8 @@ export default function Settings() {
               <Ionicons name="shield-checkmark" size={17} color={Palette.white} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowText}>{t("askBeforeActing")}</Text>
-              <Text style={styles.rowSubtext}>
-                {t("approveWrites")}
-              </Text>
+              <Text style={styles.rowText}>{t("settings.askBeforeActing")}</Text>
+              <Text style={styles.rowSubtext}>{t("settings.approveWrites")}</Text>
             </View>
           </View>
           <Switch
@@ -260,10 +272,8 @@ export default function Settings() {
               <Ionicons name="globe" size={17} color={Palette.white} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowText}>Web access</Text>
-              <Text style={styles.rowSubtext}>
-                Let the agent search and read pages on its own
-              </Text>
+              <Text style={styles.rowText}>{t("settings.webAccess")}</Text>
+              <Text style={styles.rowSubtext}>{t("settings.webAccessSub")}</Text>
             </View>
           </View>
           <Switch
@@ -278,7 +288,7 @@ export default function Settings() {
             <View style={[styles.iconContainer, { backgroundColor: Color.accent }]}>
               <Ionicons name="finger-print" size={18} color={Palette.white} />
             </View>
-            <Text style={styles.rowText}>Haptic feedback</Text>
+            <Text style={styles.rowText}>{t("settings.haptics")}</Text>
           </View>
           <Switch
             {...switchProps}
@@ -289,13 +299,12 @@ export default function Settings() {
       </View>
       {!config.requireApproval && (
         <Text style={[styles.footerText, styles.warningText]}>
-          Approval is off. The agent will open pull requests, send messages and
-          trigger deploys without asking you first.
+          {t("settings.approvalOff")}
         </Text>
       )}
 
       {/* -- Limite de passos -------------------------------------------- */}
-      <Text style={styles.sectionTitle}>MAX TOOL ROUNDS</Text>
+      <Text style={styles.sectionTitle}>{t("settings.maxRounds")}</Text>
       <View style={styles.segmented}>
         {STEP_OPTIONS.map((n) => (
           <TouchableOpacity
@@ -315,13 +324,10 @@ export default function Settings() {
           </TouchableOpacity>
         ))}
       </View>
-      <Text style={styles.footerText}>
-        How many times the agent may call tools before it must answer. Higher
-        handles harder tasks; it also costs more per message.
-      </Text>
+      <Text style={styles.footerText}>{t("settings.maxRoundsFooter")}</Text>
 
       {/* -- Memória ------------------------------------------------------ */}
-      <Text style={styles.sectionTitle}>MEMORY</Text>
+      <Text style={styles.sectionTitle}>{t("settings.memory")}</Text>
       <View style={styles.group}>
         <View style={styles.row}>
           <View style={styles.rowLeft}>
@@ -329,9 +335,12 @@ export default function Settings() {
               <Ionicons name="library" size={17} color={Palette.white} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowText}>Long-term memory</Text>
+              <Text style={styles.rowText}>{t("settings.longTermMemory")}</Text>
               <Text style={styles.rowSubtext}>
-                {memoryCount} fact{memoryCount === 1 ? "" : "s"} remembered
+                {t(
+                  memoryCount === 1 ? "settings.factOne" : "settings.factOther",
+                  { count: memoryCount },
+                )}
               </Text>
             </View>
           </View>
@@ -358,14 +367,14 @@ export default function Settings() {
                 { color: memoryCount === 0 ? Color.tertiary : Color.danger },
               ]}
             >
-              Clear memory
+              {t("settings.clearMemory")}
             </Text>
           </View>
         </TouchableOpacity>
       </View>
 
       {/* -- Studio de imagens -------------------------------------------- */}
-      <Text style={styles.sectionTitle}>IMAGE MODEL</Text>
+      <Text style={styles.sectionTitle}>{t("settings.imageModel")}</Text>
       <View style={styles.group}>
         {IMAGE_MODELS.map((model, index) => (
           <TouchableOpacity
@@ -384,7 +393,8 @@ export default function Settings() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowText}>{model.name}</Text>
                 <Text style={styles.rowSubtext}>
-                  {model.desc} · {model.price}
+                  {t(model.descKey)} ·{" "}
+                  {formatPrice(model.priceAmount, t(model.priceUnitKey))}
                 </Text>
               </View>
             </View>
@@ -397,14 +407,13 @@ export default function Settings() {
 
       {/* -- Integrações ativas ------------------------------------------- */}
       <Text style={styles.sectionTitle}>
-        CONNECTED SERVICES · {tools.length} TOOLS
+        {t("settings.connectedServices", { count: tools.length })}
       </Text>
       <View style={styles.group}>
         {connected.length === 0 ? (
           <View style={[styles.row, styles.noBorder]}>
             <Text style={styles.rowSubtext}>
-              No service connected yet. The agent can still chat, remember,
-              search the web and generate images.
+              {t("settings.noServiceConnected")}
             </Text>
           </View>
         ) : (
@@ -431,7 +440,10 @@ export default function Settings() {
                   <View style={{ flex: 1 }}>
                     <Text style={styles.rowText}>{meta.label}</Text>
                     <Text style={styles.rowSubtext}>
-                      {count} tool{count === 1 ? "" : "s"} available
+                      {t(
+                        count === 1 ? "settings.toolOne" : "settings.toolOther",
+                        { count },
+                      )}
                     </Text>
                   </View>
                 </View>
@@ -441,18 +453,14 @@ export default function Settings() {
           })
         )}
       </View>
-      <Text style={styles.footerText}>
-        A service shows up here once its credentials are saved. Tools you have
-        not configured are never offered to the model — it cannot try and fail
-        on them.
-      </Text>
+      <Text style={styles.footerText}>{t("settings.servicesFooter")}</Text>
 
       <TouchableOpacity
         style={styles.linkRow}
         onPress={() => router.push("/(onboarding)" as never)}
         activeOpacity={0.6}
       >
-        <Text style={styles.linkText}>Manage integrations</Text>
+        <Text style={styles.linkText}>{t("settings.manageIntegrations")}</Text>
         <Feather name="chevron-right" size={18} color={Color.accent} />
       </TouchableOpacity>
     </ScrollView>

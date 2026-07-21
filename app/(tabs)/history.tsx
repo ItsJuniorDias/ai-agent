@@ -38,9 +38,12 @@ import type { StoredConversation } from "@/agent/types";
 import { useTranslation } from "@/i18n";
 
 /** Primeira resposta do agente na conversa, para o preview do card. */
-function previewOf(conversation: StoredConversation): string {
+function previewOf(
+  conversation: StoredConversation,
+  fallback: string,
+): string {
   const reply = conversation.messages.find((m) => m.role !== "user");
-  return reply?.text?.trim() || "No response yet";
+  return reply?.text?.trim() || fallback;
 }
 
 export default function History() {
@@ -67,12 +70,12 @@ export default function History() {
 
   const handleDelete = (id: string) => {
     Alert.alert(
-      "Delete conversation",
-      "Are you sure you want to delete this conversation from your history?",
+      t("history.deleteTitle"),
+      t("history.deleteBody"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("common.delete"),
           style: "destructive",
           onPress: async () => {
             try {
@@ -89,7 +92,7 @@ export default function History() {
               setHistory(updated);
             } catch (err) {
               console.log("Error deleting history:", err);
-              Alert.alert("Error", "Could not delete the conversation.");
+              Alert.alert(t("common.error"), t("history.deleteError"));
             }
           },
         },
@@ -115,7 +118,7 @@ export default function History() {
           </Text>
 
           <Text style={styles.cardDescription} numberOfLines={2}>
-            {previewOf(item)}
+            {previewOf(item, t("history.noResponse"))}
           </Text>
 
           <Text style={styles.cardDate}>{item.date}</Text>
@@ -138,10 +141,8 @@ export default function History() {
           <View style={styles.emptyIcon}>
             <Feather name="clock" size={24} color={Color.secondary} />
           </View>
-          <Text style={styles.emptyText}>{t("nothingSaved")}</Text>
-          <Text style={styles.emptySub}>
-            Conversations you have with the agent show up here.
-          </Text>
+          <Text style={styles.emptyText}>{t("history.nothingSaved")}</Text>
+          <Text style={styles.emptySub}>{t("history.emptySub")}</Text>
         </View>
       ) : (
         <FlatList
@@ -150,8 +151,8 @@ export default function History() {
           renderItem={renderItem}
           ListHeaderComponent={
             <View style={styles.listHeader}>
-              <Text style={styles.kicker}>{t("archive")}</Text>
-              <Text style={styles.title}>{t("history")}</Text>
+              <Text style={styles.kicker}>{t("history.archive")}</Text>
+              <Text style={styles.title}>{t("history.title")}</Text>
             </View>
           }
           contentContainerStyle={styles.listContainer}

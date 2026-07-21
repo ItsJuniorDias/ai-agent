@@ -13,8 +13,10 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Color } from "@/constants/theme";
+import { useTranslation } from "@/i18n";
 
 export default function VercelScreen() {
+  const { t } = useTranslation();
   const [token, setToken] = useState("");
   const [projectId, setProjectId] = useState("");
   const [teamId, setTeamId] = useState("");
@@ -37,7 +39,7 @@ export default function VercelScreen() {
       if (savedProject) setProjectId(savedProject);
       if (savedTeam) setTeamId(savedTeam);
     } catch (e) {
-      Alert.alert("Error", "Could not load the settings.");
+      Alert.alert(t("common.error"), t("common.loadError"));
     }
   };
 
@@ -48,9 +50,9 @@ export default function VercelScreen() {
       await AsyncStorage.setItem("@vercel_project_id", projectId);
       await AsyncStorage.setItem("@vercel_team_id", teamId);
 
-      Alert.alert("Success", "Settings saved successfully!");
+      Alert.alert(t("common.success"), t("common.savedOnDevice"));
     } catch (e) {
-      Alert.alert("Error", "Failed to save data.");
+      Alert.alert(t("common.error"), t("common.saveError"));
     } finally {
       setLoadingSave(false);
     }
@@ -58,7 +60,7 @@ export default function VercelScreen() {
 
   const handleDeploy = async () => {
     if (!token || !projectId) {
-      Alert.alert("Attention", "Token and Project ID are required.");
+      Alert.alert(t("common.attention"), t("conn.vercel.tokenProjectRequired"));
       return;
     }
 
@@ -91,19 +93,19 @@ export default function VercelScreen() {
       // Check if the Vercel API returned an error (e.g., Invalid token, missing permissions)
       if (!response.ok) {
         throw new Error(
-          data.error?.message || "Unknown error communicating with Vercel.",
+          data.error?.message || t("conn.vercel.unknownVercelError"),
         );
       }
 
       // Success! Show the generated URL in the alert
       Alert.alert(
-        "Deploy Started 🚀",
-        `The process has started successfully!\n\nURL: ${data.url}`,
+        t("conn.vercel.deployStarted"),
+        t("conn.vercel.deployStartedBody", { url: data.url }),
       );
     } catch (error) {
       Alert.alert(
-        "Deployment Error",
-        error instanceof Error ? error.message : "Unknown error.",
+        t("conn.vercel.deploymentError"),
+        error instanceof Error ? error.message : t("conn.vercel.unknownError"),
       );
     } finally {
       setLoadingDeploy(false);
@@ -117,16 +119,14 @@ export default function VercelScreen() {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.title}>Vercel Integration</Text>
-          <Text style={styles.description}>
-            Configure your credentials to trigger a deployment via API.
-          </Text>
+          <Text style={styles.title}>{t("conn.vercel.title")}</Text>
+<Text style={styles.description}>{t("conn.vercel.description")}</Text>
         </View>
 
         {/* iOS Style Input Group */}
         <View style={styles.inputGroup}>
           <View style={styles.inputRow}>
-            <Text style={styles.label}>Token</Text>
+            <Text style={styles.label}>{t("conn.vercel.token")}</Text>
             <TextInput
               style={styles.input}
               placeholder="e.g., m9H1..."
@@ -142,7 +142,7 @@ export default function VercelScreen() {
           <View style={styles.separator} />
 
           <View style={styles.inputRow}>
-            <Text style={styles.label}>Project ID</Text>
+            <Text style={styles.label}>{t("conn.vercel.projectId")}</Text>
             <TextInput
               style={styles.input}
               placeholder="e.g., prj_123..."
@@ -157,10 +157,10 @@ export default function VercelScreen() {
           <View style={styles.separator} />
 
           <View style={styles.inputRow}>
-            <Text style={styles.label}>Team ID</Text>
+            <Text style={styles.label}>{t("conn.vercel.teamId")}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Optional"
+              placeholder={t("common.optional")}
               placeholderTextColor={Color.placeholder}
               value={teamId}
               onChangeText={setTeamId}
@@ -179,7 +179,7 @@ export default function VercelScreen() {
           {loadingSave ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.primaryButtonText}>Save Settings</Text>
+            <Text style={styles.primaryButtonText}>{t("common.saveSettings")}</Text>
           )}
         </TouchableOpacity>
 
@@ -191,7 +191,7 @@ export default function VercelScreen() {
           {loadingDeploy ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.deployButtonText}>Start Deployment</Text>
+            <Text style={styles.deployButtonText}>{t("conn.vercel.startDeployment")}</Text>
           )}
         </TouchableOpacity>
       </ScrollView>

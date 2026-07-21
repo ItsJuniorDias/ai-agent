@@ -1,0 +1,496 @@
+import type { Dict } from "./en";
+
+const ar: Dict = {
+  common: {
+    save: "حفظ",
+    saveSettings: "حفظ الإعدادات",
+    cancel: "إلغاء",
+    back: "رجوع",
+    ok: "حسنًا",
+    delete: "حذف",
+    error: "خطأ",
+    success: "تم بنجاح",
+    attention: "تنبيه",
+    disconnect: "قطع الاتصال",
+    optional: "اختياري",
+    requiredTitle: "حقول مطلوبة",
+    requiredBody: "يرجى ملء جميع الحقول للمتابعة.",
+    loadError: "تعذّر تحميل الإعدادات المحفوظة.",
+    saveError: "تعذّر حفظ الإعدادات.",
+    savedOnDevice: "تم حفظ الإعدادات على هذا الجهاز.",
+  },
+
+  tabs: {
+    askAI: "اسأل الذكاء",
+    history: "السجل",
+    studio: "الاستوديو",
+    files: "الملفات",
+    settings: "الإعدادات",
+  },
+
+  chat: {
+    onDuty: "قيد العمل",
+    agent: "الوكيل",
+    clear: "مسح",
+    promptHint: "ماذا تريدني أن أفعل؟",
+    hintSub: "يمكنني الاستدلال عبر أدواتك المتصلة والتصرف من تلقاء نفسي.",
+    newChat: "محادثة جديدة",
+    missingKeyTitle: "مفتاح OpenRouter مفقود",
+    missingKey:
+      "اضبط EXPO_PUBLIC_OPENROUTER_API_KEY في ملف .env وأعد تشغيل الحزم.",
+    askPlaceholder: "اطلب من الوكيل تنفيذ مهمة",
+    clearTitle: "مسح المحادثة",
+    clearBody:
+      "حذف المحادثة الحالية؟ لن تتأثر الذاكرة طويلة المدى.",
+    cancelled: "تم الإلغاء.",
+    errorLabel: "خطأ",
+    s1: "راجع طلبات السحب المفتوحة في مستودعي",
+    s2: "لخّص ما تغيّر هذا الأسبوع وانشره على Slack",
+    s3: "أنشئ تذكرة Jira لخطأ تسجيل الدخول",
+    s4: "أنشئ أيقونة تطبيق: ثعلب يقرأ كتابًا، بأسلوب متجه مسطّح",
+  },
+
+  history: {
+    archive: "الأرشيف",
+    title: "السجل",
+    nothingSaved: "لا يوجد شيء محفوظ بعد.",
+    emptySub: "تظهر هنا المحادثات التي تجريها مع الوكيل.",
+    noResponse: "لا يوجد رد بعد",
+    deleteTitle: "حذف المحادثة",
+    deleteBody:
+      "هل أنت متأكد أنك تريد حذف هذه المحادثة من سجلك؟",
+    deleteError: "تعذّر حذف المحادثة.",
+  },
+
+  studio: {
+    imageStudio: "استوديو الصور",
+    subtitle: "{{model}} · عبر OpenRouter",
+    modelFallback: "نموذج الصور",
+    generating: "جارٍ الإنشاء…",
+    tryAgain: "أعد المحاولة",
+    creationHere: "سيظهر إبداعك هنا",
+    editingThis: "يتم تحرير هذه الصورة وفق مطالبتك",
+    describePlaceholder: "صف الصورة — التكوين، الإضاءة، الأسلوب",
+    edit: "تحرير",
+    generate: "إنشاء",
+    readError: "تعذّر قراءة تلك الصورة.",
+    genTimeout:
+      "استغرق الإنشاء وقتًا طويلاً وتم إلغاؤه. أعد المحاولة أو غيّر النموذج في الإعدادات.",
+    genFailed: "فشل الإنشاء",
+    permDenied: "تم رفض الإذن",
+    permDeniedBody: "نحتاج إلى إذن لحفظ الصورة في مكتبتك.",
+    saved: "تم الحفظ",
+    savedBody: "الصورة في مكتبة صورك.",
+    saveImageError: "تعذّر حفظ الصورة.",
+  },
+
+  insights: {
+    title: "الرؤى",
+    document: "المستند",
+    analyzeNow: "حلّل الآن",
+    selectFile: "انقر لاختيار ملف (PDF, TXT, CSV, IMG)",
+    scannedPdf: "PDF ممسوح ضوئيًا (استخدم OCR — أبطأ وأعلى تكلفة)",
+    placeholder:
+      "اختر ملفًا وانقر «حلّل الآن» لرؤية ملخص الرؤى هنا.",
+    selectError: "تعذّر اختيار المستند. يرجى إعادة المحاولة.",
+    analysisFailed: "فشل التحليل",
+    ocrHint:
+      "لم يعثر المحلّل على طبقة نصية. هذا عادةً ملف PDF ممسوح ضوئيًا — شغّل OCR وأعد المحاولة.",
+    modeSummary: "ملخص",
+    modeExtract: "بيانات رئيسية",
+    modeQuestions: "نقد",
+    modeActions: "بنود إجرائية",
+  },
+
+  settings: {
+    preferences: "التفضيلات",
+    title: "الإعدادات",
+    missingKeyBanner:
+      "لم يُعثر على مفتاح OpenRouter. أضف EXPO_PUBLIC_OPENROUTER_API_KEY إلى ملف .env وأعد التشغيل بـ `npx expo start -c`.",
+    personalAssistant: "المساعد الشخصي",
+    proactiveAssistant: "مساعد استباقي",
+    enabledWatching: "مُفعّل · يراقب خدماتك",
+    notificationsBlocked: "مُفعّل · الإشعارات محظورة",
+    disabledConfigure: "مُعطّل · انقر للتهيئة",
+    assistantFooter:
+      "تنبيهات في الخلفية وتذكيرات مجدولة. يخبرك الوكيل بطلبات السحب المنتظرة للمراجعة وعمليات النشر الفاشلة والمشكلات الجديدة.",
+    language: "اللغة",
+    languageFooter:
+      "التبديل إلى لغة تُكتب من اليمين إلى اليسار يقلب التخطيط بالكامل ويتطلب إعادة تشغيل التطبيق ليأخذ مفعوله كاملاً.",
+    agentModel: "نموذج الوكيل",
+    modelFooter:
+      "كل نموذج مدرج يدعم استدعاء الأدوات — بدونه لا يستطيع الوكيل التصرف إطلاقًا. التسعير مُدخل / مُخرج لكل مليون رمز.",
+    agentBehavior: "سلوك الوكيل",
+    askBeforeActing: "الاستئذان قبل التصرف",
+    approveWrites: "الموافقة على كل كتابة إلى خدمة خارجية",
+    webAccess: "الوصول إلى الويب",
+    webAccessSub: "دع الوكيل يبحث ويقرأ الصفحات بنفسه",
+    haptics: "الاستجابة اللمسية",
+    approvalOff:
+      "الموافقة معطّلة. سيفتح الوكيل طلبات سحب ويرسل رسائل ويطلق عمليات نشر دون سؤالك أولًا.",
+    maxRounds: "أقصى جولات الأدوات",
+    maxRoundsFooter:
+      "كم مرة يمكن للوكيل استدعاء الأدوات قبل أن يجيب. القيمة الأعلى تتعامل مع مهام أصعب؛ لكنها تكلّف أكثر لكل رسالة.",
+    memory: "الذاكرة",
+    longTermMemory: "الذاكرة طويلة المدى",
+    factOne: "تم تذكّر {{count}} حقيقة",
+    factOther: "تم تذكّر {{count}} حقيقة",
+    clearMemory: "مسح الذاكرة",
+    clearMemoryTitle: "مسح الذاكرة طويلة المدى",
+    clearMemoryBody:
+      "حذف كل الحقائق المتذكَّرة البالغ عددها {{count}}؟ لا يمكن التراجع عن ذلك.",
+    imageModel: "نموذج الصور",
+    connectedServices: "الخدمات المتصلة · {{count}} أداة",
+    noServiceConnected:
+      "لا توجد خدمة متصلة بعد. لا يزال بإمكان الوكيل الدردشة والتذكّر والبحث في الويب وإنشاء الصور.",
+    toolOne: "{{count}} أداة متاحة",
+    toolOther: "{{count}} أداة متاحة",
+    servicesFooter:
+      "تظهر الخدمة هنا بمجرد حفظ بيانات اعتمادها. الأدوات التي لم تهيّئها لا تُعرض على النموذج أبدًا — فلا يمكنه تجربتها والفشل فيها.",
+    manageIntegrations: "إدارة عمليات التكامل",
+  },
+
+  assistant: {
+    title: "المساعد الشخصي",
+    intro:
+      "يصبح الوكيل مساعدًا يراقب خدماتك في الخلفية وينبّهك عندما يظهر شيء مهم — طلب سحب ينتظر المراجعة، أو عملية نشر فاشلة، أو مشكلة جديدة مُسندة إليك. كما يجدول التذكيرات عندما تطلب ذلك في المحادثة.",
+    missingKeyBanner:
+      "لا يوجد مفتاح OpenRouter. لن تعمل عمليات الفحص حتى تضبط EXPO_PUBLIC_OPENROUTER_API_KEY في ملف .env.",
+    enableNotifications: "تشغيل الإشعارات",
+    enableNotificationsSub: "بدون ذلك لا يملك المساعد وسيلة للوصول إليك.",
+    settingsBtn: "الإعدادات",
+    enableBtn: "تفعيل",
+    proactiveMonitoring: "المراقبة الاستباقية",
+    monitorBackground: "المراقبة في الخلفية",
+    monitorBackgroundSub: "يفحص خدماتك ويرسل التنبيهات من تلقاء نفسه",
+    statusLine:
+      "حالة النظام: {{status}}. آخر فحص: {{when}}{{summary}}.",
+    available: "متاح",
+    restricted: "مُقيّد من قِبل النظام",
+    unavailable: "غير متاح",
+    minInterval: "الحد الأدنى للفاصل",
+    intervalFooter:
+      "هذا حدّ أدنى، وليس ساعة. يقرر iOS متى يوقظ التطبيق ويميل إلى تجميع عمليات التشغيل في نوافذه الخاصة — أحيانًا ليلاً فقط. لفحص فوري، استخدم «افحص الآن» أدناه أو اطلب في المحادثة.",
+    quietHours: "ساعات الهدوء",
+    silenceNight: "الإسكات ليلًا",
+    from: "من",
+    to: "إلى",
+    quietFooter:
+      "ينطبق فقط على عمليات الفحص التلقائية. التذكيرات التي جدولتها صراحةً تعمل بصرف النظر عن ذلك.",
+    watchedServices: "الخدمات المراقَبة",
+    noMonitorable:
+      "لا توجد خدمة قابلة للمراقبة متصلة. اربط GitHub أو GitLab أو Jira أو Linear أو Vercel ليكون لدى المساعد ما يراقبه.",
+    connectMore: "ربط المزيد من الخدمات",
+    scanNow: "افحص الآن",
+    scheduledReminders: "التذكيرات المجدولة · {{count}}",
+    noReminders:
+      "لا توجد تذكيرات مجدولة. اطلب في المحادثة: «ذكّرني بمراجعة طلب السحب غدًا الساعة 9 صباحًا».",
+    clearAll: "مسح الكل",
+    clearRemindersTitle: "مسح التذكيرات",
+    clearRemindersBody: "إلغاء التذكيرات المجدولة البالغ عددها {{count}}؟",
+    notifDisabledTitle: "الإشعارات معطّلة",
+    notifDisabledBody:
+      "اسمح بالإشعارات ليتمكن المساعد من الوصول إليك.",
+    scanOkNotified: "تم — أُرسل {{count}} تنبيه.",
+    scanOkClear: "اكتمل الفحص. لا شيء عاجل الآن.",
+    scanNeedsPermission: "اسمح بالإشعارات أولًا (الزر أعلاه).",
+    scanNoKey: "لا يوجد مفتاح OpenRouter. اضبط ملف .env لتشغيل الوكيل.",
+    scanNoTargets:
+      "لا توجد خدمة قابلة للمراقبة متصلة. اربط GitHub أو Jira أو Vercel…",
+    scanQuiet: "ضمن ساعات الهدوء — تم التخطي.",
+    scanDisabled: "المراقبة معطّلة.",
+    scanFail: "فشل الفحص.",
+  },
+
+  onboarding: {
+    setup: "الإعداد",
+    title: "ما الذي يمكن للوكيل الوصول إليه؟",
+    subtitle:
+      "اختر كل خدمة تستخدمها. يقرر الوكيل بنفسه أيها يستخدم — فأنت لا تختار أداة رئيسية واحدة.",
+    selectAll: "تحديد الكل",
+    deselectAll: "إلغاء تحديد الكل",
+    setUp: "إعداد",
+    note:
+      "اختيار خدمة هنا يخبر الوكيل فقط بأنها موجودة. لا تصبح قابلة للاستخدام إلا بعد حفظ بيانات اعتمادها في شاشتها الخاصة — انقر «إعداد».",
+    toolsCount: "ستتاح {{count}} أداة للوكيل",
+    continue: "متابعة",
+    nothingSelectedTitle: "لم يتم تحديد شيء",
+    nothingSelectedBody:
+      "اختر خدمة واحدة على الأقل، أو تخطَّ — لا يزال بإمكان الوكيل الدردشة والتذكّر والبحث في الويب وإنشاء الصور.",
+    skip: "تخطّي",
+    catDev: "التطوير والشيفرة",
+    catPlanning: "الإدارة والتخطيط",
+    catDesign: "التصميم",
+    catCommunication: "التواصل",
+    descGithub: "قراءة الفروق والمراجعة وفتح طلبات السحب وتسجيل المشكلات",
+    descGitlab: "طلبات الدمج والفروق والتعليقات",
+    descVercel: "فحص عمليات النشر وإطلاق إعادة نشر",
+    descJira: "البحث بـ JQL وإنشاء المشكلات والتعليق",
+    descLinear: "سرد المشكلات وإنشاؤها",
+    descNotion: "البحث في مساحة العمل وإنشاء الصفحات",
+    descFigma: "فحص بنية ملف وترك التعليقات",
+    descSlack: "سرد القنوات ونشر الرسائل",
+    descDiscord: "النشر إلى قناة عبر webhook",
+    descTeams: "النشر إلى قناة",
+    descWhatsapp: "إرسال الرسائل عبر Cloud API",
+    descGmail: "صياغة البريد وإرساله",
+  },
+
+  aiTerms: {
+    title: "الذكاء الاصطناعي والخصوصية",
+    subtitle:
+      "لتقديم ميزات الذكاء الاصطناعي لدينا، نحتاج إلى مشاركة بعض البيانات. إليك كيف نحمي خصوصيتك.",
+    whatTitle: "ما البيانات التي تُرسل",
+    whatBody:
+      "يُرسل للمعالجة فقط النص الذي تكتبه في المحادثة [أو الصور التي ترفعها]. نحن لا نرسل اسمك أو بريدك الإلكتروني أو بيانات موقعك.",
+    whoTitle: "لمن نرسلها",
+    whoBody:
+      "تُرسل بياناتك بأمان إلى [INSERT AI NAME, e.g., OpenAI / Google Gemini]، مزوّد خدمة الذكاء الاصطناعي الشريك لنا.",
+    useTitle: "استخدام البيانات وحمايتها",
+    useBody:
+      "تُستخدم البيانات حصريًا لإنشاء الردود داخل التطبيق. لا يستخدم شركاؤنا بياناتك لتدريب نماذج ذكاء اصطناعي عامة.",
+    disclaimer:
+      "بالمتابعة، فإنك توافق على مشاركة البيانات الموضحة أعلاه مع شركاء الذكاء الاصطناعي لدينا. اقرأ ",
+    privacyPolicy: "سياسة الخصوصية",
+    agree: "أوافق وأتابع",
+    exitTitle: "الخروج من ميزات الذكاء الاصطناعي",
+    exitBody:
+      "لقد اخترت عدم مشاركة البيانات مع شركاء الذكاء الاصطناعي لدينا. لا يزال بإمكانك استخدام التطبيق، لكن ميزات الذكاء الاصطناعي ستكون معطّلة.",
+    doNotShare: "عدم المشاركة (خروج)",
+  },
+
+  approval: {
+    warning: "يريد الوكيل تنفيذ هذا الإجراء. إنه حقيقي ولا يمكن التراجع عنه.",
+    noArgs: "لا توجد معلّمات.",
+    reject: "رفض",
+    execute: "تنفيذ",
+    footnote: "يمكنك إيقاف هذه التأكيدات من الإعدادات.",
+  },
+
+  trace: {
+    agent: "الوكيل",
+    actionOne: "إجراء واحد ({{count}})",
+    actionOther: "{{count}} إجراء",
+    withError: " · {{count}} فشل",
+    open: "فتح",
+    concluded: "تم",
+    failed: "فشل",
+  },
+
+  models: {
+    per1M: "لكل مليون",
+    perToken: "لكل رمز",
+    perImage: "/ صورة",
+    descGeminiFlash: "سريع ورخيص وممتاز في استدعاء الأدوات",
+    descClaudeSonnet: "أفضل استدلال للمهام متعددة الخطوات",
+    descGrok: "تكلفة في الحدّ الأدنى، سياق 2M",
+    descDeepseek: "قوي في الشيفرة، تسعير تنافسي",
+    descClaudeOpus: "الأكثر قدرة لإعادة الهيكلة والخطط الطويلة",
+    descGeminiLite: "رخيص للغاية للمهام البسيطة",
+    descNanoBanana: "Gemini 2.5 Flash Image — مستقر وسريع",
+    descNanoBanana2: "جودة Pro بسرعة Flash",
+    descSeedream: "سعر ثابت لكل صورة، ممتاز في التكوين",
+  },
+
+  conn: {
+    github: {
+      title: "إعداد GitHub",
+      subtitle: "تهيئة لمراجعات الشيفرة المدعومة بالذكاء الاصطناعي",
+      connectionSettings: "إعدادات الاتصال",
+      baseUrl: "API Base URL",
+      token: "Personal Access Token",
+      owner: "Owner (e.g. facebook)",
+      repo: "Repository (e.g. react-native)",
+      ownerRepoHint:
+        "يشكّل الـ Owner والـ Repository مسار المشروع. e.g. github.com/owner/repository",
+      prDetails: "تفاصيل PULL REQUEST",
+      sourceBranch: "Source Branch / Head (e.g. feature/new-screen)",
+      targetBranch: "Target Branch / Base (e.g. main)",
+      prTitle: "عنوان PR",
+      prDesc: "وصف PR",
+    },
+    gitlab: {
+      title: "GitLab",
+      description:
+        "هيّئ تكاملك مع GitLab لمزامنة مستودعاتك ومشكلاتك.",
+      credentials: "بيانات الاعتماد",
+      token: "Personal Access Token",
+    },
+    vercel: {
+      title: "تكامل Vercel",
+      description:
+        "هيّئ بيانات اعتمادك لإطلاق عملية نشر عبر API.",
+      token: "Token",
+      projectId: "Project ID",
+      teamId: "Team ID",
+      startDeployment: "بدء النشر",
+      tokenProjectRequired: "الـ Token والـ Project ID مطلوبان.",
+      unknownVercelError: "خطأ غير معروف في التواصل مع Vercel.",
+      deployStarted: "بدأ النشر 🚀",
+      deployStartedBody: "بدأت العملية بنجاح!\n\nURL: {{url}}",
+      deploymentError: "خطأ في النشر",
+      unknownError: "خطأ غير معروف.",
+    },
+    jira: {
+      title: "تكامل Jira",
+      subtitle:
+        "هيّئ بيانات اعتماد Atlassian Cloud لمزامنة مساحة عملك.",
+      accountDetails: "تفاصيل الحساب",
+      email: "البريد الإلكتروني",
+      token: "API Token",
+      workspace: "مساحة العمل",
+      domain: "your-company",
+      domainHint: "ابحث عن نطاقك في رابط متصفح Jira.",
+      savedSecurely: "تم حفظ الإعدادات بأمان.",
+    },
+    linear: {
+      title: "Linear",
+      description: "دع الوكيل يسرد المشكلات وينشئها في مساحة عملك.",
+      authentication: "المصادقة",
+      apiKey: "API Key",
+      apiKeyHint: "Linear → Settings → Security & access → Personal API keys.",
+      team: "الفريق",
+      teamId: "Team ID",
+      loadTeamsPlaceholder: "حمّل الفرق أدناه",
+      teamHint:
+        "يحدّد Linear الفرق بواسطة UUID، وليس بالمفتاح الذي تراه في الواجهة (“ENG”). حمّلها من حسابك بدلًا من كتابتها.",
+      selected: "\n\nالمحدد: {{name}}.",
+      loadTeams: "حمّل فرقي",
+      connectedBody: "تم ربط Linear. يمكن للوكيل استخدامه الآن.",
+      apiKeyRequired: "الـ API Key مطلوب.",
+      failed: "فشل",
+      noTeams: "لا توجد فرق",
+      noTeamsBody: "لا توجد فرق مرتبطة بهذا المفتاح.",
+      reachError: "تعذّر الوصول إلى Linear.",
+    },
+    notion: {
+      title: "Notion",
+      description: "دع الوكيل يبحث في مساحة عملك وينشئ صفحات.",
+      authentication: "المصادقة",
+      secretToken: "Secret Token",
+      tokenHint:
+        "أنشئ تكاملًا في notion.so/my-integrations وانسخ الـ Internal Integration Secret.",
+      workspace: "مساحة العمل",
+      databaseId: "Database ID",
+      databaseHint:
+        "قاعدة البيانات الافتراضية للصفحات الجديدة. يمكن للوكيل تجاوزها لكل طلب. اتركها فارغة وسيسأل.\n\nلن تظهر قاعدة البيانات حتى تشاركها مع تكاملك — افتحها في Notion، ثم ••• → Connections → تكاملك. هذا هو السبب الأكثر شيوعًا لإرجاع Notion لرسالة “object not found”.",
+      tokenRequired: "الـ Integration Token مطلوب.",
+      connectedBody: "تم ربط Notion. يمكن للوكيل استخدامه الآن.",
+      testConnection: "اختبار الاتصال",
+      connected: "متصل",
+      connectedAs: "تمت المصادقة باسم {{who}}.",
+      workspaceBot: "روبوت مساحة العمل",
+      integration: "تكامل",
+      reachError: "تعذّر الوصول إلى Notion.",
+      failed: "فشل",
+    },
+    gmail: {
+      title: "Gmail",
+      description: "دع الوكيل يصوغ البريد ويرسله نيابةً عنك.",
+      account: "الحساب",
+      email: "البريد الإلكتروني",
+      accountHint:
+        "بعنوان بريد فقط، يفتح الوكيل تطبيق بريدك والرسالة مكتوبة بالفعل — وأنت تنقر إرسال.",
+      autoSending: "الإرسال التلقائي (اختياري)",
+      oauthToken: "OAuth access token",
+      oauthHint:
+        "الصق رمزًا يحمل نطاق gmail.send وسيرسل الوكيل دون سؤال. تنتهي رموز Google خلال ساعة تقريبًا، لذا فهذا للاختبار — للبقاء بعد ذلك يلزم refresh token، وهو يحتاج client secret، وهذا يحتاج backend. هذا التطبيق لم يملك واحدًا قط.",
+      getToken: "احصل على رمز في OAuth Playground",
+      checking: "جارٍ التحقق…",
+      testToken: "اختبار الرمز",
+      tokenExpiredTitle: "انتهت صلاحية الرمز",
+      tokenExpiredBody:
+        "تدوم رموز وصول Google نحو ساعة. أنشئ رمزًا آخر في OAuth Playground.",
+      apiRespondedFail: "استجابت واجهة Gmail بـ {{status}}.",
+      connected: "متصل",
+      connectedBody:
+        "الرمز صالح لـ {{email}}. سيرسل الوكيل البريد مباشرةً عبر API.",
+      networkError: "خطأ في الشبكة",
+      networkErrorBody: "تعذّر الوصول إلى واجهة Gmail.",
+      missingEmail: "البريد مفقود",
+      missingEmailBody: "أدخل عنوان الحساب.",
+      saved: "تم الحفظ",
+      savedTokenBody:
+        "سيرسل الوكيل عبر واجهة Gmail طالما الرمز صالح.",
+      savedNoTokenBody: "سيفتح الوكيل تطبيق بريدك والرسالة جاهزة.",
+      disconnected: "تم قطع الاتصال",
+      disconnectedBody: "تم حذف بيانات اعتماد Gmail.",
+    },
+    slack: {
+      title: "Slack",
+      description:
+        "هيّئ تكامل Slack لإرسال الإشعارات ومزامنة الرسائل مباشرةً إلى قنواتك.",
+      authentication: "المصادقة",
+      botToken: "Bot Token",
+      botTokenHint:
+        'يمكنك إنشاء Bot Token في إعدادات تطبيق Slack ضمن "OAuth & Permissions".',
+      workspace: "مساحة العمل",
+      channelId: "Channel ID",
+      enableNotifications: "تفعيل الإشعارات",
+      connectToSlack: "الاتصال بـ Slack",
+      botTokenRequired: "الـ Bot Token مطلوب.",
+      savedBody: "تم حفظ تهيئة Slack بنجاح!",
+      loadError: "تعذّر تحميل الإعدادات.",
+    },
+    teams: {
+      title: "تكامل Teams",
+      description:
+        "أدخل بيانات اعتماد تطبيقك المسجّل في Microsoft Entra ID.",
+      tipTitle: "💡 أين تجد هذه المفاتيح؟",
+      tipBefore: "اذهب إلى ",
+      tipLink: "Azure Portal (App registrations)",
+      tipAfter:
+        ". أنشئ تطبيقًا جديدًا للحصول على الـ Client ID والـ Tenant ID. ثم اذهب إلى “Certificates & secrets” لإنشاء الـ Client Secret الخاص بك.",
+      clientId: "Client ID",
+      tenantId: "Tenant ID",
+      clientSecret: "Client Secret",
+      clientSecretPlaceholder: "أدخل الـ client secret",
+      connectToTeams: "الاتصال بـ Teams",
+      savedBody: "تم حفظ بيانات اعتمادك على هذا الجهاز.",
+      fillAll: "يرجى ملء جميع الحقول.",
+    },
+    figma: {
+      title: "تكامل Figma",
+      description:
+        "أدخل الـ Personal Access Token والـ File Key لربط Figma الخاص بك",
+      token: "Token",
+      tokenPlaceholder: "Personal Access Token",
+      fileKey: "File Key",
+      footerHint:
+        "يمكنك العثور على الـ Personal Access Token في إعدادات حساب Figma",
+      connectToFigma: "الاتصال بـ Figma",
+      fillAll: "يرجى ملء جميع الحقول.",
+      connecting: "جارٍ الاتصال…",
+      connectingBody: "تم حفظ البيانات بنجاح. جارٍ بدء التكامل.",
+      saveError: "تعذّر حفظ البيانات.",
+    },
+    discord: {
+      title: "Discord",
+      subtitle:
+        "اربط وكيلك بقناة Discord باستخدام Webhook URL. اختياريًا، قدّم Bot Token لميزات محسّنة.",
+      identity: "هوية الذكاء",
+      agentName: "اسم الوكيل",
+      temperature: "Temperature (e.g. 0.7)",
+      integration: "تكامل DISCORD",
+      botTokenOptional: "Bot Token (اختياري)",
+      webhookHint: "يتيح الـ Webhook للذكاء إرسال رسائل إلى قناة محددة.",
+      behavior: "السلوك (SYSTEM PROMPT)",
+      personalityPlaceholder: "تعليمات الشخصية...",
+      saveConnect: "حفظ واتصال",
+      fillRequired: "يرجى ملء الاسم والسلوك والـ Webhook URL.",
+      savedBody: "تم حفظ إعدادات الوكيل وDiscord!",
+    },
+    whatsapp: {
+      title: "WhatsApp",
+      subtitle:
+        "هيّئ تكامل WhatsApp بتقديم بيانات الاعتماد اللازمة أدناه.",
+      token: "TOKEN",
+      tokenPlaceholder: "رمز وصول دائم",
+      phoneId: "PHONE NUMBER ID",
+      recipient: "رقم المستلم",
+      footerHint: "تأكّد من أن الـ Webhooks تشير إلى خادم backend الخاص بك.",
+    },
+  },
+};
+
+export default ar;

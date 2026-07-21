@@ -17,8 +17,10 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Color } from "@/constants/theme";
+import { useTranslation } from "@/i18n";
 
 export default function GitHubScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState({
@@ -55,10 +57,7 @@ export default function GitHubScreen() {
       !config.targetBranch ||
       !config.title
     ) {
-      Alert.alert(
-        "Campos obrigatórios",
-        "Por favor, preencha todas as informações essenciais para continuar.",
-      );
+      Alert.alert(t("common.requiredTitle"), t("common.requiredBody"));
       return;
     }
 
@@ -72,7 +71,7 @@ export default function GitHubScreen() {
       }
       router.back();
     } catch (e) {
-      Alert.alert("Erro", "Não foi possível salvar as configurações.");
+      Alert.alert(t("common.error"), t("common.saveError"));
     } finally {
       setLoading(false);
     }
@@ -93,20 +92,18 @@ export default function GitHubScreen() {
             <View style={styles.iconContainer}>
               <Ionicons name="logo-github" size={44} color="#E6EDF3" />
             </View>
-            <Text style={styles.title}>GitHub Setup</Text>
-            <Text style={styles.subtitle}>
-              Configuration for AI-Powered Code Reviews
-            </Text>
+            <Text style={styles.title}>{t("conn.github.title")}</Text>
+<Text style={styles.subtitle}>{t("conn.github.subtitle")}</Text>
           </View>
 
           {/* Grupo 1: Conexão */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>CONNECTION SETTINGS</Text>
+            <Text style={styles.sectionLabel}>{t("conn.github.connectionSettings")}</Text>
             <View style={styles.inputGroup}>
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="API Base URL"
+                  placeholder={t("conn.github.baseUrl")}
                   placeholderTextColor={Color.placeholder}
                   value={config.baseUrl}
                   onChangeText={(txt) => setConfig({ ...config, baseUrl: txt })}
@@ -118,7 +115,7 @@ export default function GitHubScreen() {
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Personal Access Token"
+                  placeholder={t("conn.github.token")}
                   placeholderTextColor={Color.placeholder}
                   value={config.accessToken}
                   onChangeText={(txt) =>
@@ -132,7 +129,7 @@ export default function GitHubScreen() {
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Owner (ex: facebook)"
+                  placeholder={t("conn.github.owner")}
                   placeholderTextColor={Color.placeholder}
                   value={config.repoOwner}
                   onChangeText={(txt) =>
@@ -145,7 +142,7 @@ export default function GitHubScreen() {
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Repository (ex: react-native)"
+                  placeholder={t("conn.github.repo")}
                   placeholderTextColor={Color.placeholder}
                   value={config.repoName}
                   onChangeText={(txt) =>
@@ -155,20 +152,17 @@ export default function GitHubScreen() {
                 />
               </View>
             </View>
-            <Text style={styles.footerText}>
-              The Owner and Repository form the project path. Ex:
-              github.com/owner/repository
-            </Text>
+<Text style={styles.footerText}>{t("conn.github.ownerRepoHint")}</Text>
           </View>
 
           {/* Group 2: Pull Request Details */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>PULL REQUEST DETAILS </Text>
+            <Text style={styles.sectionLabel}>{t("conn.github.prDetails")}</Text>
             <View style={styles.inputGroup}>
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Source Branch / Head (ex: feature/nova-tela)"
+                  placeholder={t("conn.github.sourceBranch")}
                   placeholderTextColor={Color.placeholder}
                   value={config.sourceBranch}
                   onChangeText={(txt) =>
@@ -181,7 +175,7 @@ export default function GitHubScreen() {
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Target Branch / Base (ex: main)"
+                  placeholder={t("conn.github.targetBranch")}
                   placeholderTextColor={Color.placeholder}
                   value={config.targetBranch}
                   onChangeText={(txt) =>
@@ -194,7 +188,7 @@ export default function GitHubScreen() {
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Título do PR"
+                  placeholder={t("conn.github.prTitle")}
                   placeholderTextColor={Color.placeholder}
                   value={config.title}
                   onChangeText={(txt) => setConfig({ ...config, title: txt })}
@@ -204,7 +198,7 @@ export default function GitHubScreen() {
               <View style={[styles.inputWrapper, styles.textAreaWrapper]}>
                 <TextInput
                   style={[styles.input, styles.textArea]}
-                  placeholder="Descrição do PR"
+                  placeholder={t("conn.github.prDesc")}
                   placeholderTextColor={Color.placeholder}
                   value={config.description}
                   onChangeText={(txt) =>
@@ -227,7 +221,7 @@ export default function GitHubScreen() {
               {loading ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text style={styles.primaryButtonText}>Save</Text>
+                <Text style={styles.primaryButtonText}>{t("common.save")}</Text>
               )}
             </TouchableOpacity>
 
@@ -235,7 +229,7 @@ export default function GitHubScreen() {
               style={styles.secondaryButton}
               onPress={() => router.back()}
             >
-              <Text style={styles.secondaryButtonText}>Cancel</Text>
+              <Text style={styles.secondaryButtonText}>{t("common.cancel")}</Text>
             </TouchableOpacity>
           </View>
 

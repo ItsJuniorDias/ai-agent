@@ -27,6 +27,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { Color } from "@/constants/theme";
+import { useTranslation } from "@/i18n";
 
 const STORAGE_KEY = "@linear_config";
 const LINEAR_API = "https://api.linear.app/graphql";
@@ -35,6 +36,7 @@ type LinearConfig = { apiKey?: string; teamId?: string };
 type Team = { id: string; key: string; name: string };
 
 export default function LinearScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
 
   const [apiKey, setApiKey] = useState("");
@@ -78,7 +80,7 @@ export default function LinearScreen() {
       const data = await res.json();
 
       if (data.errors?.length) {
-        Alert.alert("Failed", data.errors[0].message);
+        Alert.alert(t("conn.linear.failed"), data.errors[0].message);
         return;
       }
 
@@ -86,12 +88,12 @@ export default function LinearScreen() {
       setTeams(nodes);
 
       if (!nodes.length) {
-        Alert.alert("No teams", "This key has no teams attached to it.");
+        Alert.alert(t("conn.linear.noTeams"), t("conn.linear.noTeamsBody"));
       } else if (!teamId) {
         setTeamId(nodes[0].id);
       }
     } catch (err: any) {
-      Alert.alert("Failed", err?.message ?? "Could not reach Linear.");
+      Alert.alert(t("conn.linear.failed"), err?.message ?? t("conn.linear.reachError"));
     } finally {
       setLoading(false);
     }
@@ -99,7 +101,7 @@ export default function LinearScreen() {
 
   const save = async () => {
     if (!apiKey.trim()) {
-      Alert.alert("Error", "The API Key is required.");
+      Alert.alert(t("common.error"), t("conn.linear.apiKeyRequired"));
       return;
     }
 
@@ -109,8 +111,8 @@ export default function LinearScreen() {
     };
 
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-    Alert.alert("Saved", "Linear is connected. The agent can use it now.", [
-      { text: "OK", onPress: () => router.back() },
+    Alert.alert(t("common.success"), t("conn.linear.connectedBody"), [
+      { text: t("common.ok"), onPress: () => router.back() },
     ]);
   };
 
@@ -131,16 +133,14 @@ export default function LinearScreen() {
       >
         <ScrollView contentContainerStyle={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.title}>Linear</Text>
-            <Text style={styles.description}>
-              Let the agent list and create issues in your workspace.
-            </Text>
+            <Text style={styles.title}>{t("conn.linear.title")}</Text>
+<Text style={styles.description}>{t("conn.linear.description")}</Text>
           </View>
 
-          <Text style={styles.sectionTitle}>Authentication</Text>
+          <Text style={styles.sectionTitle}>{t("conn.linear.authentication")}</Text>
           <View style={styles.section}>
             <View style={styles.row}>
-              <Text style={styles.label}>API Key</Text>
+              <Text style={styles.label}>{t("conn.linear.apiKey")}</Text>
               <TextInput
                 style={styles.input}
                 placeholder="lin_api_…"
@@ -153,11 +153,9 @@ export default function LinearScreen() {
               />
             </View>
           </View>
-          <Text style={styles.sectionFooter}>
-            Linear → Settings → Security & access → Personal API keys.
-          </Text>
+<Text style={styles.sectionFooter}>{t("conn.linear.apiKeyHint")}</Text>
 
-          <Text style={styles.sectionTitle}>Team</Text>
+          <Text style={styles.sectionTitle}>{t("conn.linear.team")}</Text>
           <View style={styles.section}>
             {teams.length > 0 ? (
               teams.map((team, index) => (
@@ -181,10 +179,10 @@ export default function LinearScreen() {
               ))
             ) : (
               <View style={styles.row}>
-                <Text style={styles.label}>Team ID</Text>
+                <Text style={styles.label}>{t("conn.linear.teamId")}</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Load teams below"
+                  placeholder={t("conn.linear.loadTeamsPlaceholder")}
                   placeholderTextColor={Color.placeholder}
                   value={teamId}
                   onChangeText={setTeamId}
@@ -195,9 +193,10 @@ export default function LinearScreen() {
             )}
           </View>
           <Text style={styles.sectionFooter}>
-            Linear identifies teams by UUID, not by the key you see in the UI
-            (“ENG”). Load them from your account instead of typing it.
-            {selectedTeam ? `\n\nSelected: ${selectedTeam.name}.` : ""}
+            {t("conn.linear.teamHint")}
+            {selectedTeam
+              ? t("conn.linear.selected", { name: selectedTeam.name })
+              : ""}
           </Text>
 
           <TouchableOpacity
@@ -210,7 +209,7 @@ export default function LinearScreen() {
             ) : (
               <>
                 <Feather name="download-cloud" size={15} color={Color.accent} />
-                <Text style={styles.secondaryText}>Load my teams</Text>
+                <Text style={styles.secondaryText}>{t("conn.linear.loadTeams")}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -220,12 +219,12 @@ export default function LinearScreen() {
             onPress={save}
             disabled={!apiKey.trim()}
           >
-            <Text style={styles.buttonText}>Save</Text>
+            <Text style={styles.buttonText}>{t("common.save")}</Text>
           </TouchableOpacity>
 
           {!!apiKey && (
             <TouchableOpacity style={styles.dangerButton} onPress={disconnect}>
-              <Text style={styles.dangerText}>Disconnect</Text>
+              <Text style={styles.dangerText}>{t("common.disconnect")}</Text>
             </TouchableOpacity>
           )}
         </ScrollView>

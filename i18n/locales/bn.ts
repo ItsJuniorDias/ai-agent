@@ -1,0 +1,496 @@
+import type { Dict } from "./en";
+
+const bn: Dict = {
+  common: {
+    save: "সংরক্ষণ",
+    saveSettings: "সেটিংস সংরক্ষণ",
+    cancel: "বাতিল",
+    back: "ফিরে যান",
+    ok: "ঠিক আছে",
+    delete: "মুছুন",
+    error: "ত্রুটি",
+    success: "সফল",
+    attention: "মনোযোগ দিন",
+    disconnect: "সংযোগ বিচ্ছিন্ন",
+    optional: "ঐচ্ছিক",
+    requiredTitle: "আবশ্যক ঘর",
+    requiredBody: "চালিয়ে যেতে অনুগ্রহ করে সব ঘর পূরণ করুন।",
+    loadError: "সংরক্ষিত সেটিংস লোড করা যায়নি।",
+    saveError: "সেটিংস সংরক্ষণ করা যায়নি।",
+    savedOnDevice: "সেটিংস এই ডিভাইসে সংরক্ষিত হয়েছে।",
+  },
+
+  tabs: {
+    askAI: "AI-কে জিজ্ঞাসা",
+    history: "ইতিহাস",
+    studio: "স্টুডিও",
+    files: "ফাইল",
+    settings: "সেটিংস",
+  },
+
+  chat: {
+    onDuty: "কর্তব্যরত",
+    agent: "এজেন্ট",
+    clear: "সাফ করুন",
+    promptHint: "আমি আপনার জন্য কী করব?",
+    hintSub: "আমি আপনার সংযুক্ত টুলগুলোর ওপর যুক্তি করতে এবং নিজে থেকে কাজ করতে পারি।",
+    newChat: "নতুন চ্যাট",
+    missingKeyTitle: "OpenRouter কী নেই",
+    missingKey:
+      "আপনার .env-এ EXPO_PUBLIC_OPENROUTER_API_KEY সেট করুন এবং বান্ডলার পুনরায় চালু করুন।",
+    askPlaceholder: "এজেন্টকে কিছু করতে বলুন",
+    clearTitle: "কথোপকথন সাফ করুন",
+    clearBody:
+      "বর্তমান কথোপকথন মুছবেন? দীর্ঘমেয়াদি মেমরি প্রভাবিত হবে না।",
+    cancelled: "বাতিল করা হয়েছে।",
+    errorLabel: "ত্রুটি",
+    s1: "আমার রিপোজিটরির খোলা পুল রিকোয়েস্টগুলো পর্যালোচনা করুন",
+    s2: "এই সপ্তাহে যা বদলেছে তা সারসংক্ষেপ করে Slack-এ পোস্ট করুন",
+    s3: "লগইন বাগের জন্য একটি Jira টিকিট তৈরি করুন",
+    s4: "একটি অ্যাপ আইকন তৈরি করুন: বই পড়ছে এমন একটি শিয়াল, ফ্ল্যাট ভেক্টর",
+  },
+
+  history: {
+    archive: "সংরক্ষণাগার",
+    title: "ইতিহাস",
+    nothingSaved: "এখনও কিছু সংরক্ষিত নেই।",
+    emptySub: "এজেন্টের সঙ্গে আপনার কথোপকথন এখানে দেখা যাবে।",
+    noResponse: "এখনও কোনো উত্তর নেই",
+    deleteTitle: "কথোপকথন মুছুন",
+    deleteBody:
+      "আপনি কি নিশ্চিত যে এই কথোপকথন আপনার ইতিহাস থেকে মুছতে চান?",
+    deleteError: "কথোপকথন মোছা যায়নি।",
+  },
+
+  studio: {
+    imageStudio: "ইমেজ স্টুডিও",
+    subtitle: "{{model}} · OpenRouter-এর মাধ্যমে",
+    modelFallback: "ইমেজ মডেল",
+    generating: "তৈরি হচ্ছে…",
+    tryAgain: "আবার চেষ্টা করুন",
+    creationHere: "আপনার সৃষ্টি এখানে দেখা যাবে",
+    editingThis: "আপনার প্রম্পট দিয়ে এই ইমেজটি সম্পাদনা করা হচ্ছে",
+    describePlaceholder: "ইমেজটি বর্ণনা করুন — গঠন, আলো, শৈলী",
+    edit: "সম্পাদনা",
+    generate: "তৈরি করুন",
+    readError: "সেই ইমেজটি পড়া যায়নি।",
+    genTimeout:
+      "তৈরি করতে অনেক সময় লেগেছে এবং বাতিল করা হয়েছে। আবার চেষ্টা করুন বা সেটিংসে মডেল বদলান।",
+    genFailed: "তৈরি ব্যর্থ হয়েছে",
+    permDenied: "অনুমতি প্রত্যাখ্যাত",
+    permDeniedBody: "ইমেজটি আপনার লাইব্রেরিতে সংরক্ষণ করতে আমাদের অনুমতি প্রয়োজন।",
+    saved: "সংরক্ষিত",
+    savedBody: "ইমেজটি আপনার ফটো লাইব্রেরিতে আছে।",
+    saveImageError: "ইমেজটি সংরক্ষণ করা যায়নি।",
+  },
+
+  insights: {
+    title: "ইনসাইটস",
+    document: "নথি",
+    analyzeNow: "এখনই বিশ্লেষণ করুন",
+    selectFile: "ফাইল নির্বাচন করতে ট্যাপ করুন (PDF, TXT, CSV, IMG)",
+    scannedPdf: "স্ক্যান করা PDF (OCR ব্যবহার করুন — ধীর, বেশি খরচ)",
+    placeholder:
+      "একটি ফাইল নির্বাচন করুন এবং ইনসাইটস সারসংক্ষেপ এখানে দেখতে এখনই বিশ্লেষণ করুন ট্যাপ করুন।",
+    selectError: "নথিটি নির্বাচন করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    analysisFailed: "বিশ্লেষণ ব্যর্থ হয়েছে",
+    ocrHint:
+      "পার্সার কোনো টেক্সট স্তর পায়নি। এটি সাধারণত স্ক্যান করা PDF — OCR চালু করে আবার চেষ্টা করুন।",
+    modeSummary: "সারসংক্ষেপ",
+    modeExtract: "মূল তথ্য",
+    modeQuestions: "সমালোচনা",
+    modeActions: "করণীয় বিষয়",
+  },
+
+  settings: {
+    preferences: "পছন্দসমূহ",
+    title: "সেটিংস",
+    missingKeyBanner:
+      "কোনো OpenRouter কী পাওয়া যায়নি। আপনার .env-এ EXPO_PUBLIC_OPENROUTER_API_KEY যোগ করুন এবং `npx expo start -c` দিয়ে পুনরায় চালু করুন।",
+    personalAssistant: "ব্যক্তিগত সহকারী",
+    proactiveAssistant: "সক্রিয় সহকারী",
+    enabledWatching: "সক্রিয় · আপনার সেবাগুলো নজরে",
+    notificationsBlocked: "সক্রিয় · বিজ্ঞপ্তি অবরুদ্ধ",
+    disabledConfigure: "নিষ্ক্রিয় · কনফিগার করতে ট্যাপ করুন",
+    assistantFooter:
+      "পটভূমির সতর্কতা এবং নির্ধারিত অনুস্মারক। এজেন্ট আপনাকে পর্যালোচনার অপেক্ষায় থাকা PR, ব্যর্থ ডিপ্লয় এবং নতুন ইস্যু সম্পর্কে জানায়।",
+    language: "ভাষা",
+    languageFooter:
+      "ডান-থেকে-বাম ভাষায় পরিবর্তন করলে পুরো লেআউট উল্টে যায় এবং পূর্ণ প্রভাবের জন্য অ্যাপ পুনরায় চালু করা প্রয়োজন।",
+    agentModel: "এজেন্ট মডেল",
+    modelFooter:
+      "তালিকাভুক্ত প্রতিটি মডেল টুল কলিং সমর্থন করে — এটি ছাড়া এজেন্ট কোনো কাজ করতে পারে না। মূল্য প্রতি 1M টোকেনে ইনপুট / আউটপুট।",
+    agentBehavior: "এজেন্টের আচরণ",
+    askBeforeActing: "কাজের আগে জিজ্ঞাসা করুন",
+    approveWrites: "কোনো বাহ্যিক সেবায় প্রতিটি রাইট অনুমোদন করুন",
+    webAccess: "ওয়েব অ্যাক্সেস",
+    webAccessSub: "এজেন্টকে নিজে থেকে পৃষ্ঠা খুঁজতে ও পড়তে দিন",
+    haptics: "হ্যাপটিক প্রতিক্রিয়া",
+    approvalOff:
+      "অনুমোদন বন্ধ। এজেন্ট আপনাকে না জিজ্ঞাসা করেই পুল রিকোয়েস্ট খুলবে, বার্তা পাঠাবে এবং ডিপ্লয় ট্রিগার করবে।",
+    maxRounds: "সর্বাধিক টুল রাউন্ড",
+    maxRoundsFooter:
+      "উত্তর দেওয়ার আগে এজেন্ট কতবার টুল কল করতে পারে। বেশি হলে কঠিন কাজ সামলায়; প্রতি বার্তায় খরচও বাড়ে।",
+    memory: "মেমরি",
+    longTermMemory: "দীর্ঘমেয়াদি মেমরি",
+    factOne: "{{count}} তথ্য মনে রাখা হয়েছে",
+    factOther: "{{count}} তথ্য মনে রাখা হয়েছে",
+    clearMemory: "মেমরি সাফ করুন",
+    clearMemoryTitle: "দীর্ঘমেয়াদি মেমরি সাফ করুন",
+    clearMemoryBody:
+      "মনে রাখা সব {{count}} তথ্য মুছবেন? এটি পূর্বাবস্থায় ফেরানো যাবে না।",
+    imageModel: "ইমেজ মডেল",
+    connectedServices: "সংযুক্ত সেবা · {{count}} টুল",
+    noServiceConnected:
+      "এখনও কোনো সেবা সংযুক্ত নেই। এজেন্ট তবুও চ্যাট করতে, মনে রাখতে, ওয়েবে খুঁজতে এবং ইমেজ তৈরি করতে পারে।",
+    toolOne: "{{count}} টুল উপলব্ধ",
+    toolOther: "{{count}} টুল উপলব্ধ",
+    servicesFooter:
+      "শংসাপত্র সংরক্ষণ করলেই সেবাটি এখানে দেখা যায়। যে টুলগুলো আপনি কনফিগার করেননি সেগুলো মডেলকে কখনও দেওয়া হয় না — সে সেগুলোতে চেষ্টা করে ব্যর্থ হতে পারে না।",
+    manageIntegrations: "ইন্টিগ্রেশন পরিচালনা করুন",
+  },
+
+  assistant: {
+    title: "ব্যক্তিগত সহকারী",
+    intro:
+      "এজেন্ট একটি সহকারীতে পরিণত হয় যা পটভূমিতে আপনার সেবাগুলো নজরে রাখে এবং গুরুত্বপূর্ণ কিছু দেখা দিলে আপনাকে জানায় — পর্যালোচনার অপেক্ষায় থাকা PR, ব্যর্থ ডিপ্লয়, আপনাকে বরাদ্দ করা নতুন ইস্যু। আপনি চ্যাটে বললে এটি অনুস্মারকও নির্ধারণ করে।",
+    missingKeyBanner:
+      "কোনো OpenRouter কী নেই। আপনি .env-এ EXPO_PUBLIC_OPENROUTER_API_KEY সেট না করা পর্যন্ত স্ক্যান চলবে না।",
+    enableNotifications: "বিজ্ঞপ্তি চালু করুন",
+    enableNotificationsSub: "এটি ছাড়া সহকারীর আপনার কাছে পৌঁছানোর কোনো উপায় নেই।",
+    settingsBtn: "সেটিংস",
+    enableBtn: "সক্রিয় করুন",
+    proactiveMonitoring: "সক্রিয় পর্যবেক্ষণ",
+    monitorBackground: "পটভূমিতে পর্যবেক্ষণ",
+    monitorBackgroundSub: "আপনার সেবাগুলো স্ক্যান করে এবং নিজে থেকে সতর্কতা পাঠায়",
+    statusLine:
+      "সিস্টেম অবস্থা: {{status}}. সর্বশেষ স্ক্যান: {{when}}{{summary}}.",
+    available: "উপলব্ধ",
+    restricted: "সিস্টেম দ্বারা সীমাবদ্ধ",
+    unavailable: "অনুপলব্ধ",
+    minInterval: "ন্যূনতম ব্যবধান",
+    intervalFooter:
+      "এটি একটি ন্যূনতম সীমা, ঘড়ি নয়। iOS ঠিক করে কখন অ্যাপ জাগাবে এবং রানগুলো নিজের উইন্ডোতে ব্যাচ করে — কখনও কখনও কেবল রাতভর। তাৎক্ষণিক যাচাইয়ের জন্য নিচের “এখনই স্ক্যান করুন” ব্যবহার করুন বা চ্যাটে জিজ্ঞাসা করুন।",
+    quietHours: "নীরব সময়",
+    silenceNight: "রাতে নীরব রাখুন",
+    from: "থেকে",
+    to: "পর্যন্ত",
+    quietFooter:
+      "শুধু স্বয়ংক্রিয় স্ক্যানে প্রযোজ্য। আপনি স্পষ্টভাবে নির্ধারিত অনুস্মারকগুলো যেভাবেই হোক চলে।",
+    watchedServices: "পর্যবেক্ষিত সেবা",
+    noMonitorable:
+      "কোনো পর্যবেক্ষণযোগ্য সেবা সংযুক্ত নেই। GitHub, GitLab, Jira, Linear বা Vercel সংযুক্ত করুন যাতে সহকারীর দেখার মতো কিছু থাকে।",
+    connectMore: "আরও সেবা সংযুক্ত করুন",
+    scanNow: "এখনই স্ক্যান করুন",
+    scheduledReminders: "নির্ধারিত অনুস্মারক · {{count}}",
+    noReminders:
+      "কোনো নির্ধারিত অনুস্মারক নেই। চ্যাটে জিজ্ঞাসা করুন: “আগামীকাল সকাল ৯টায় PR পর্যালোচনার কথা মনে করিয়ে দিও”।",
+    clearAll: "সব সাফ করুন",
+    clearRemindersTitle: "অনুস্মারক সাফ করুন",
+    clearRemindersBody: "{{count}} নির্ধারিত অনুস্মারক বাতিল করবেন?",
+    notifDisabledTitle: "বিজ্ঞপ্তি নিষ্ক্রিয়",
+    notifDisabledBody:
+      "সহকারী যাতে আপনার কাছে পৌঁছাতে পারে সেজন্য বিজ্ঞপ্তির অনুমতি দিন।",
+    scanOkNotified: "সম্পন্ন — {{count}}টি সতর্কতা পাঠানো হয়েছে।",
+    scanOkClear: "স্ক্যান সম্পূর্ণ। এখন জরুরি কিছু নেই।",
+    scanNeedsPermission: "আগে বিজ্ঞপ্তির অনুমতি দিন (উপরের বোতাম)।",
+    scanNoKey: "কোনো OpenRouter কী নেই। এজেন্ট চালাতে .env সেট করুন।",
+    scanNoTargets:
+      "কোনো পর্যবেক্ষণযোগ্য সেবা সংযুক্ত নেই। GitHub, Jira, Vercel সংযুক্ত করুন…",
+    scanQuiet: "নীরব সময়ের মধ্যে — এড়িয়ে যাওয়া হয়েছে।",
+    scanDisabled: "পর্যবেক্ষণ বন্ধ।",
+    scanFail: "স্ক্যান ব্যর্থ হয়েছে।",
+  },
+
+  onboarding: {
+    setup: "সেটআপ",
+    title: "এজেন্ট কী কী স্পর্শ করতে পারে?",
+    subtitle:
+      "আপনি ব্যবহার করেন এমন প্রতিটি সেবা নির্বাচন করুন। এজেন্ট নিজেই ঠিক করে কোনটি ব্যবহার করবে — আপনি একটি প্রধান টুল নির্বাচন করছেন না।",
+    selectAll: "সব নির্বাচন",
+    deselectAll: "সব অনির্বাচন",
+    setUp: "সেটআপ",
+    note:
+      "এখানে একটি সেবা নির্বাচন করা এজেন্টকে কেবল জানায় যে এটি বিদ্যমান। এটি ব্যবহারযোগ্য হয় কেবল তখনই যখন আপনি তার নিজস্ব স্ক্রিনে শংসাপত্র সংরক্ষণ করেন — “সেটআপ” ট্যাপ করুন।",
+    toolsCount: "এজেন্টের কাছে {{count}}টি টুল উপলব্ধ থাকবে",
+    continue: "চালিয়ে যান",
+    nothingSelectedTitle: "কিছু নির্বাচিত হয়নি",
+    nothingSelectedBody:
+      "অন্তত একটি সেবা নির্বাচন করুন, অথবা এড়িয়ে যান — এজেন্ট তবুও চ্যাট করতে, মনে রাখতে, ওয়েবে খুঁজতে এবং ইমেজ তৈরি করতে পারে।",
+    skip: "এড়িয়ে যান",
+    catDev: "ডেভেলপমেন্ট ও কোড",
+    catPlanning: "ব্যবস্থাপনা ও পরিকল্পনা",
+    catDesign: "ডিজাইন",
+    catCommunication: "যোগাযোগ",
+    descGithub: "ডিফ পড়ুন, পর্যালোচনা করুন ও PR খুলুন, ইস্যু দাখিল করুন",
+    descGitlab: "মার্জ রিকোয়েস্ট, ডিফ ও মন্তব্য",
+    descVercel: "ডিপ্লয়মেন্ট যাচাই করুন, পুনরায় ডিপ্লয় ট্রিগার করুন",
+    descJira: "JQL দিয়ে খুঁজুন, ইস্যু তৈরি করুন, মন্তব্য করুন",
+    descLinear: "ইস্যু তালিকাভুক্ত ও তৈরি করুন",
+    descNotion: "ওয়ার্কস্পেস খুঁজুন, পৃষ্ঠা তৈরি করুন",
+    descFigma: "একটি ফাইলের গঠন পরিদর্শন করুন, মন্তব্য রাখুন",
+    descSlack: "চ্যানেল তালিকাভুক্ত করুন, বার্তা পোস্ট করুন",
+    descDiscord: "webhook-এর মাধ্যমে চ্যানেলে পোস্ট করুন",
+    descTeams: "চ্যানেলে পোস্ট করুন",
+    descWhatsapp: "Cloud API-এর মাধ্যমে বার্তা পাঠান",
+    descGmail: "ইমেল খসড়া ও পাঠান",
+  },
+
+  aiTerms: {
+    title: "কৃত্রিম বুদ্ধিমত্তা ও গোপনীয়তা",
+    subtitle:
+      "আমাদের AI বৈশিষ্ট্য প্রদানের জন্য আমাদের কিছু তথ্য শেয়ার করতে হয়। আমরা কীভাবে আপনার গোপনীয়তা রক্ষা করি তা এখানে।",
+    whatTitle: "কোন তথ্য পাঠানো হয়",
+    whatBody:
+      "শুধুমাত্র আপনি চ্যাটে যে টেক্সট টাইপ করেন [বা আপনি যে ফটো আপলোড করেন] তা প্রক্রিয়াকরণের জন্য পাঠানো হয়। আমরা আপনার নাম, ইমেল বা অবস্থানের তথ্য পাঠাই না।",
+    whoTitle: "আমরা কাকে পাঠাই",
+    whoBody:
+      "আপনার তথ্য নিরাপদে [INSERT AI NAME, e.g., OpenAI / Google Gemini]-এ পাঠানো হয়, যা আমাদের অংশীদার কৃত্রিম বুদ্ধিমত্তা সেবা প্রদানকারী।",
+    useTitle: "তথ্য ব্যবহার ও সুরক্ষা",
+    useBody:
+      "তথ্য কেবল অ্যাপের ভেতরে উত্তর তৈরি করতে ব্যবহৃত হয়। আমাদের অংশীদাররা সর্বজনীন AI মডেল প্রশিক্ষণে আপনার তথ্য ব্যবহার করে না।",
+    disclaimer:
+      "চালিয়ে গেলে, আপনি উপরে বর্ণিত তথ্য আমাদের AI অংশীদারদের সঙ্গে শেয়ার করতে সম্মত হন। আমাদের ",
+    privacyPolicy: "গোপনীয়তা নীতি",
+    agree: "সম্মত ও চালিয়ে যান",
+    exitTitle: "AI বৈশিষ্ট্য থেকে প্রস্থান",
+    exitBody:
+      "আপনি আমাদের AI অংশীদারদের সঙ্গে তথ্য শেয়ার না করা বেছে নিয়েছেন। আপনি এখনও অ্যাপ ব্যবহার করতে পারেন, তবে AI বৈশিষ্ট্যগুলো নিষ্ক্রিয় থাকবে।",
+    doNotShare: "শেয়ার করবেন না (প্রস্থান)",
+  },
+
+  approval: {
+    warning: "এজেন্ট এই কাজটি চালাতে চায়। এটি বাস্তব এবং পূর্বাবস্থায় ফেরানো যায় না।",
+    noArgs: "কোনো প্যারামিটার নেই।",
+    reject: "প্রত্যাখ্যান",
+    execute: "চালান",
+    footnote: "আপনি এই নিশ্চিতকরণগুলো সেটিংসে বন্ধ করতে পারেন।",
+  },
+
+  trace: {
+    agent: "এজেন্ট",
+    actionOne: "{{count}}টি কাজ",
+    actionOther: "{{count}}টি কাজ",
+    withError: " · {{count}}টি ব্যর্থ",
+    open: "খুলুন",
+    concluded: "সম্পন্ন",
+    failed: "ব্যর্থ",
+  },
+
+  models: {
+    per1M: "প্রতি 1M",
+    perToken: "প্রতি টোকেন",
+    perImage: "/ ইমেজ",
+    descGeminiFlash: "দ্রুত, সস্তা এবং টুল কলিংয়ে দুর্দান্ত",
+    descClaudeSonnet: "বহু-ধাপের কাজের জন্য সেরা যুক্তি",
+    descGrok: "সর্বনিম্ন খরচ, 2M কনটেক্সট",
+    descDeepseek: "কোডে শক্তিশালী, প্রতিযোগিতামূলক মূল্য",
+    descClaudeOpus: "রিফ্যাক্টর ও দীর্ঘ পরিকল্পনার জন্য সবচেয়ে সক্ষম",
+    descGeminiLite: "সহজ কাজের জন্য অতি-সস্তা",
+    descNanoBanana: "Gemini 2.5 Flash Image — স্থিতিশীল ও দ্রুত",
+    descNanoBanana2: "Flash গতিতে Pro মান",
+    descSeedream: "প্রতি ইমেজে সমমূল্য, গঠনে দুর্দান্ত",
+  },
+
+  conn: {
+    github: {
+      title: "GitHub সেটআপ",
+      subtitle: "AI-চালিত কোড পর্যালোচনার জন্য কনফিগারেশন",
+      connectionSettings: "সংযোগ সেটিংস",
+      baseUrl: "API Base URL",
+      token: "Personal Access Token",
+      owner: "Owner (e.g. facebook)",
+      repo: "Repository (e.g. react-native)",
+      ownerRepoHint:
+        "Owner এবং Repository মিলে প্রকল্প পথ গঠন করে। e.g. github.com/owner/repository",
+      prDetails: "PULL REQUEST বিবরণ",
+      sourceBranch: "Source Branch / Head (e.g. feature/new-screen)",
+      targetBranch: "Target Branch / Base (e.g. main)",
+      prTitle: "PR শিরোনাম",
+      prDesc: "PR বিবরণ",
+    },
+    gitlab: {
+      title: "GitLab",
+      description:
+        "আপনার রিপোজিটরি ও ইস্যু সিঙ্ক করতে GitLab-এর সঙ্গে আপনার ইন্টিগ্রেশন কনফিগার করুন।",
+      credentials: "শংসাপত্র",
+      token: "Personal Access Token",
+    },
+    vercel: {
+      title: "Vercel ইন্টিগ্রেশন",
+      description:
+        "API-এর মাধ্যমে একটি ডিপ্লয়মেন্ট ট্রিগার করতে আপনার শংসাপত্র কনফিগার করুন।",
+      token: "Token",
+      projectId: "Project ID",
+      teamId: "Team ID",
+      startDeployment: "ডিপ্লয়মেন্ট শুরু করুন",
+      tokenProjectRequired: "Token এবং Project ID আবশ্যক।",
+      unknownVercelError: "Vercel-এর সঙ্গে যোগাযোগে অজানা ত্রুটি।",
+      deployStarted: "ডিপ্লয় শুরু হয়েছে 🚀",
+      deployStartedBody: "প্রক্রিয়াটি সফলভাবে শুরু হয়েছে!\n\nURL: {{url}}",
+      deploymentError: "ডিপ্লয়মেন্ট ত্রুটি",
+      unknownError: "অজানা ত্রুটি।",
+    },
+    jira: {
+      title: "Jira ইন্টিগ্রেশন",
+      subtitle:
+        "আপনার ওয়ার্কস্পেস সিঙ্ক করতে আপনার Atlassian Cloud শংসাপত্র কনফিগার করুন।",
+      accountDetails: "অ্যাকাউন্ট বিবরণ",
+      email: "ইমেল",
+      token: "API Token",
+      workspace: "ওয়ার্কস্পেস",
+      domain: "your-company",
+      domainHint: "আপনার Jira ব্রাউজার URL-এ আপনার ডোমেন খুঁজুন।",
+      savedSecurely: "সেটিংস নিরাপদে সংরক্ষিত হয়েছে।",
+    },
+    linear: {
+      title: "Linear",
+      description: "এজেন্টকে আপনার ওয়ার্কস্পেসে ইস্যু তালিকাভুক্ত ও তৈরি করতে দিন।",
+      authentication: "প্রমাণীকরণ",
+      apiKey: "API Key",
+      apiKeyHint: "Linear → Settings → Security & access → Personal API keys.",
+      team: "টিম",
+      teamId: "Team ID",
+      loadTeamsPlaceholder: "নিচে টিম লোড করুন",
+      teamHint:
+        "Linear টিমগুলো UUID দিয়ে শনাক্ত করে, UI-তে আপনি যে key দেখেন তা দিয়ে নয় (“ENG”)। এটি টাইপ করার বদলে আপনার অ্যাকাউন্ট থেকে লোড করুন।",
+      selected: "\n\nনির্বাচিত: {{name}}.",
+      loadTeams: "আমার টিম লোড করুন",
+      connectedBody: "Linear সংযুক্ত হয়েছে। এজেন্ট এখন এটি ব্যবহার করতে পারে।",
+      apiKeyRequired: "API Key আবশ্যক।",
+      failed: "ব্যর্থ",
+      noTeams: "কোনো টিম নেই",
+      noTeamsBody: "এই key-তে কোনো টিম সংযুক্ত নেই।",
+      reachError: "Linear-এ পৌঁছানো যায়নি।",
+    },
+    notion: {
+      title: "Notion",
+      description: "এজেন্টকে আপনার ওয়ার্কস্পেস খুঁজতে ও পৃষ্ঠা তৈরি করতে দিন।",
+      authentication: "প্রমাণীকরণ",
+      secretToken: "Secret Token",
+      tokenHint:
+        "notion.so/my-integrations-এ একটি ইন্টিগ্রেশন তৈরি করুন এবং Internal Integration Secret কপি করুন।",
+      workspace: "ওয়ার্কস্পেস",
+      databaseId: "Database ID",
+      databaseHint:
+        "নতুন পৃষ্ঠার জন্য ডিফল্ট ডেটাবেস। এজেন্ট প্রতি অনুরোধে এটি ওভাররাইড করতে পারে। খালি রাখলে এটি জিজ্ঞাসা করবে।\n\nআপনি ডেটাবেসটি আপনার ইন্টিগ্রেশনের সঙ্গে শেয়ার না করা পর্যন্ত এটি দৃশ্যমান হবে না — Notion-এ এটি খুলুন, তারপর ••• → Connections → আপনার ইন্টিগ্রেশন। Notion “object not found” ফেরত দেওয়ার এটিই সবচেয়ে সাধারণ কারণ।",
+      tokenRequired: "Integration Token আবশ্যক।",
+      connectedBody: "Notion সংযুক্ত হয়েছে। এজেন্ট এখন এটি ব্যবহার করতে পারে।",
+      testConnection: "সংযোগ পরীক্ষা করুন",
+      connected: "সংযুক্ত",
+      connectedAs: "{{who}} হিসেবে প্রমাণীকৃত।",
+      workspaceBot: "ওয়ার্কস্পেস বট",
+      integration: "ইন্টিগ্রেশন",
+      reachError: "Notion-এ পৌঁছানো যায়নি।",
+      failed: "ব্যর্থ",
+    },
+    gmail: {
+      title: "Gmail",
+      description: "এজেন্টকে আপনার পক্ষে ইমেল খসড়া ও পাঠাতে দিন।",
+      account: "অ্যাকাউন্ট",
+      email: "ইমেল",
+      accountHint:
+        "শুধু একটি ইমেল ঠিকানা দিয়ে, এজেন্ট আপনার মেল অ্যাপ বার্তা লেখা অবস্থায় খোলে — আপনি পাঠান ট্যাপ করেন।",
+      autoSending: "স্বয়ংক্রিয় প্রেরণ (ঐচ্ছিক)",
+      oauthToken: "OAuth access token",
+      oauthHint:
+        "gmail.send স্কোপযুক্ত একটি token পেস্ট করুন এবং এজেন্ট না জিজ্ঞাসা করেই পাঠায়। Google token প্রায় এক ঘণ্টায় মেয়াদ শেষ হয়, তাই এটি পরীক্ষার জন্য — এর পরে টিকে থাকতে refresh token লাগে, যার জন্য client secret লাগে, যার জন্য backend লাগে। এই অ্যাপে কখনও ছিল না।",
+      getToken: "OAuth Playground-এ একটি token নিন",
+      checking: "যাচাই হচ্ছে…",
+      testToken: "token পরীক্ষা করুন",
+      tokenExpiredTitle: "token-এর মেয়াদ শেষ",
+      tokenExpiredBody:
+        "Google access token প্রায় এক ঘণ্টা টেকে। OAuth Playground-এ আরেকটি তৈরি করুন।",
+      apiRespondedFail: "Gmail API {{status}} উত্তর দিয়েছে।",
+      connected: "সংযুক্ত",
+      connectedBody:
+        "{{email}}-এর জন্য token বৈধ। এজেন্ট সরাসরি API-এর মাধ্যমে ইমেল পাঠাবে।",
+      networkError: "নেটওয়ার্ক ত্রুটি",
+      networkErrorBody: "Gmail API-এ পৌঁছানো যায়নি।",
+      missingEmail: "ইমেল নেই",
+      missingEmailBody: "অ্যাকাউন্ট ঠিকানা লিখুন।",
+      saved: "সংরক্ষিত",
+      savedTokenBody:
+        "token বৈধ থাকা পর্যন্ত এজেন্ট Gmail API-এর মাধ্যমে পাঠাবে।",
+      savedNoTokenBody: "এজেন্ট আপনার মেল অ্যাপ বার্তা প্রস্তুত অবস্থায় খুলবে।",
+      disconnected: "সংযোগ বিচ্ছিন্ন",
+      disconnectedBody: "Gmail শংসাপত্র মুছে ফেলা হয়েছে।",
+    },
+    slack: {
+      title: "Slack",
+      description:
+        "আপনার চ্যানেলগুলোতে সরাসরি বিজ্ঞপ্তি পাঠাতে ও বার্তা সিঙ্ক করতে আপনার Slack ইন্টিগ্রেশন কনফিগার করুন।",
+      authentication: "প্রমাণীকরণ",
+      botToken: "Bot Token",
+      botTokenHint:
+        'আপনি আপনার Slack App কনফিগারেশনে "OAuth & Permissions"-এর অধীনে একটি Bot Token তৈরি করতে পারেন।',
+      workspace: "ওয়ার্কস্পেস",
+      channelId: "Channel ID",
+      enableNotifications: "বিজ্ঞপ্তি সক্রিয় করুন",
+      connectToSlack: "Slack-এ সংযুক্ত করুন",
+      botTokenRequired: "Bot Token আবশ্যক।",
+      savedBody: "Slack কনফিগারেশন সফলভাবে সংরক্ষিত হয়েছে!",
+      loadError: "সেটিংস লোড করা যায়নি।",
+    },
+    teams: {
+      title: "Teams ইন্টিগ্রেশন",
+      description:
+        "Microsoft Entra ID-তে নিবন্ধিত আপনার অ্যাপের শংসাপত্র লিখুন।",
+      tipTitle: "💡 এই key-গুলো কোথায় পাবেন?",
+      tipBefore: "যান ",
+      tipLink: "Azure Portal (App registrations)",
+      tipAfter:
+        "। Client ID ও Tenant ID পেতে একটি নতুন অ্যাপ তৈরি করুন। তারপর আপনার Client Secret তৈরি করতে “Certificates & secrets”-এ যান।",
+      clientId: "Client ID",
+      tenantId: "Tenant ID",
+      clientSecret: "Client Secret",
+      clientSecretPlaceholder: "client secret লিখুন",
+      connectToTeams: "Teams-এ সংযুক্ত করুন",
+      savedBody: "আপনার শংসাপত্র এই ডিভাইসে সংরক্ষিত হয়েছে।",
+      fillAll: "অনুগ্রহ করে সব ঘর পূরণ করুন।",
+    },
+    figma: {
+      title: "Figma ইন্টিগ্রেশন",
+      description:
+        "আপনার Figma সংযুক্ত করতে আপনার Personal Access Token ও File Key লিখুন",
+      token: "Token",
+      tokenPlaceholder: "Personal Access Token",
+      fileKey: "File Key",
+      footerHint:
+        "আপনি আপনার Personal Access Token আপনার Figma অ্যাকাউন্ট সেটিংসে পাবেন",
+      connectToFigma: "Figma-এ সংযুক্ত করুন",
+      fillAll: "অনুগ্রহ করে সব ঘর পূরণ করুন।",
+      connecting: "সংযুক্ত হচ্ছে…",
+      connectingBody: "ডেটা সফলভাবে সংরক্ষিত হয়েছে। ইন্টিগ্রেশন শুরু হচ্ছে।",
+      saveError: "ডেটা সংরক্ষণ করা যায়নি।",
+    },
+    discord: {
+      title: "Discord",
+      subtitle:
+        "একটি Webhook URL ব্যবহার করে আপনার এজেন্টকে একটি Discord চ্যানেলে সংযুক্ত করুন। ঐচ্ছিকভাবে, উন্নত বৈশিষ্ট্যের জন্য একটি Bot Token দিন।",
+      identity: "AI পরিচয়",
+      agentName: "এজেন্টের নাম",
+      temperature: "Temperature (e.g. 0.7)",
+      integration: "DISCORD ইন্টিগ্রেশন",
+      botTokenOptional: "Bot Token (ঐচ্ছিক)",
+      webhookHint: "Webhook AI-কে একটি নির্দিষ্ট চ্যানেলে বার্তা পাঠাতে দেয়।",
+      behavior: "আচরণ (SYSTEM PROMPT)",
+      personalityPlaceholder: "ব্যক্তিত্বের নির্দেশনা...",
+      saveConnect: "সংরক্ষণ ও সংযুক্ত করুন",
+      fillRequired: "অনুগ্রহ করে নাম, আচরণ এবং Webhook URL পূরণ করুন।",
+      savedBody: "এজেন্ট ও Discord সেটিংস সংরক্ষিত হয়েছে!",
+    },
+    whatsapp: {
+      title: "WhatsApp",
+      subtitle:
+        "নিচে প্রয়োজনীয় শংসাপত্র দিয়ে আপনার WhatsApp ইন্টিগ্রেশন কনফিগার করুন।",
+      token: "TOKEN",
+      tokenPlaceholder: "স্থায়ী access token",
+      phoneId: "PHONE NUMBER ID",
+      recipient: "প্রাপকের নম্বর",
+      footerHint: "নিশ্চিত করুন যে Webhooks আপনার backend সার্ভারের দিকে নির্দেশ করছে।",
+    },
+  },
+};
+
+export default bn;

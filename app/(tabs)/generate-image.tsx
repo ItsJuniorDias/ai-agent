@@ -72,7 +72,7 @@ export default function ImageStudio() {
   );
 
   const modelName =
-    IMAGE_MODELS.find((m) => m.id === modelId)?.name ?? "Image model";
+    IMAGE_MODELS.find((m) => m.id === modelId)?.name ?? t("studio.modelFallback");
 
   const canGenerate = !!prompt.trim() && !loading;
 
@@ -93,7 +93,7 @@ export default function ImageStudio() {
 
       setReference(`data:${asset.mimeType ?? "image/png"};base64,${base64}`);
     } catch {
-      Alert.alert("Error", "Could not read that image.");
+      Alert.alert(t("common.error"), t("studio.readError"));
     }
   };
 
@@ -128,10 +128,10 @@ export default function ImageStudio() {
     } catch (err: any) {
       const message =
         err?.name === "AbortError"
-          ? "A geração demorou demais e foi cancelada. Tente de novo ou troque o modelo em Ajustes."
+          ? t("studio.genTimeout")
           : (err?.message ?? String(err));
       setError(message);
-      Alert.alert("Generation failed", message);
+      Alert.alert(t("studio.genFailed"), message);
     } finally {
       clearTimeout(timeout);
       setLoading(false);
@@ -146,17 +146,14 @@ export default function ImageStudio() {
       const { status } = await MediaLibrary.requestPermissionsAsync(true);
 
       if (status !== "granted") {
-        Alert.alert(
-          "Permission denied",
-          "We need permission to save the image to your library.",
-        );
+        Alert.alert(t("studio.permDenied"), t("studio.permDeniedBody"));
         return;
       }
 
       await MediaLibrary.saveToLibraryAsync(image);
-      Alert.alert("Saved", "The image is in your photo library.");
+      Alert.alert(t("studio.saved"), t("studio.savedBody"));
     } catch (err: any) {
-      Alert.alert("Error", err?.message ?? "Could not save the image.");
+      Alert.alert(t("common.error"), err?.message ?? t("studio.saveImageError"));
     } finally {
       setDownloading(false);
     }
@@ -184,9 +181,9 @@ export default function ImageStudio() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.kicker}>{t("studio")}</Text>
-          <Text style={styles.title}>{t("imageStudio")}</Text>
-          <Text style={styles.subtitle}>{modelName} · via OpenRouter</Text>
+          <Text style={styles.kicker}>{t("tabs.studio")}</Text>
+          <Text style={styles.title}>{t("studio.imageStudio")}</Text>
+          <Text style={styles.subtitle}>{t("studio.subtitle", { model: modelName })}</Text>
         </View>
 
         <View style={styles.previewContainer}>
@@ -194,7 +191,7 @@ export default function ImageStudio() {
             <View style={styles.loadingState}>
               <AuroraGlow size={180} style={StyleSheet.absoluteFill as any} />
               <ActivityIndicator size="large" color={Color.accent} />
-              <Text style={styles.loadingText}>{t("generating")}</Text>
+              <Text style={styles.loadingText}>{t("studio.generating")}</Text>
             </View>
           ) : image ? (
             <View style={styles.imageWrapper}>
@@ -230,7 +227,7 @@ export default function ImageStudio() {
                 onPress={handleGenerate}
                 activeOpacity={0.7}
               >
-                <Text style={styles.retryText}>{t("tryAgain")}</Text>
+                <Text style={styles.retryText}>{t("studio.tryAgain")}</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -238,7 +235,7 @@ export default function ImageStudio() {
               <AuroraGlow size={160} style={styles.placeholderGlow} />
               <Ionicons name="sparkles" size={30} color={Color.accent} />
               <Text style={styles.placeholderText}>
-                Your creation will appear here
+                {t("studio.creationHere")}
               </Text>
             </View>
           )}
@@ -270,7 +267,7 @@ export default function ImageStudio() {
             <View style={styles.referenceRow}>
               <Image source={{ uri: reference }} style={styles.referenceThumb} />
               <Text style={styles.referenceText}>
-                Editing this image with your prompt
+                {t("studio.editingThis")}
               </Text>
               <TouchableOpacity
                 onPress={() => setReference(null)}
@@ -287,7 +284,7 @@ export default function ImageStudio() {
 
           <TextInput
             style={styles.input}
-            placeholder="Describe the image — composition, lighting, style"
+            placeholder={t("studio.describePlaceholder")}
             placeholderTextColor={Color.placeholder}
             value={prompt}
             onChangeText={(t) => {
@@ -330,18 +327,18 @@ export default function ImageStudio() {
                   {loading ? (
                     <View style={styles.buttonBusy}>
                       <ActivityIndicator size="small" color={Color.onAccent} />
-                      <Text style={styles.buttonText}>{t("generating")}</Text>
+                      <Text style={styles.buttonText}>{t("studio.generating")}</Text>
                     </View>
                   ) : (
                     <Text style={styles.buttonText}>
-                      {reference ? "Edit" : "Generate"}
+                      {reference ? t("studio.edit") : t("studio.generate")}
                     </Text>
                   )}
                 </LinearGradient>
               ) : (
                 <View style={[styles.button, styles.buttonDisabled]}>
                   <Text style={styles.buttonTextDisabled}>
-                    {reference ? "Edit" : "Generate"}
+                    {reference ? t("studio.edit") : t("studio.generate")}
                   </Text>
                 </View>
               )}

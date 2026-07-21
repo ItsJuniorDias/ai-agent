@@ -13,8 +13,10 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // <-- Importação do AsyncStorage
 import { Color } from "@/constants/theme";
+import { useTranslation } from "@/i18n";
 
 export default function TeamsScreen() {
+  const { t } = useTranslation();
   const [clientId, setClientId] = useState("");
   const [tenantId, setTenantId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
@@ -42,7 +44,7 @@ export default function TeamsScreen() {
   const handleSaveCredentials = async () => {
     // Validação simples para não salvar vazio
     if (!clientId || !tenantId || !clientSecret) {
-      Alert.alert("Atenção", "Por favor, preencha todos os campos.");
+      Alert.alert(t("common.attention"), t("conn.teams.fillAll"));
       return;
     }
 
@@ -57,10 +59,10 @@ export default function TeamsScreen() {
       // Salva no AsyncStorage transformando o objeto em string
       await AsyncStorage.setItem("@teams_config", JSON.stringify(teamsConfig));
 
-      Alert.alert("Sucesso!", "Suas credenciais foram salvas no dispositivo.");
+      Alert.alert(t("common.success"), t("conn.teams.savedBody"));
     } catch (error) {
       console.error("Erro ao salvar credenciais:", error);
-      Alert.alert("Erro", "Não foi possível salvar as credenciais.");
+      Alert.alert(t("common.error"), t("common.saveError"));
     }
   };
 
@@ -87,30 +89,23 @@ export default function TeamsScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Teams Integration</Text>
-          <Text style={styles.description}>
-            Insira as credenciais da sua aplicação registada no Microsoft Entra
-            ID.
-          </Text>
+          <Text style={styles.title}>{t("conn.teams.title")}</Text>
+<Text style={styles.description}>{t("conn.teams.description")}</Text>
         </View>
 
         <View style={styles.tipContainer}>
-          <Text style={styles.tipTitle}>💡 Onde encontrar estas chaves?</Text>
+          <Text style={styles.tipTitle}>{t("conn.teams.tipTitle")}</Text>
           <Text style={styles.tipText}>
-            Aceda ao{" "}
+            {t("conn.teams.tipBefore")}
             <Text style={styles.linkText} onPress={openAzurePortal}>
-              Portal do Azure (Registos de aplicações)
+              {t("conn.teams.tipLink")}
             </Text>
-            . Crie uma nova aplicação para obter o{" "}
-            <Text style={{ fontStyle: "italic" }}>Client ID</Text> e o{" "}
-            <Text style={{ fontStyle: "italic" }}>Tenant ID</Text>. Depois, vá a
-            &quot;Certificados e segredos&quot; para gerar o seu{" "}
-            <Text style={{ fontStyle: "italic" }}>Client Secret</Text>.
+            {t("conn.teams.tipAfter")}
           </Text>
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Client ID</Text>
+          <Text style={styles.label}>{t("conn.teams.clientId")}</Text>
           <TextInput
             style={styles.input}
             placeholder="Ex: 11111111-2222-3333-4444-555555555555"
@@ -121,7 +116,7 @@ export default function TeamsScreen() {
             autoCorrect={false}
           />
 
-          <Text style={styles.label}>Tenant ID</Text>
+          <Text style={styles.label}>{t("conn.teams.tenantId")}</Text>
           <TextInput
             style={styles.input}
             placeholder="Ex: aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
@@ -132,10 +127,10 @@ export default function TeamsScreen() {
             autoCorrect={false}
           />
 
-          <Text style={styles.label}>Client Secret</Text>
+          <Text style={styles.label}>{t("conn.teams.clientSecret")}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Insira o segredo do cliente"
+            placeholder={t("conn.teams.clientSecretPlaceholder")}
             placeholderTextColor={Color.placeholder}
             value={clientSecret}
             onChangeText={setClientSecret}
@@ -149,7 +144,7 @@ export default function TeamsScreen() {
             onPress={handleSaveCredentials}
             activeOpacity={0.8}
           >
-            <Text style={styles.buttonText}>Ligar ao Teams</Text>
+            <Text style={styles.buttonText}>{t("conn.teams.connectToTeams")}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

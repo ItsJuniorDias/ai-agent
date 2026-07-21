@@ -13,10 +13,12 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Color } from "@/constants/theme";
+import { useTranslation } from "@/i18n";
 
 const STORAGE_KEY = "@whatsapp_config";
 
 export default function WhatsappScreen() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -39,7 +41,7 @@ export default function WhatsappScreen() {
         setForm(JSON.parse(savedData));
       }
     } catch (e) {
-      Alert.alert("Erro", "Não foi possível carregar as configurações.");
+      Alert.alert(t("common.error"), t("common.loadError"));
     } finally {
       setLoading(false);
     }
@@ -49,9 +51,9 @@ export default function WhatsappScreen() {
     setSaving(true);
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(form));
-      Alert.alert("Sucesso", "Configurações salvas no dispositivo.");
+      Alert.alert(t("common.success"), t("common.savedOnDevice"));
     } catch (e) {
-      Alert.alert("Erro", "Falha ao salvar os dados.");
+      Alert.alert(t("common.error"), t("common.saveError"));
     } finally {
       setSaving(false);
     }
@@ -73,20 +75,17 @@ export default function WhatsappScreen() {
       >
         <View style={styles.inner}>
           <View style={styles.header}>
-            <Text style={styles.title}>WhatsApp</Text>
-            <Text style={styles.subtitle}>
-              Configure your WhatsApp integration by providing the necessary
-              credentials below.
-            </Text>
+            <Text style={styles.title}>{t("conn.whatsapp.title")}</Text>
+<Text style={styles.subtitle}>{t("conn.whatsapp.subtitle")}</Text>
           </View>
 
           <View style={styles.group}>
             {/* Campo: Token */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>TOKEN</Text>
+              <Text style={styles.label}>{t("conn.whatsapp.token")}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Permanent access token"
+                placeholder={t("conn.whatsapp.tokenPlaceholder")}
                 placeholderTextColor={Color.placeholder}
                 secureTextEntry // Esconde o token por segurança
                 autoCapitalize="none"
@@ -99,7 +98,7 @@ export default function WhatsappScreen() {
 
             {/* Campo: Phone Number ID */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>PHONE NUMBER ID</Text>
+              <Text style={styles.label}>{t("conn.whatsapp.phoneId")}</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Ex: 1045678901234"
@@ -114,7 +113,7 @@ export default function WhatsappScreen() {
 
             {/* Campo: Recipient Number */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>RECIPIENT NUMBER</Text>
+              <Text style={styles.label}>{t("conn.whatsapp.recipient")}</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Ex: 5511999999999"
@@ -136,13 +135,11 @@ export default function WhatsappScreen() {
             {saving ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Save</Text>
+              <Text style={styles.buttonText}>{t("common.save")}</Text>
             )}
           </TouchableOpacity>
 
-          <Text style={styles.footerText}>
-            Make sure the Webhooks are pointing to your backend server.
-          </Text>
+<Text style={styles.footerText}>{t("conn.whatsapp.footerHint")}</Text>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

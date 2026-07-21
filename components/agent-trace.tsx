@@ -23,6 +23,7 @@ import {
 import { Feather } from "@expo/vector-icons";
 import { Color, MonoFont, Radius, Type, alpha } from "@/constants/theme";
 import type { AgentStep, IntegrationId } from "@/agent/types";
+import { useTranslation } from "@/i18n";
 
 if (
   Platform.OS === "android" &&
@@ -46,7 +47,7 @@ export const INTEGRATION_META: Record<
     icon: keyof typeof Feather.glyphMap;
   }
 > = {
-  core: { label: "Agente", color: Color.accent, onSurface: Color.accent, icon: "cpu" },
+  core: { label: "Agent", color: Color.accent, onSurface: Color.accent, icon: "cpu" },
   github: { label: "GitHub", color: "#24292E", onSurface: "#24292E", icon: "github" },
   gitlab: { label: "GitLab", color: "#FC6D26", onSurface: "#C84D11", icon: "git-merge" },
   jira: { label: "Jira", color: "#0052CC", onSurface: "#0052CC", icon: "trello" },
@@ -92,6 +93,7 @@ function StatusIcon({ status }: { status: AgentStep["status"] }) {
 }
 
 function StepRow({ step }: { step: AgentStep }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const meta = INTEGRATION_META[step.integration] ?? INTEGRATION_META.core;
   const args = formatArgs(step.args);
@@ -144,8 +146,8 @@ function StepRow({ step }: { step: AgentStep }) {
               ]}
             >
               {step.result.ok
-                ? (step.result.summary ?? "Concluído")
-                : (step.result.error ?? "Falhou")}
+                ? (step.result.summary ?? t("trace.concluded"))
+                : (step.result.error ?? t("trace.failed"))}
             </Text>
           )}
 
@@ -155,7 +157,7 @@ function StepRow({ step }: { step: AgentStep }) {
               style={styles.linkButton}
             >
               <Feather name="external-link" size={12} color={Color.accent} />
-              <Text style={styles.linkText}>Abrir</Text>
+              <Text style={styles.linkText}>{t("trace.open")}</Text>
             </TouchableOpacity>
           )}
 
@@ -173,6 +175,7 @@ function StepRow({ step }: { step: AgentStep }) {
 }
 
 export function AgentTrace({ steps }: { steps: AgentStep[] }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   if (!steps.length) return null;
@@ -198,8 +201,10 @@ export function AgentTrace({ steps }: { steps: AgentStep[] }) {
           color={Color.secondary}
         />
         <Text style={styles.summaryText}>
-          {steps.length} {steps.length === 1 ? "ação" : "ações"}
-          {failed > 0 ? ` · ${failed} com erro` : ""}
+          {t(steps.length === 1 ? "trace.actionOne" : "trace.actionOther", {
+            count: steps.length,
+          })}
+          {failed > 0 ? t("trace.withError", { count: failed }) : ""}
         </Text>
         {running && <ActivityIndicator size="small" color={Color.secondary} />}
       </TouchableOpacity>

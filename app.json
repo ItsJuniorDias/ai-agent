@@ -35,6 +35,9 @@
     "plugins": [
       "expo-router",
       [
+        "expo-localization"
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/icon_nobg.png",
@@ -71,6 +74,9 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "supportsRTL": true
     }
   }
 }

@@ -32,46 +32,39 @@ import { Feather } from "@expo/vector-icons";
 import { analyzeFile as runAnalysis } from "@/services/openrouter";
 import { loadConfig } from "@/services/config";
 import { Color, MonoFont, Radius, Shadow, Spacing, Type, alpha } from "@/constants/theme";
-import { useTranslation } from "@/i18n";
+import { localeTag, useTranslation } from "@/i18n";
 
-type Mode = { id: string; label: string; prompt: string };
+type Mode = { id: string; labelKey: string; prompt: string };
 
 const MODES: Mode[] = [
   {
     id: "summary",
-    label: "Summary",
+    labelKey: "insights.modeSummary",
     prompt:
       "Analyze this file and produce a structured summary in Markdown: the main points, the key takeaways, and the conclusions. Be specific — cite the actual numbers, names and claims in the document rather than describing them in the abstract.",
   },
   {
     id: "extract",
-    label: "Key data",
+    labelKey: "insights.modeExtract",
     prompt:
       "Extract every concrete data point from this file — figures, dates, names, amounts, deadlines — and present them as a Markdown table. If the document has no tabular data, use a bulleted list grouped by theme. Do not summarize prose; extract facts.",
   },
   {
     id: "questions",
-    label: "Critique",
+    labelKey: "insights.modeQuestions",
     prompt:
       "Read this file critically. List: (1) claims that are unsupported or weakly supported, (2) internal contradictions, (3) important information that is missing, (4) the questions someone should ask before acting on this. Be direct.",
   },
   {
     id: "actions",
-    label: "Action items",
+    labelKey: "insights.modeActions",
     prompt:
       "Pull every action item, decision, commitment and deadline out of this file. Present as a Markdown checklist, with the owner and the due date where the document states them. If something is implied but not stated, mark it as inferred.",
   },
 ];
 
-/**
- * PDF escaneado não tem camada de texto — o parser gratuito devolve vazio.
- * Nesse caso o `mistral-ocr` resolve, mas custa. Deixamos o usuário decidir.
- */
-const OCR_HINT =
-  "The parser found no text layer. This is usually a scanned PDF — turn on OCR and try again.";
-
 export default function FileAnalyzer() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [file, setFile] = useState<DocumentPicker.DocumentPickerAsset | null>(
     null,
   );
@@ -99,7 +92,7 @@ export default function FileAnalyzer() {
       setFile(result.assets[0]);
       setSummary("");
     } catch {
-      Alert.alert("Error", "Could not select the document. Please try again.");
+      Alert.alert(t("common.error"), t("insights.selectError"));
     }
   };
 
@@ -125,9 +118,9 @@ export default function FileAnalyzer() {
         pdfEngine: ocr ? "mistral-ocr" : "pdf-text",
       });
 
-      setSummary(text || OCR_HINT);
+      setSummary(text || t("insights.ocrHint"));
     } catch (err: any) {
-      Alert.alert("Analysis failed", err?.message ?? String(err));
+      Alert.alert(t("insights.analysisFailed"), err?.message ?? String(err));
     } finally {
       setIsLoading(false);
     }
@@ -144,14 +137,14 @@ export default function FileAnalyzer() {
       <View style={styles.header}>
         <Text style={styles.dateText}>
           {new Date()
-            .toLocaleDateString("en-US", {
+            .toLocaleDateString(localeTag(language), {
               weekday: "long",
               day: "numeric",
               month: "long",
             })
             .toUpperCase()}
         </Text>
-        <Text style={styles.title}>{t("insights")}</Text>
+        <Text style={styles.title}>{t("insights.title")}</Text>
       </View>
 
       <ScrollView
@@ -159,7 +152,7 @@ export default function FileAnalyzer() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>{t("document")}</Text>
+          <Text style={styles.cardTitle}>{t("insights.document")}</Text>
 
           <TouchableOpacity
             style={[styles.dropZone, !!file && styles.dropZoneActive]}
@@ -175,7 +168,7 @@ export default function FileAnalyzer() {
               style={[styles.dropZoneText, !!file && styles.dropZoneTextActive]}
               numberOfLines={1}
             >
-              {file ? file.name : "Tap to select a file (PDF, TXT, CSV, IMG)"}
+              {file ? file.name : t("insights.selectFile")}
             </Text>
           </TouchableOpacity>
 
@@ -193,7 +186,7 @@ export default function FileAnalyzer() {
                     mode.id === m.id && styles.modeTextActive,
                   ]}
                 >
-                  {m.label}
+                  {t(m.labelKey)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -210,9 +203,7 @@ export default function FileAnalyzer() {
                 size={18}
                 color={ocr ? Color.accent : Color.tertiary}
               />
-              <Text style={styles.ocrText}>
-                Scanned PDF (use OCR — slower, costs more)
-              </Text>
+              <Text style={styles.ocrText}>{t("insights.scannedPdf")}</Text>
             </TouchableOpacity>
           )}
 
@@ -231,7 +222,7 @@ export default function FileAnalyzer() {
                 {isLoading ? (
                   <ActivityIndicator color={Color.onAccent} />
                 ) : (
-                  <Text style={styles.mainButtonText}>{t("analyzeNow")}</Text>
+                  <Text style={styles.mainButtonText}>{t("insights.analyzeNow")}</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
@@ -249,8 +240,7 @@ export default function FileAnalyzer() {
           ) : (
             !isLoading && (
               <Text style={styles.placeholderText}>
-                Select a file and tap Analyze now to see the insights summary
-                here.
+                {t("insights.placeholder")}
               </Text>
             )
           )}

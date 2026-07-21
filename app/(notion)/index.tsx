@@ -28,6 +28,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { Color } from "@/constants/theme";
+import { useTranslation } from "@/i18n";
 
 const STORAGE_KEY = "@notion_config";
 const NOTION_VERSION = "2022-06-28";
@@ -35,6 +36,7 @@ const NOTION_VERSION = "2022-06-28";
 type NotionConfig = { token?: string; databaseId?: string };
 
 export default function NotionScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
 
   const [token, setToken] = useState("");
@@ -58,7 +60,7 @@ export default function NotionScreen() {
 
   const save = async () => {
     if (!token.trim()) {
-      Alert.alert("Error", "The Integration Token is required.");
+      Alert.alert(t("common.error"), t("conn.notion.tokenRequired"));
       return;
     }
 
@@ -68,8 +70,8 @@ export default function NotionScreen() {
     };
 
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-    Alert.alert("Saved", "Notion is connected. The agent can use it now.", [
-      { text: "OK", onPress: () => router.back() },
+    Alert.alert(t("common.success"), t("conn.notion.connectedBody"), [
+      { text: t("common.ok"), onPress: () => router.back() },
     ]);
   };
 
@@ -89,16 +91,20 @@ export default function NotionScreen() {
       const data = await res.json();
 
       if (!res.ok) {
-        Alert.alert("Failed", data?.message ?? `HTTP ${res.status}`);
+        Alert.alert(t("conn.notion.failed"), data?.message ?? `HTTP ${res.status}`);
         return;
       }
 
       Alert.alert(
-        "Connected",
-        `Authenticated as ${data?.bot?.owner?.workspace ? "workspace bot" : (data?.name ?? "integration")}.`,
+        t("conn.notion.connected"),
+        t("conn.notion.connectedAs", {
+          who: data?.bot?.owner?.workspace
+            ? t("conn.notion.workspaceBot")
+            : (data?.name ?? t("conn.notion.integration")),
+        }),
       );
     } catch (err: any) {
-      Alert.alert("Failed", err?.message ?? "Could not reach Notion.");
+      Alert.alert(t("conn.notion.failed"), err?.message ?? t("conn.notion.reachError"));
     } finally {
       setTesting(false);
     }
@@ -118,16 +124,14 @@ export default function NotionScreen() {
       >
         <ScrollView contentContainerStyle={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.title}>Notion</Text>
-            <Text style={styles.description}>
-              Let the agent search your workspace and create pages.
-            </Text>
+            <Text style={styles.title}>{t("conn.notion.title")}</Text>
+<Text style={styles.description}>{t("conn.notion.description")}</Text>
           </View>
 
-          <Text style={styles.sectionTitle}>Authentication</Text>
+          <Text style={styles.sectionTitle}>{t("conn.notion.authentication")}</Text>
           <View style={styles.section}>
             <View style={styles.row}>
-              <Text style={styles.label}>Secret Token</Text>
+              <Text style={styles.label}>{t("conn.notion.secretToken")}</Text>
               <TextInput
                 style={styles.input}
                 placeholder="ntn_… or secret_…"
@@ -140,18 +144,15 @@ export default function NotionScreen() {
               />
             </View>
           </View>
-          <Text style={styles.sectionFooter}>
-            Create an integration at notion.so/my-integrations and copy the
-            Internal Integration Secret.
-          </Text>
+<Text style={styles.sectionFooter}>{t("conn.notion.tokenHint")}</Text>
 
-          <Text style={styles.sectionTitle}>Workspace</Text>
+          <Text style={styles.sectionTitle}>{t("conn.notion.workspace")}</Text>
           <View style={styles.section}>
             <View style={styles.row}>
-              <Text style={styles.label}>Database ID</Text>
+              <Text style={styles.label}>{t("conn.notion.databaseId")}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Optional"
+                placeholder={t("common.optional")}
                 placeholderTextColor={Color.placeholder}
                 value={databaseId}
                 onChangeText={setDatabaseId}
@@ -160,21 +161,14 @@ export default function NotionScreen() {
               />
             </View>
           </View>
-          <Text style={styles.sectionFooter}>
-            The default database for new pages. The agent can override it per
-            request. Leave empty and it will ask.{"\n\n"}
-            The database will not be visible until you share it with your
-            integration — open it in Notion, then ••• → Connections → your
-            integration. This is the single most common reason Notion returns
-            “object not found”.
-          </Text>
+<Text style={styles.sectionFooter}>{t("conn.notion.databaseHint")}</Text>
 
           <TouchableOpacity
             style={[styles.button, !token.trim() && styles.buttonDisabled]}
             onPress={save}
             disabled={!token.trim()}
           >
-            <Text style={styles.buttonText}>Save</Text>
+            <Text style={styles.buttonText}>{t("common.save")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -187,14 +181,14 @@ export default function NotionScreen() {
             ) : (
               <>
                 <Feather name="zap" size={15} color={Color.accent} />
-                <Text style={styles.secondaryText}>Test connection</Text>
+                <Text style={styles.secondaryText}>{t("conn.notion.testConnection")}</Text>
               </>
             )}
           </TouchableOpacity>
 
           {!!token && (
             <TouchableOpacity style={styles.dangerButton} onPress={disconnect}>
-              <Text style={styles.dangerText}>Disconnect</Text>
+              <Text style={styles.dangerText}>{t("common.disconnect")}</Text>
             </TouchableOpacity>
           )}
         </ScrollView>

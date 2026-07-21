@@ -16,6 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Color } from "@/constants/theme";
+import { useTranslation } from "@/i18n";
 
 const STORAGE_KEYS = {
   EMAIL: "@jira_email",
@@ -24,6 +25,7 @@ const STORAGE_KEYS = {
 };
 
 export default function JiraSettings() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [token, setToken] = useState("");
   const [domain, setDomain] = useState("");
@@ -47,13 +49,13 @@ export default function JiraSettings() {
       if (tokenValue) setToken(tokenValue);
       if (domainValue) setDomain(domainValue);
     } catch (e) {
-      Alert.alert("Error", "Could not load settings.");
+      Alert.alert(t("common.error"), t("common.loadError"));
     }
   };
 
   const handleSave = async () => {
     if (!email || !token || !domain) {
-      Alert.alert("Required Fields", "Please complete all fields to continue.");
+      Alert.alert(t("common.requiredTitle"), t("common.requiredBody"));
       return;
     }
 
@@ -64,9 +66,9 @@ export default function JiraSettings() {
         AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token.trim()),
         AsyncStorage.setItem(STORAGE_KEYS.DOMAIN, domain.toLowerCase().trim()),
       ]);
-      Alert.alert("Success", "Settings saved securely.");
+      Alert.alert(t("common.success"), t("conn.jira.savedSecurely"));
     } catch (e) {
-      Alert.alert("Error", "Failed to save configuration.");
+      Alert.alert(t("common.error"), t("common.saveError"));
     } finally {
       setLoading(false);
     }
@@ -80,19 +82,17 @@ export default function JiraSettings() {
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
-            <Text style={styles.title}>Jira Integration</Text>
-            <Text style={styles.subtitle}>
-              Configure your Atlassian Cloud credentials to sync your workspace.
-            </Text>
+            <Text style={styles.title}>{t("conn.jira.title")}</Text>
+<Text style={styles.subtitle}>{t("conn.jira.subtitle")}</Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>ACCOUNT DETAILS</Text>
+            <Text style={styles.sectionLabel}>{t("conn.jira.accountDetails")}</Text>
             <View style={styles.group}>
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Email"
+                  placeholder={t("conn.jira.email")}
                   value={email}
                   onChangeText={setEmail}
                   autoCapitalize="none"
@@ -104,7 +104,7 @@ export default function JiraSettings() {
               <View style={[styles.inputWrapper, styles.noBorder]}>
                 <TextInput
                   style={styles.input}
-                  placeholder="API Token"
+                  placeholder={t("conn.jira.token")}
                   value={token}
                   onChangeText={setToken}
                   secureTextEntry
@@ -115,7 +115,7 @@ export default function JiraSettings() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>WORKSPACE</Text>
+            <Text style={styles.sectionLabel}>{t("conn.jira.workspace")}</Text>
             <View style={styles.group}>
               <View
                 style={[
@@ -126,7 +126,7 @@ export default function JiraSettings() {
               >
                 <TextInput
                   style={[styles.input, { flex: 1 }]}
-                  placeholder="your-company"
+                  placeholder={t("conn.jira.domain")}
                   value={domain}
                   onChangeText={setDomain}
                   autoCapitalize="none"
@@ -134,9 +134,7 @@ export default function JiraSettings() {
                 />
               </View>
             </View>
-            <Text style={styles.footerText}>
-              Find your domain in your Jira browser URL.
-            </Text>
+<Text style={styles.footerText}>{t("conn.jira.domainHint")}</Text>
           </View>
 
           <TouchableOpacity
@@ -147,7 +145,7 @@ export default function JiraSettings() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Save Settings</Text>
+              <Text style={styles.buttonText}>{t("common.saveSettings")}</Text>
             )}
           </TouchableOpacity>
 
@@ -155,7 +153,7 @@ export default function JiraSettings() {
             style={styles.secondaryButton}
             onPress={() => router.back()}
           >
-            <Text style={styles.secondaryButtonText}>Cancel</Text>
+            <Text style={styles.secondaryButtonText}>{t("common.cancel")}</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

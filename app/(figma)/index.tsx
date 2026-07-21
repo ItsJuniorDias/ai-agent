@@ -12,8 +12,10 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Color } from "@/constants/theme";
+import { useTranslation } from "@/i18n";
 
 export default function FigmaScreen() {
+  const { t } = useTranslation();
   const [personalAccessToken, setPersonalAccessToken] = useState("");
   const [fileKey, setFileKey] = useState("");
 
@@ -36,7 +38,7 @@ export default function FigmaScreen() {
 
   const handleConnect = async () => {
     if (!personalAccessToken || !fileKey) {
-      Alert.alert("Erro", "Por favor, preencha todos os campos.");
+      Alert.alert(t("common.error"), t("conn.figma.fillAll"));
       return;
     }
 
@@ -47,11 +49,11 @@ export default function FigmaScreen() {
 
       // Lógica de integração com a API do Figma entraria aqui
       Alert.alert(
-        "Conectando...",
-        "Dados salvos com sucesso. Iniciando integração.",
+        t("conn.figma.connecting"),
+        t("conn.figma.connectingBody"),
       );
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível salvar os dados.");
+      Alert.alert(t("common.error"), t("conn.figma.saveError"));
       console.error("Erro ao salvar no AsyncStorage:", error);
     }
   };
@@ -63,18 +65,16 @@ export default function FigmaScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={styles.headerContainer}>
-          <Text style={styles.title}>Figma Integration</Text>
-          <Text style={styles.description}>
-            Enter your Personal Access Token and File Key to connect your Figma
-          </Text>
+          <Text style={styles.title}>{t("conn.figma.title")}</Text>
+<Text style={styles.description}>{t("conn.figma.description")}</Text>
         </View>
 
         <View style={styles.formGroup}>
           <View style={styles.inputRow}>
-            <Text style={styles.label}>Token</Text>
+            <Text style={styles.label}>{t("conn.figma.token")}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Personal Access Token"
+              placeholder={t("conn.figma.tokenPlaceholder")}
               placeholderTextColor={Color.placeholder}
               value={personalAccessToken}
               onChangeText={setPersonalAccessToken}
@@ -87,7 +87,7 @@ export default function FigmaScreen() {
           <View style={styles.separator} />
 
           <View style={styles.inputRow}>
-            <Text style={styles.label}>File Key</Text>
+            <Text style={styles.label}>{t("conn.figma.fileKey")}</Text>
             <TextInput
               style={styles.input}
               placeholder="Ex: jF98xV..."
@@ -100,12 +100,10 @@ export default function FigmaScreen() {
           </View>
         </View>
 
-        <Text style={styles.footerText}>
-          You can find your Personal Access Token in your Figma account settings
-        </Text>
+<Text style={styles.footerText}>{t("conn.figma.footerHint")}</Text>
 
         <TouchableOpacity style={styles.button} onPress={handleConnect}>
-          <Text style={styles.buttonText}>Connect to Figma</Text>
+          <Text style={styles.buttonText}>{t("conn.figma.connectToFigma")}</Text>
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>

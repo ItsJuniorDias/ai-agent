@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Color } from "@/constants/theme";
+import { useTranslation } from "@/i18n";
 
 // Chaves para o AsyncStorage
 const STORAGE_KEYS = {
@@ -23,6 +24,7 @@ const STORAGE_KEYS = {
 };
 
 export default function SlackScreen() {
+  const { t } = useTranslation();
   const [botToken, setBotToken] = useState("");
   const [channelId, setChannelId] = useState("");
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -46,7 +48,7 @@ export default function SlackScreen() {
         if (storedNotifs !== null)
           setNotificationsEnabled(JSON.parse(storedNotifs));
       } catch (error) {
-        Alert.alert("Erro", "Não foi possível carregar as configurações.");
+        Alert.alert(t("common.error"), t("conn.slack.loadError"));
         console.error("Failed to load Slack settings:", error);
       } finally {
         setIsLoading(false);
@@ -59,7 +61,7 @@ export default function SlackScreen() {
   // Salvar dados
   const handleSave = async () => {
     if (!botToken) {
-      Alert.alert("Error", "The Bot Token is required.");
+      Alert.alert(t("common.error"), t("conn.slack.botTokenRequired"));
       return;
     }
 
@@ -72,9 +74,9 @@ export default function SlackScreen() {
         JSON.stringify(notificationsEnabled),
       );
 
-      Alert.alert("Success", "Slack configuration saved successfully!");
+      Alert.alert(t("common.success"), t("conn.slack.savedBody"));
     } catch (error) {
-      Alert.alert("Error", "Failed to save configuration.");
+      Alert.alert(t("common.error"), t("common.saveError"));
       console.error("Failed to save Slack settings:", error);
     } finally {
       setIsSaving(false);
@@ -96,18 +98,15 @@ export default function SlackScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Slack</Text>
-          <Text style={styles.description}>
-            Configure your Slack integration to send notifications and sync
-            messages directly to your channels.
-          </Text>
+          <Text style={styles.title}>{t("conn.slack.title")}</Text>
+<Text style={styles.description}>{t("conn.slack.description")}</Text>
         </View>
 
         {/* Authentication Section */}
-        <Text style={styles.sectionTitle}>AUTHENTICATION</Text>
+        <Text style={styles.sectionTitle}>{t("conn.slack.authentication")}</Text>
         <View style={styles.section}>
           <View style={styles.row}>
-            <Text style={styles.label}>Bot Token</Text>
+            <Text style={styles.label}>{t("conn.slack.botToken")}</Text>
             <TextInput
               style={styles.input}
               placeholder="xoxb-..."
@@ -120,16 +119,13 @@ export default function SlackScreen() {
             />
           </View>
         </View>
-        <Text style={styles.sectionFooter}>
-          You can generate a Bot Token in your Slack App configuration under
-          &quot;OAuth &amp; Permissions&quot;.
-        </Text>
+<Text style={styles.sectionFooter}>{t("conn.slack.botTokenHint")}</Text>
 
         {/* Workspace Configuration Section */}
-        <Text style={styles.sectionTitle}>WORKSPACE</Text>
+        <Text style={styles.sectionTitle}>{t("conn.slack.workspace")}</Text>
         <View style={styles.section}>
           <View style={[styles.row, styles.borderBottom]}>
-            <Text style={styles.label}>Channel ID</Text>
+            <Text style={styles.label}>{t("conn.slack.channelId")}</Text>
             <TextInput
               style={styles.input}
               placeholder="Ex: C01234567"
@@ -141,7 +137,7 @@ export default function SlackScreen() {
             />
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Enable Notifications</Text>
+            <Text style={styles.label}>{t("conn.slack.enableNotifications")}</Text>
             <Switch
               value={notificationsEnabled}
               onValueChange={setNotificationsEnabled}
@@ -159,7 +155,7 @@ export default function SlackScreen() {
           {isSaving ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.buttonText}>Connect to Slack</Text>
+            <Text style={styles.buttonText}>{t("conn.slack.connectToSlack")}</Text>
           )}
         </TouchableOpacity>
       </KeyboardAvoidingView>

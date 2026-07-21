@@ -35,6 +35,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { Color } from "@/constants/theme";
+import { useTranslation } from "@/i18n";
 
 const EMAIL_KEY = "@gmail_email";
 const TOKEN_KEY = "@gmail_access_token";
@@ -49,6 +50,7 @@ const LEGACY_KEYS = [
 const PLAYGROUND_URL = "https://developers.google.com/oauthplayground";
 
 export default function GmailScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -80,14 +82,14 @@ export default function GmailScreen() {
 
       if (res.status === 401) {
         Alert.alert(
-          "Token expirado",
-          "Access tokens do Google valem cerca de 1 hora. Gere outro no OAuth Playground.",
+          t("conn.gmail.tokenExpiredTitle"),
+          t("conn.gmail.tokenExpiredBody"),
         );
         return;
       }
 
       if (!res.ok) {
-        Alert.alert("Falhou", `A Gmail API respondeu ${res.status}.`);
+        Alert.alert(t("common.error"), t("conn.gmail.apiRespondedFail", { status: res.status }));
         return;
       }
 
@@ -95,11 +97,11 @@ export default function GmailScreen() {
       if (data.emailAddress && !email) setEmail(data.emailAddress);
 
       Alert.alert(
-        "Conectado",
-        `Token válido para ${data.emailAddress}. O agente vai enviar e-mails direto pela API.`,
+        t("conn.gmail.connected"),
+        t("conn.gmail.connectedBody", { email: data.emailAddress }),
       );
     } catch {
-      Alert.alert("Erro de rede", "Não deu para falar com a Gmail API.");
+      Alert.alert(t("conn.gmail.networkError"), t("conn.gmail.networkErrorBody"));
     } finally {
       setChecking(false);
     }
@@ -107,7 +109,7 @@ export default function GmailScreen() {
 
   const handleSave = async () => {
     if (!email.trim()) {
-      Alert.alert("Falta o e-mail", "Informe o endereço da conta.");
+      Alert.alert(t("conn.gmail.missingEmail"), t("conn.gmail.missingEmailBody"));
       return;
     }
 
@@ -117,11 +119,11 @@ export default function GmailScreen() {
     else await AsyncStorage.removeItem(TOKEN_KEY);
 
     Alert.alert(
-      "Salvo",
+      t("conn.gmail.saved"),
       token.trim()
-        ? "O agente vai enviar pela Gmail API enquanto o token valer."
-        : "O agente vai abrir seu app de e-mail com a mensagem pronta.",
-      [{ text: "OK", onPress: () => router.back() }],
+        ? t("conn.gmail.savedTokenBody")
+        : t("conn.gmail.savedNoTokenBody"),
+      [{ text: t("common.ok"), onPress: () => router.back() }],
     );
   };
 
@@ -129,7 +131,7 @@ export default function GmailScreen() {
     await AsyncStorage.multiRemove([EMAIL_KEY, TOKEN_KEY, ...LEGACY_KEYS]);
     setEmail("");
     setToken("");
-    Alert.alert("Desconectado", "As credenciais do Gmail foram apagadas.");
+    Alert.alert(t("conn.gmail.disconnected"), t("conn.gmail.disconnectedBody"));
   };
 
   const connected = !!email;
@@ -145,16 +147,14 @@ export default function GmailScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <Text style={styles.title}>Gmail</Text>
-            <Text style={styles.description}>
-              Let the agent draft and send email on your behalf.
-            </Text>
+            <Text style={styles.title}>{t("conn.gmail.title")}</Text>
+<Text style={styles.description}>{t("conn.gmail.description")}</Text>
           </View>
 
-          <Text style={styles.sectionTitle}>ACCOUNT</Text>
+          <Text style={styles.sectionTitle}>{t("conn.gmail.account")}</Text>
           <View style={styles.section}>
             <View style={styles.row}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>{t("conn.gmail.email")}</Text>
               <TextInput
                 style={styles.input}
                 placeholder="you@gmail.com"
@@ -167,15 +167,12 @@ export default function GmailScreen() {
               />
             </View>
           </View>
-          <Text style={styles.sectionFooter}>
-            With just an email address, the agent opens your mail app with the
-            message already written — you tap send.
-          </Text>
+<Text style={styles.sectionFooter}>{t("conn.gmail.accountHint")}</Text>
 
-          <Text style={styles.sectionTitle}>AUTOMATIC SENDING (OPTIONAL)</Text>
+          <Text style={styles.sectionTitle}>{t("conn.gmail.autoSending")}</Text>
           <View style={styles.section}>
             <View style={styles.stackedRow}>
-              <Text style={styles.label}>OAuth access token</Text>
+              <Text style={styles.label}>{t("conn.gmail.oauthToken")}</Text>
               <TextInput
                 style={styles.stackedInput}
                 placeholder="ya29.…"
@@ -188,19 +185,14 @@ export default function GmailScreen() {
               />
             </View>
           </View>
-          <Text style={styles.sectionFooter}>
-            Paste a token with the gmail.send scope and the agent sends without
-            asking. Google tokens expire in about an hour, so this is for
-            testing — surviving that needs a refresh token, which needs a client
-            secret, which needs a backend. This app never had one.
-          </Text>
+<Text style={styles.sectionFooter}>{t("conn.gmail.oauthHint")}</Text>
 
           <TouchableOpacity
             style={styles.linkRow}
             onPress={() => Linking.openURL(PLAYGROUND_URL)}
           >
             <Feather name="external-link" size={16} color={Color.accent} />
-            <Text style={styles.linkText}>Get a token in OAuth Playground</Text>
+            <Text style={styles.linkText}>{t("conn.gmail.getToken")}</Text>
           </TouchableOpacity>
 
           {!!token.trim() && (
@@ -210,13 +202,13 @@ export default function GmailScreen() {
               disabled={checking}
             >
               <Text style={styles.secondaryButtonText}>
-                {checking ? "Checking…" : "Test token"}
+                {checking ? t("conn.gmail.checking") : t("conn.gmail.testToken")}
               </Text>
             </TouchableOpacity>
           )}
 
           <TouchableOpacity style={styles.button} onPress={handleSave}>
-            <Text style={styles.buttonText}>Save</Text>
+            <Text style={styles.buttonText}>{t("common.save")}</Text>
           </TouchableOpacity>
 
           {connected && (
@@ -224,7 +216,7 @@ export default function GmailScreen() {
               style={styles.disconnect}
               onPress={handleDisconnect}
             >
-              <Text style={styles.disconnectText}>Disconnect</Text>
+              <Text style={styles.disconnectText}>{t("common.disconnect")}</Text>
             </TouchableOpacity>
           )}
         </ScrollView>

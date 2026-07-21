@@ -11,8 +11,10 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Color } from "@/constants/theme";
+import { useTranslation } from "@/i18n";
 
 export default function AIPrivacyScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
 
   return (
@@ -26,23 +28,16 @@ export default function AIPrivacyScreen() {
             color={Color.accent}
             style={styles.headerIcon}
           />
-          <Text style={styles.title}>Artificial Intelligence & Privacy</Text>
-          <Text style={styles.subtitle}>
-            To provide our AI features, we need to share some data. Here is how
-            we protect your privacy.
-          </Text>
+          <Text style={styles.title}>{t("aiTerms.title")}</Text>
+          <Text style={styles.subtitle}>{t("aiTerms.subtitle")}</Text>
         </View>
 
         {/* Requisito 1: Disclose what data will be sent */}
         <View style={styles.infoBlock}>
           <Ionicons name="document-text" size={36} color={Color.accent} />
           <View style={styles.textContainer}>
-            <Text style={styles.infoTitle}>What data is sent</Text>
-            <Text style={styles.infoDescription}>
-              Only the text you type in the chat [OR the photos you upload] is
-              sent for processing. We do not send your name, email, or location
-              data.
-            </Text>
+            <Text style={styles.infoTitle}>{t("aiTerms.whatTitle")}</Text>
+            <Text style={styles.infoDescription}>{t("aiTerms.whatBody")}</Text>
           </View>
         </View>
 
@@ -50,12 +45,8 @@ export default function AIPrivacyScreen() {
         <View style={styles.infoBlock}>
           <Ionicons name="cloud-upload" size={36} color={Color.accent} />
           <View style={styles.textContainer}>
-            <Text style={styles.infoTitle}>Who we send it to</Text>
-            <Text style={styles.infoDescription}>
-              Your data is securely sent to [INSERT AI NAME, e.g., OpenAI /
-              Google Gemini], our partnered Artificial Intelligence service
-              provider.
-            </Text>
+            <Text style={styles.infoTitle}>{t("aiTerms.whoTitle")}</Text>
+            <Text style={styles.infoDescription}>{t("aiTerms.whoBody")}</Text>
           </View>
         </View>
 
@@ -63,11 +54,8 @@ export default function AIPrivacyScreen() {
         <View style={styles.infoBlock}>
           <Ionicons name="lock-closed" size={36} color={Color.accent} />
           <View style={styles.textContainer}>
-            <Text style={styles.infoTitle}>Data Use & Protection</Text>
-            <Text style={styles.infoDescription}>
-              The data is used exclusively to generate responses within the app.
-              Our partners do not use your data to train public AI models.
-            </Text>
+            <Text style={styles.infoTitle}>{t("aiTerms.useTitle")}</Text>
+            <Text style={styles.infoDescription}>{t("aiTerms.useBody")}</Text>
           </View>
         </View>
       </ScrollView>
@@ -75,33 +63,26 @@ export default function AIPrivacyScreen() {
       {/* Requisito: Obtain the user's permission */}
       <View style={styles.footer}>
         <Text style={styles.footerDisclaimer}>
-          By continuing, you agree to share the data described above with our AI
-          partners. Read our <Text style={styles.linkText}>Privacy Policy</Text>
-          .
+          {t("aiTerms.disclaimer")}
+          <Text style={styles.linkText}>{t("aiTerms.privacyPolicy")}</Text>.
         </Text>
 
         <TouchableOpacity
           style={styles.primaryButton}
           onPress={() => router.push("/(onboarding)")}
         >
-          <Text style={styles.primaryButtonText}>Agree & Continue</Text>
+          <Text style={styles.primaryButtonText}>{t("aiTerms.agree")}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.secondaryButton}
           onPress={() => {
-            Alert.alert(
-              "Exit AI Features",
-              "You have chosen not to share data with our AI partners. You can still use the app, but AI features will be disabled.",
-              [
-                {
-                  text: "OK",
-                },
-              ],
-            );
+            Alert.alert(t("aiTerms.exitTitle"), t("aiTerms.exitBody"), [
+              { text: t("common.ok") },
+            ]);
           }}
         >
-          <Text style={styles.secondaryButtonText}>Do Not Share (Exit)</Text>
+          <Text style={styles.secondaryButtonText}>{t("aiTerms.doNotShare")}</Text>
         </TouchableOpacity>
       </View>
     </View>

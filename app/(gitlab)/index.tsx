@@ -12,8 +12,10 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Color } from "@/constants/theme";
+import { useTranslation } from "@/i18n";
 
 export default function GitlabScreen() {
+  const { t } = useTranslation();
   const [url, setUrl] = useState("");
   const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -31,7 +33,7 @@ export default function GitlabScreen() {
       if (savedUrl) setUrl(savedUrl);
       if (savedToken) setToken(savedToken);
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível carregar as informações salvas.");
+      Alert.alert(t("common.error"), t("common.loadError"));
     } finally {
       setIsLoading(false);
     }
@@ -41,9 +43,9 @@ export default function GitlabScreen() {
     try {
       await AsyncStorage.setItem("@gitlab_url", url);
       await AsyncStorage.setItem("@gitlab_token", token);
-      Alert.alert("Sucesso", "Configurações salvas no dispositivo!");
+      Alert.alert(t("common.success"), t("common.savedOnDevice"));
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível salvar as configurações.");
+      Alert.alert(t("common.error"), t("common.saveError"));
     }
   };
 
@@ -61,14 +63,11 @@ export default function GitlabScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.header}>
-        <Text style={styles.title}>GitLab</Text>
-        <Text style={styles.description}>
-          Configure your integration with GitLab to sync your repositories and
-          issues.
-        </Text>
+        <Text style={styles.title}>{t("conn.gitlab.title")}</Text>
+<Text style={styles.description}>{t("conn.gitlab.description")}</Text>
       </View>
 
-      <Text style={styles.sectionTitle}>CREDENCIAIS</Text>
+      <Text style={styles.sectionTitle}>{t("conn.gitlab.credentials")}</Text>
 
       <View style={styles.inputGroup}>
         <TextInput
@@ -84,7 +83,7 @@ export default function GitlabScreen() {
         <View style={styles.separator} />
         <TextInput
           style={styles.input}
-          placeholder="Personal Access Token"
+          placeholder={t("conn.gitlab.token")}
           placeholderTextColor={Color.placeholder}
           value={token}
           onChangeText={setToken}
@@ -95,7 +94,7 @@ export default function GitlabScreen() {
       </View>
 
       <TouchableOpacity style={styles.buttonContainer} onPress={saveSettings}>
-        <Text style={styles.buttonText}>Save Settings</Text>
+        <Text style={styles.buttonText}>{t("common.saveSettings")}</Text>
       </TouchableOpacity>
     </KeyboardAvoidingView>
   );

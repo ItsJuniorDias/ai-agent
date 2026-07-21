@@ -56,11 +56,12 @@ import { runAssistantScan, type ScanOutcome } from "@/services/assistant";
 import { hasApiKey } from "@/services/openrouter";
 import { INTEGRATION_META } from "@/components/agent-trace";
 import { Color, Radius, Shadow, Spacing, Type } from "@/constants/theme";
+import { localeTag, useTranslation, type Language } from "@/i18n";
 
-function formatWhen(iso?: string): string {
+function formatWhen(iso: string | undefined, language: Language): string {
   if (!iso) return "—";
   try {
-    return new Date(iso).toLocaleString("pt-BR", {
+    return new Date(iso).toLocaleString(localeTag(language), {
       day: "2-digit",
       month: "2-digit",
       hour: "2-digit",
@@ -71,28 +72,31 @@ function formatWhen(iso?: string): string {
   }
 }
 
-function scanMessage(out: ScanOutcome): string {
+type TFunc = (key: string, opts?: Record<string, unknown>) => string;
+
+function scanMessage(out: ScanOutcome, t: TFunc): string {
   switch (out.status) {
     case "ok":
       return out.notified > 0
-        ? `Pronto — ${out.notified} alerta(s) enviado(s).`
-        : "Varredura concluída. Nada urgente no momento.";
+        ? t("assistant.scanOkNotified", { count: out.notified })
+        : t("assistant.scanOkClear");
     case "needs-permission":
-      return "Autorize as notificações primeiro (botão acima).";
+      return t("assistant.scanNeedsPermission");
     case "no-key":
-      return "Sem chave do OpenRouter. Configure o .env para o agente rodar.";
+      return t("assistant.scanNoKey");
     case "no-targets":
-      return "Nenhum serviço monitorável conectado. Conecte GitHub, Jira, Vercel…";
+      return t("assistant.scanNoTargets");
     case "skipped-quiet":
-      return "Dentro do horário silencioso — pulei.";
+      return t("assistant.scanQuiet");
     case "skipped-disabled":
-      return "Monitor desligado.";
+      return t("assistant.scanDisabled");
     default:
-      return out.summary || "Falha na varredura.";
+      return out.summary || t("assistant.scanFail");
   }
 }
 
 export default function AssistantScreen() {
+  const { t, language } = useTranslation();
   const router = useRouter();
 
   const [config, setConfig] = useState<AssistantConfig>(DEFAULT_ASSISTANT_CONFIG);
@@ -156,8 +160,8 @@ export default function AssistantScreen() {
       if (!granted) {
         setPermission(await getPermissionStatus());
         Alert.alert(
-          "Notificações desativadas",
-          "Autorize as notificações para o assistente poder te avisar.",
+          t("assistant.notifDisabledTitle"),
+          t("assistant.notifDisabledBody"),
         );
         return;
       }
@@ -198,7 +202,7 @@ export default function AssistantScreen() {
     setScanning(true);
     setScanMsg(null);
     const out = await runAssistantScan("manual");
-    setScanMsg(scanMessage(out));
+    setScanMsg(scanMessage(out, t));
     setScanning(false);
     // Recarrega estado + lembretes; a varredura pode ter atualizado a telemetria.
     const [st, rem] = await Promise.all([loadAssistantState(), listScheduled()]);
@@ -215,12 +219,12 @@ export default function AssistantScreen() {
   const clearReminders = () => {
     if (!reminders.length) return;
     Alert.alert(
-      "Limpar lembretes",
-      `Cancelar os ${reminders.length} lembretes agendados?`,
+      t("assistant.clearRemindersTitle"),
+      t("assistant.clearRemindersBody", { count: reminders.length }),
       [
-        { text: "Cancelar", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Limpar",
+          text: t("assistant.clearAll"),
           style: "destructive",
           onPress: async () => {
             await cancelAllScheduled();
@@ -241,10 +245,10 @@ export default function AssistantScreen() {
 
   const availabilityLabel =
     availability === "available"
-      ? "Disponível"
+      ? t("assistant.available")
       : availability === "restricted"
-        ? "Restrito pelo sistema"
-        : "Indisponível";
+        ? t("assistant.restricted")
+        : t("assistant.unavailable");
 
   return (
     <ScrollView
@@ -255,23 +259,17 @@ export default function AssistantScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.back}>
           <Feather name="chevron-left" size={26} color={Color.accent} />
         </TouchableOpacity>
-        <Text style={styles.title}>Personal Assistant</Text>
+        <Text style={styles.title}>{t("assistant.title")}</Text>
       </View>
 
-      <Text style={styles.intro}>
-        O agente vira um assistente que vigia seus serviços em segundo plano e te
-        avisa por notificação quando algo importante aparece — um PR esperando
-        review, um deploy quebrado, uma issue nova pra você. Ele também agenda
-        lembretes quando você pede no chat.
-      </Text>
+      <Text style={styles.intro}>{t("assistant.intro")}</Text>
 
       {/* Chave ausente */}
       {!hasApiKey() && (
         <View style={styles.banner}>
           <Feather name="alert-triangle" size={18} color={Color.warning} />
           <Text style={styles.bannerText}>
-            Sem chave do OpenRouter. A varredura não roda até definir
-            EXPO_PUBLIC_OPENROUTER_API_KEY no .env.
+            {t("assistant.missingKeyBanner")}
           </Text>
         </View>
       )}
@@ -281,21 +279,23 @@ export default function AssistantScreen() {
         <View style={styles.permCard}>
           <Ionicons name="notifications" size={22} color={Color.accent} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.permTitle}>Ative as notificações</Text>
+            <Text style={styles.permTitle}>{t("assistant.enableNotifications")}</Text>
             <Text style={styles.permSub}>
-              Sem isso o assistente não tem como te alcançar.
+              {t("assistant.enableNotificationsSub")}
             </Text>
           </View>
           <TouchableOpacity style={styles.permBtn} onPress={enablePermission}>
             <Text style={styles.permBtnText}>
-              {permission === "denied" ? "Ajustes" : "Ativar"}
+              {permission === "denied"
+                ? t("assistant.settingsBtn")
+                : t("assistant.enableBtn")}
             </Text>
           </TouchableOpacity>
         </View>
       )}
 
       {/* Monitor proativo */}
-      <Text style={styles.sectionTitle}>PROACTIVE MONITORING</Text>
+      <Text style={styles.sectionTitle}>{t("assistant.proactiveMonitoring")}</Text>
       <View style={styles.group}>
         <View style={[styles.row, styles.noBorder]}>
           <View style={styles.rowLeft}>
@@ -303,9 +303,9 @@ export default function AssistantScreen() {
               <Ionicons name="pulse" size={17} color="white" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowText}>Monitorar em segundo plano</Text>
+              <Text style={styles.rowText}>{t("assistant.monitorBackground")}</Text>
               <Text style={styles.rowSubtext}>
-                Varre seus serviços e envia alertas sozinho
+                {t("assistant.monitorBackgroundSub")}
               </Text>
             </View>
           </View>
@@ -318,13 +318,17 @@ export default function AssistantScreen() {
         </View>
       </View>
       <Text style={styles.footerText}>
-        Status do sistema: {availabilityLabel}. Última varredura:{" "}
-        {formatWhen(state.lastScanAt)}
-        {state.lastScanSummary ? ` · ${state.lastScanSummary}` : ""}.
+        {t("assistant.statusLine", {
+          status: availabilityLabel,
+          when: formatWhen(state.lastScanAt, language),
+          summary: state.lastScanSummary
+            ? ` · ${state.lastScanSummary}`
+            : "",
+        })}
       </Text>
 
       {/* Frequência */}
-      <Text style={styles.sectionTitle}>MINIMUM INTERVAL</Text>
+      <Text style={styles.sectionTitle}>{t("assistant.minInterval")}</Text>
       <View style={styles.segmented}>
         {ASSISTANT_INTERVALS.map((n) => (
           <TouchableOpacity
@@ -344,21 +348,17 @@ export default function AssistantScreen() {
           </TouchableOpacity>
         ))}
       </View>
-      <Text style={styles.footerText}>
-        Piso, não relógio. O iOS decide quando acordar o app e costuma agrupar as
-        execuções em janelas próprias — às vezes só de madrugada. Para uma
-        checagem imediata, use “Scan now” abaixo ou peça no chat.
-      </Text>
+      <Text style={styles.footerText}>{t("assistant.intervalFooter")}</Text>
 
       {/* Horário silencioso */}
-      <Text style={styles.sectionTitle}>QUIET HOURS</Text>
+      <Text style={styles.sectionTitle}>{t("assistant.quietHours")}</Text>
       <View style={styles.group}>
         <View style={styles.row}>
           <View style={styles.rowLeft}>
             <View style={[styles.iconBox, { backgroundColor: Color.accent }]}>
               <Ionicons name="moon" size={16} color="white" />
             </View>
-            <Text style={styles.rowText}>Silenciar à noite</Text>
+            <Text style={styles.rowText}>{t("assistant.silenceNight")}</Text>
           </View>
           <Switch
             trackColor={{ false: Color.surface3, true: Color.success }}
@@ -369,7 +369,7 @@ export default function AssistantScreen() {
         </View>
 
         <View style={[styles.row, styles.noBorder, !config.quietHoursEnabled && styles.dim]}>
-          <Text style={styles.rowText}>De</Text>
+          <Text style={styles.rowText}>{t("assistant.from")}</Text>
           <View style={styles.stepper}>
             <TouchableOpacity
               onPress={() => shiftHour("start", -1)}
@@ -390,7 +390,7 @@ export default function AssistantScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={[styles.rowText, { marginLeft: 12 }]}>até</Text>
+          <Text style={[styles.rowText, { marginLeft: 12 }]}>{t("assistant.to")}</Text>
           <View style={styles.stepper}>
             <TouchableOpacity
               onPress={() => shiftHour("end", -1)}
@@ -412,19 +412,15 @@ export default function AssistantScreen() {
           </View>
         </View>
       </View>
-      <Text style={styles.footerText}>
-        Vale só para as varreduras automáticas. Lembretes que você agendou
-        explicitamente disparam de qualquer forma.
-      </Text>
+      <Text style={styles.footerText}>{t("assistant.quietFooter")}</Text>
 
       {/* Serviços vigiados */}
-      <Text style={styles.sectionTitle}>WATCHED SERVICES</Text>
+      <Text style={styles.sectionTitle}>{t("assistant.watchedServices")}</Text>
       <View style={styles.group}>
         {connected.length === 0 ? (
           <View style={[styles.row, styles.noBorder]}>
             <Text style={styles.rowSubtext}>
-              Nenhum serviço monitorável conectado. Conecte GitHub, GitLab, Jira,
-              Linear ou Vercel para o assistente ter o que vigiar.
+              {t("assistant.noMonitorable")}
             </Text>
           </View>
         ) : (
@@ -457,7 +453,7 @@ export default function AssistantScreen() {
         onPress={() => router.push("/(onboarding)" as never)}
         activeOpacity={0.6}
       >
-        <Text style={styles.linkText}>Conectar mais serviços</Text>
+        <Text style={styles.linkText}>{t("assistant.connectMore")}</Text>
         <Feather name="chevron-right" size={18} color={Color.accent} />
       </TouchableOpacity>
 
@@ -473,7 +469,7 @@ export default function AssistantScreen() {
         ) : (
           <>
             <Feather name="radio" size={18} color="#FFFFFF" />
-            <Text style={styles.scanBtnText}>Scan now</Text>
+            <Text style={styles.scanBtnText}>{t("assistant.scanNow")}</Text>
           </>
         )}
       </TouchableOpacity>
@@ -481,15 +477,12 @@ export default function AssistantScreen() {
 
       {/* Lembretes agendados */}
       <Text style={styles.sectionTitle}>
-        SCHEDULED REMINDERS · {reminders.length}
+        {t("assistant.scheduledReminders", { count: reminders.length })}
       </Text>
       <View style={styles.group}>
         {reminders.length === 0 ? (
           <View style={[styles.row, styles.noBorder]}>
-            <Text style={styles.rowSubtext}>
-              Nenhum lembrete agendado. Peça no chat: “me lembra de revisar o PR
-              amanhã às 9h”.
-            </Text>
+            <Text style={styles.rowSubtext}>{t("assistant.noReminders")}</Text>
           </View>
         ) : (
           reminders.map((r, index) => (
@@ -505,7 +498,7 @@ export default function AssistantScreen() {
                   <Text style={styles.rowText} numberOfLines={1}>
                     {r.title}
                   </Text>
-                  <Text style={styles.rowSubtext}>{formatWhen(r.fireAt)}</Text>
+                  <Text style={styles.rowSubtext}>{formatWhen(r.fireAt, language)}</Text>
                 </View>
               </View>
               <TouchableOpacity
@@ -524,7 +517,7 @@ export default function AssistantScreen() {
           onPress={clearReminders}
           activeOpacity={0.6}
         >
-          <Text style={styles.clearText}>Limpar todos</Text>
+          <Text style={styles.clearText}>{t("assistant.clearAll")}</Text>
         </TouchableOpacity>
       )}
     </ScrollView>

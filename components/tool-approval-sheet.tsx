@@ -24,6 +24,7 @@ import { GradientButton } from "@/components/ui/gradient-button";
 import { Color, MonoFont, Radius, Spacing, Type, alpha } from "@/constants/theme";
 import type { ApprovalDecision, ApprovalRequest } from "@/agent/types";
 import { INTEGRATION_META } from "./agent-trace";
+import { useTranslation } from "@/i18n";
 
 /** Campos longos viram bloco; campos curtos viram linha. */
 const LONG_FIELD_THRESHOLD = 60;
@@ -41,6 +42,8 @@ export function ToolApprovalSheet({
   onDecide: (decision: ApprovalDecision) => void;
   haptics?: boolean;
 }) {
+  const { t } = useTranslation();
+
   if (!request) return null;
 
   const meta = INTEGRATION_META[request.integration] ?? INTEGRATION_META.core;
@@ -87,10 +90,7 @@ export function ToolApprovalSheet({
 
           <View style={styles.warning}>
             <Feather name="alert-triangle" size={15} color={Color.warning} />
-            <Text style={styles.warningText}>
-              O agente quer executar esta ação. Ela é real e não dá para
-              desfazer.
-            </Text>
+            <Text style={styles.warningText}>{t("approval.warning")}</Text>
           </View>
 
           <ScrollView
@@ -98,7 +98,7 @@ export function ToolApprovalSheet({
             contentContainerStyle={styles.argsContent}
           >
             {entries.length === 0 ? (
-              <Text style={styles.noArgs}>Sem parâmetros.</Text>
+              <Text style={styles.noArgs}>{t("approval.noArgs")}</Text>
             ) : (
               entries.map(([key, value]) => {
                 const text =
@@ -131,11 +131,11 @@ export function ToolApprovalSheet({
               onPress={() => decide("reject")}
               activeOpacity={0.7}
             >
-              <Text style={styles.rejectText}>Recusar</Text>
+              <Text style={styles.rejectText}>{t("approval.reject")}</Text>
             </TouchableOpacity>
 
             <GradientButton
-              label="Executar"
+              label={t("approval.execute")}
               onPress={() => decide("approve")}
               icon={<Feather name="check" size={17} color={Color.onAccent} />}
               height={50}
@@ -143,9 +143,7 @@ export function ToolApprovalSheet({
             />
           </View>
 
-          <Text style={styles.footnote}>
-            Você pode desligar essas confirmações em Ajustes.
-          </Text>
+          <Text style={styles.footnote}>{t("approval.footnote")}</Text>
         </View>
       </View>
     </Modal>

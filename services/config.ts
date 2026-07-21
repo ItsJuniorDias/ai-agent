@@ -29,10 +29,17 @@ export const STORAGE_KEYS = {
 export type ModelInfo = {
   id: string;
   name: string;
-  desc: string;
+  /** Chave i18n da descrição curta (namespace `models`). */
+  descKey: string;
   color: string;
-  /** Preço aproximado por 1M de tokens, só para exibir na UI. */
-  price: string;
+  /**
+   * Preço só para exibir na UI, separado em valor + unidade para permitir
+   * tradução da unidade. O valor (moeda/número) é universal e fica literal;
+   * a unidade (`per1M`/`perToken`/`perImage`) vem do dicionário. String vazia
+   * em `priceAmount` renderiza só a unidade (ex.: "per token").
+   */
+  priceAmount: string;
+  priceUnitKey: string;
 };
 
 /**
@@ -44,44 +51,50 @@ export const AGENT_MODELS: ModelInfo[] = [
   {
     id: "google/gemini-3-flash-preview",
     name: "Gemini 3 Flash",
-    desc: "Rápido, barato e ótimo em tool calling",
+    descKey: "models.descGeminiFlash",
     color: "#4285F4",
-    price: "$0.50 / $3 por 1M",
+    priceAmount: "$0.50 / $3",
+    priceUnitKey: "models.per1M",
   },
   {
     id: "anthropic/claude-sonnet-4.6",
     name: "Claude Sonnet 4.6",
-    desc: "Melhor raciocínio para tarefas de múltiplos passos",
+    descKey: "models.descClaudeSonnet",
     color: "#D97757",
-    price: "$3 / $15 por 1M",
+    priceAmount: "$3 / $15",
+    priceUnitKey: "models.per1M",
   },
   {
     id: "x-ai/grok-4.1-fast",
     name: "Grok 4.1 Fast",
-    desc: "Custo baixíssimo, contexto de 2M",
+    descKey: "models.descGrok",
     color: "#111111",
-    price: "$0.20 / $0.50 por 1M",
+    priceAmount: "$0.20 / $0.50",
+    priceUnitKey: "models.per1M",
   },
   {
     id: "deepseek/deepseek-v3.2",
     name: "DeepSeek V3.2",
-    desc: "Forte em código, preço agressivo",
+    descKey: "models.descDeepseek",
     color: "#4D6BFE",
-    price: "$0.25 / $0.38 por 1M",
+    priceAmount: "$0.25 / $0.38",
+    priceUnitKey: "models.per1M",
   },
   {
     id: "anthropic/claude-opus-4.6",
     name: "Claude Opus 4.6",
-    desc: "O mais capaz para refactors e planos longos",
+    descKey: "models.descClaudeOpus",
     color: "#8B5CF6",
-    price: "$5 / $25 por 1M",
+    priceAmount: "$5 / $25",
+    priceUnitKey: "models.per1M",
   },
   {
     id: "google/gemini-2.5-flash-lite",
     name: "Gemini 2.5 Flash Lite",
-    desc: "Ultra barato para tarefas simples",
+    descKey: "models.descGeminiLite",
     color: "#10B981",
-    price: "$0.10 / $0.40 por 1M",
+    priceAmount: "$0.10 / $0.40",
+    priceUnitKey: "models.per1M",
   },
 ];
 
@@ -89,23 +102,26 @@ export const IMAGE_MODELS: ModelInfo[] = [
   {
     id: "google/gemini-2.5-flash-image",
     name: "Nano Banana",
-    desc: "Gemini 2.5 Flash Image — estável e rápido",
+    descKey: "models.descNanoBanana",
     color: "#FBBC04",
-    price: "por token",
+    priceAmount: "",
+    priceUnitKey: "models.perToken",
   },
   {
     id: "google/gemini-3.1-flash-image-preview",
     name: "Nano Banana 2",
-    desc: "Qualidade Pro na velocidade Flash",
+    descKey: "models.descNanoBanana2",
     color: "#EA4335",
-    price: "por token",
+    priceAmount: "",
+    priceUnitKey: "models.perToken",
   },
   {
     id: "bytedance-seed/seedream-4.5",
     name: "Seedream 4.5",
-    desc: "Preço fixo por imagem, ótimo em composição",
+    descKey: "models.descSeedream",
     color: "#EC4899",
-    price: "$0.04 / imagem",
+    priceAmount: "$0.04",
+    priceUnitKey: "models.perImage",
   },
 ];
 
