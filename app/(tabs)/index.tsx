@@ -58,6 +58,7 @@ import {
   alpha,
 } from "@/constants/theme";
 import type { AgentStep, ChatMessage, StoredConversation } from "@/agent/types";
+import { useTranslation } from "@/i18n";
 
 const SUGGESTIONS = [
   "Review the open pull requests on my repo",
@@ -81,6 +82,7 @@ function findGeneratedImage(steps?: AgentStep[]): string | null {
 }
 
 export default function ChatScreen() {
+  const { language, t } = useTranslation();
   const { conversationId: paramConversationId } = useLocalSearchParams<{
     conversationId?: string;
   }>();
@@ -109,8 +111,8 @@ export default function ChatScreen() {
   useEffect(() => {
     if (!hasApiKey()) {
       Alert.alert(
-        "Missing OpenRouter key",
-        "Set EXPO_PUBLIC_OPENROUTER_API_KEY in your .env and restart the bundler with `npx expo start -c`.",
+        t("missingKeyTitle"),
+        t("missingKey"),
       );
     }
   }, []);
@@ -138,7 +140,7 @@ export default function ChatScreen() {
         await Voice.stop();
       } else {
         setPrompt("");
-        await Voice.start("pt-BR");
+        await Voice.start(language === "zh" ? "zh-CN" : language === "pt" ? "pt-BR" : language);
       }
     } catch (err) {
       console.log("Voice error:", err);
@@ -180,7 +182,7 @@ export default function ChatScreen() {
         const all: StoredConversation[] = raw ? JSON.parse(raw) : [];
 
         const firstUser =
-          updated.find((m) => m.role === "user")?.text ?? "New Chat";
+          updated.find((m) => m.role === "user")?.text ?? t("newChat");
         const title =
           firstUser.length > 30 ? `${firstUser.slice(0, 30)}...` : firstUser;
 
@@ -203,7 +205,7 @@ export default function ChatScreen() {
         console.log("Failed to save conversation:", err);
       }
     },
-    [],
+    [t],
   );
 
   // -- Envio ----------------------------------------------------------------
@@ -304,12 +306,12 @@ export default function ChatScreen() {
       >
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <View>
-            <Text style={styles.kicker}>ON DUTY</Text>
-            <Text style={styles.largeTitle}>Agent</Text>
+            <Text style={styles.kicker}>{t("onDuty")}</Text>
+            <Text style={styles.largeTitle}>{t("agent")}</Text>
           </View>
           {messages.length > 0 && (
             <TouchableOpacity onPress={clearChat} hitSlop={8}>
-              <Text style={styles.clearButtonText}>Clear</Text>
+              <Text style={styles.clearButtonText}>{t("clear")}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -368,7 +370,7 @@ export default function ChatScreen() {
                   <Feather name="command" size={26} color={Color.label} />
                 </View>
               </View>
-              <Text style={styles.hintText}>What should I do for you?</Text>
+              <Text style={styles.hintText}>{t("promptHint")}</Text>
               <Text style={styles.hintSub}>
                 I can reason across your connected tools and act on my own.
               </Text>

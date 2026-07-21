@@ -35,6 +35,7 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import { STORAGE_KEYS } from "@/services/config";
 import { Color, Radius, Shadow, Spacing, Type } from "@/constants/theme";
 import type { StoredConversation } from "@/agent/types";
+import { useTranslation } from "@/i18n";
 
 /** Primeira resposta do agente na conversa, para o preview do card. */
 function previewOf(conversation: StoredConversation): string {
@@ -43,6 +44,7 @@ function previewOf(conversation: StoredConversation): string {
 }
 
 export default function History() {
+  const { t } = useTranslation();
   const [history, setHistory] = useState<StoredConversation[]>([]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -136,7 +138,7 @@ export default function History() {
           <View style={styles.emptyIcon}>
             <Feather name="clock" size={24} color={Color.secondary} />
           </View>
-          <Text style={styles.emptyText}>Nothing saved yet.</Text>
+          <Text style={styles.emptyText}>{t("nothingSaved")}</Text>
           <Text style={styles.emptySub}>
             Conversations you have with the agent show up here.
           </Text>
@@ -148,8 +150,8 @@ export default function History() {
           renderItem={renderItem}
           ListHeaderComponent={
             <View style={styles.listHeader}>
-              <Text style={styles.kicker}>ARCHIVE</Text>
-              <Text style={styles.title}>History</Text>
+              <Text style={styles.kicker}>{t("archive")}</Text>
+              <Text style={styles.title}>{t("history")}</Text>
             </View>
           }
           contentContainerStyle={styles.listContainer}

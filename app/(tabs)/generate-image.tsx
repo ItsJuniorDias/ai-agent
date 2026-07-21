@@ -44,6 +44,7 @@ import { GlassSurface } from "@/components/ui/glass-surface";
 import { AuroraGlow } from "@/components/ui/aurora";
 import { useKeyboardVisible } from "@/hooks/use-keyboard-visible";
 import { Color, Palette, Radius, Shadow, Spacing, Type, alpha } from "@/constants/theme";
+import { useTranslation } from "@/i18n";
 
 const RATIOS = ["1:1", "16:9", "9:16", "4:3", "3:4"];
 
@@ -52,6 +53,7 @@ const RATIOS = ["1:1", "16:9", "9:16", "4:3", "3:4"];
 const NATIVE_TAB_BAR_CLEARANCE = Platform.OS === "ios" ? 96 : 80;
 
 export default function ImageStudio() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const keyboardVisible = useKeyboardVisible();
   const [prompt, setPrompt] = useState("");
@@ -182,8 +184,8 @@ export default function ImageStudio() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.kicker}>STUDIO</Text>
-          <Text style={styles.title}>Image Studio</Text>
+          <Text style={styles.kicker}>{t("studio")}</Text>
+          <Text style={styles.title}>{t("imageStudio")}</Text>
           <Text style={styles.subtitle}>{modelName} · via OpenRouter</Text>
         </View>
 
@@ -192,7 +194,7 @@ export default function ImageStudio() {
             <View style={styles.loadingState}>
               <AuroraGlow size={180} style={StyleSheet.absoluteFill as any} />
               <ActivityIndicator size="large" color={Color.accent} />
-              <Text style={styles.loadingText}>Generating…</Text>
+              <Text style={styles.loadingText}>{t("generating")}</Text>
             </View>
           ) : image ? (
             <View style={styles.imageWrapper}>
@@ -228,7 +230,7 @@ export default function ImageStudio() {
                 onPress={handleGenerate}
                 activeOpacity={0.7}
               >
-                <Text style={styles.retryText}>Try again</Text>
+                <Text style={styles.retryText}>{t("tryAgain")}</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -328,7 +330,7 @@ export default function ImageStudio() {
                   {loading ? (
                     <View style={styles.buttonBusy}>
                       <ActivityIndicator size="small" color={Color.onAccent} />
-                      <Text style={styles.buttonText}>Generating…</Text>
+                      <Text style={styles.buttonText}>{t("generating")}</Text>
                     </View>
                   ) : (
                     <Text style={styles.buttonText}>

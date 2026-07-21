@@ -7,6 +7,7 @@ import "react-native-reanimated";
 
 import { Color } from "@/constants/theme";
 import { initNotifications } from "@/services/notifications";
+import { I18nProvider } from "@/i18n";
 
 // Single light identity — never follows the device appearance.
 const DaylightTheme: Theme = {
@@ -52,8 +53,9 @@ export default function RootLayout() {
   }, [router]);
 
   return (
-    <ThemeProvider value={DaylightTheme}>
-      <Stack
+    <I18nProvider>
+      <ThemeProvider value={DaylightTheme}>
+        <Stack
         screenOptions={{ contentStyle: { backgroundColor: Color.bg } }}
       >
         <Stack.Screen name="(app)/index" options={{ headerShown: false }} />
@@ -88,8 +90,9 @@ export default function RootLayout() {
         />
 
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
-      <StatusBar style="dark" />
-    </ThemeProvider>
+        </Stack>
+        <StatusBar style="dark" />
+      </ThemeProvider>
+    </I18nProvider>
   );
 }

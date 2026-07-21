@@ -35,6 +35,12 @@
     "plugins": [
       "expo-router",
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow AI Agent to use your country to choose the app language. Your precise location is not stored or shared."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/icon_nobg.png",

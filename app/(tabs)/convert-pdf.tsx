@@ -32,6 +32,7 @@ import { Feather } from "@expo/vector-icons";
 import { analyzeFile as runAnalysis } from "@/services/openrouter";
 import { loadConfig } from "@/services/config";
 import { Color, MonoFont, Radius, Shadow, Spacing, Type, alpha } from "@/constants/theme";
+import { useTranslation } from "@/i18n";
 
 type Mode = { id: string; label: string; prompt: string };
 
@@ -70,6 +71,7 @@ const OCR_HINT =
   "The parser found no text layer. This is usually a scanned PDF — turn on OCR and try again.";
 
 export default function FileAnalyzer() {
+  const { t } = useTranslation();
   const [file, setFile] = useState<DocumentPicker.DocumentPickerAsset | null>(
     null,
   );
@@ -149,7 +151,7 @@ export default function FileAnalyzer() {
             })
             .toUpperCase()}
         </Text>
-        <Text style={styles.title}>Insights</Text>
+        <Text style={styles.title}>{t("insights")}</Text>
       </View>
 
       <ScrollView
@@ -157,7 +159,7 @@ export default function FileAnalyzer() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Document</Text>
+          <Text style={styles.cardTitle}>{t("document")}</Text>
 
           <TouchableOpacity
             style={[styles.dropZone, !!file && styles.dropZoneActive]}
@@ -229,7 +231,7 @@ export default function FileAnalyzer() {
                 {isLoading ? (
                   <ActivityIndicator color={Color.onAccent} />
                 ) : (
-                  <Text style={styles.mainButtonText}>Analyze now</Text>
+                  <Text style={styles.mainButtonText}>{t("analyzeNow")}</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>

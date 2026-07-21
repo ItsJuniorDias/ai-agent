@@ -40,6 +40,7 @@ import { hasApiKey } from "@/services/openrouter";
 import { INTEGRATION_META } from "@/components/agent-trace";
 import { Color, Palette, Radius, Spacing, Type } from "@/constants/theme";
 import type { AgentTool } from "@/agent/types";
+import { useTranslation } from "@/i18n";
 
 const STEP_OPTIONS = [4, 6, 8, 12, 16];
 
@@ -51,6 +52,7 @@ const switchProps = {
 };
 
 export default function Settings() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -130,8 +132,8 @@ export default function Settings() {
       contentContainerStyle={{ paddingBottom: 48 }}
     >
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={styles.kicker}>PREFERENCES</Text>
-        <Text style={styles.title}>Settings</Text>
+        <Text style={styles.kicker}>{t("preferences")}</Text>
+        <Text style={styles.title}>{t("settings")}</Text>
       </View>
 
       {/* Chave ausente é a causa nº 1 de "o app não faz nada" */}
@@ -146,7 +148,7 @@ export default function Settings() {
       )}
 
       {/* -- Assistente pessoal ------------------------------------------ */}
-      <Text style={styles.sectionTitle}>PERSONAL ASSISTANT</Text>
+      <Text style={styles.sectionTitle}>{t("personalAssistant")}</Text>
       <View style={styles.group}>
         <TouchableOpacity
           style={[styles.row, styles.noBorder]}
@@ -158,13 +160,13 @@ export default function Settings() {
               <Ionicons name="notifications" size={17} color={Palette.white} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowText}>Proactive assistant</Text>
+              <Text style={styles.rowText}>{t("proactiveAssistant")}</Text>
               <Text style={styles.rowSubtext}>
                 {assistantOn
                   ? notifOn
-                    ? "Ligado · vigiando seus serviços"
-                    : "Ligado · notificações bloqueadas"
-                  : "Desligado · toque para configurar"}
+                    ? t("enabledWatching")
+                    : t("notificationsBlocked")
+                  : t("disabledConfigure")}
               </Text>
             </View>
           </View>
@@ -177,7 +179,7 @@ export default function Settings() {
       </Text>
 
       {/* -- Modelo do agente ------------------------------------------- */}
-      <Text style={styles.sectionTitle}>AGENT MODEL</Text>
+      <Text style={styles.sectionTitle}>{t("agentModel")}</Text>
       <View style={styles.group}>
         {AGENT_MODELS.map((model, index) => (
           <TouchableOpacity
@@ -212,7 +214,7 @@ export default function Settings() {
       </Text>
 
       {/* -- Comportamento ----------------------------------------------- */}
-      <Text style={styles.sectionTitle}>AGENT BEHAVIOR</Text>
+      <Text style={styles.sectionTitle}>{t("agentBehavior")}</Text>
       <View style={styles.group}>
         <View style={styles.row}>
           <View style={styles.rowLeft}>
@@ -220,9 +222,9 @@ export default function Settings() {
               <Ionicons name="shield-checkmark" size={17} color={Palette.white} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowText}>Ask before acting</Text>
+              <Text style={styles.rowText}>{t("askBeforeActing")}</Text>
               <Text style={styles.rowSubtext}>
-                Approve every write to an external service
+                {t("approveWrites")}
               </Text>
             </View>
           </View>
