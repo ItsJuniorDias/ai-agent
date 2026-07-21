@@ -1,28 +1,27 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Location from "expo-location";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { Platform } from "react-native";
 
 export const SUPPORTED_LANGUAGES = ["en", "zh", "es", "hi", "ar", "bn", "pt"] as const;
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
 
 type Dictionary = Record<string, string>;
+export type TranslationKey = keyof typeof strings.en;
 type I18nContextValue = {
   language: Language;
   isRTL: boolean;
+  /** Saves an explicit user preference. This always takes precedence over the device locale. */
+  changeLanguage: (language: Language) => Promise<void>;
   /** Translates a UI key. English is returned safely for missing translations. */
-  t: (key: string, values?: Record<string, string | number>) => string;
+  t: (key: TranslationKey, values?: Record<string, string | number>) => string;
 };
 
 const LANGUAGE_KEY = "@app_language";
 const FALLBACK_LANGUAGE: Language = "en";
 
-// Countries are intentionally mapped to the predominant app language. Location
-// is only used to choose an initial language; no coordinates are stored or sent.
-const COUNTRY_LANGUAGE: Record<string, Language> = {
-  CN: "zh", TW: "zh", SG: "zh", ES: "es", MX: "es", AR: "es", CO: "es", CL: "es", PE: "es", VE: "es",
-  IN: "hi", AE: "ar", SA: "ar", EG: "ar", DZ: "ar", MA: "ar", IQ: "ar", BD: "bn",
-  BR: "pt", PT: "pt", AO: "pt", MZ: "pt",
+/** Display names are deliberately native to make the picker usable before translation. */
+export const LANGUAGE_LABELS: Record<Language, string> = {
+  en: "English", pt: "Português", es: "Español", hi: "हिन्दी",
+  ar: "العربية", bn: "বাংলা", zh: "中文",
 };
 
 const strings: Record<Language, Dictionary> = {
@@ -44,7 +43,12 @@ function interpolate(value: string, values?: Record<string, string | number>) {
   return value.replace(/\{(\w+)\}/g, (_, key) => String(values?.[key] ?? `{${key}}`));
 }
 
-const I18nContext = createContext<I18nContextValue>({ language: FALLBACK_LANGUAGE, isRTL: false, t: (key) => strings.en[key] ?? key });
+const I18nContext = createContext<I18nContextValue>({
+  language: FALLBACK_LANGUAGE,
+  isRTL: false,
+  changeLanguage: async () => undefined,
+  t: (key) => strings.en[key],
+});
 
 export function I18nProvider({ children }: React.PropsWithChildren) {
   const [language, setLanguage] = useState<Language>(deviceLanguage);
@@ -57,21 +61,8 @@ export function I18nProvider({ children }: React.PropsWithChildren) {
         if (active) setLanguage(saved as Language);
         return;
       }
-      // Web geocoding is inconsistent and browsers already provide a locale.
-      if (Platform.OS === "web") return;
-      try {
-        const permission = await Location.requestForegroundPermissionsAsync();
-        if (permission.status !== "granted") return;
-        const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
-        const [address] = await Location.reverseGeocodeAsync(position.coords);
-        const detected = address?.isoCountryCode ? COUNTRY_LANGUAGE[address.isoCountryCode] : undefined;
-        if (detected && active) {
-          setLanguage(detected);
-          await AsyncStorage.setItem(LANGUAGE_KEY, detected);
-        }
-      } catch {
-        // Location is an enhancement; device locale remains a reliable fallback.
-      }
+      // Do not request location to infer a language. Country and language are
+      // different concepts, and an explicit choice is more accurate and private.
     };
     resolveLanguage();
     return () => { active = false; };
@@ -80,7 +71,11 @@ export function I18nProvider({ children }: React.PropsWithChildren) {
   const value = useMemo<I18nContextValue>(() => ({
     language,
     isRTL: language === "ar",
-    t: (key, values) => interpolate(strings[language][key] ?? strings.en[key] ?? key, values),
+    changeLanguage: async (nextLanguage) => {
+      await AsyncStorage.setItem(LANGUAGE_KEY, nextLanguage);
+      setLanguage(nextLanguage);
+    },
+    t: (key, values) => interpolate(strings[language][key] ?? strings.en[key], values),
   }), [language]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }

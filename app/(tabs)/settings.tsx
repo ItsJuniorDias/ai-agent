@@ -40,7 +40,7 @@ import { hasApiKey } from "@/services/openrouter";
 import { INTEGRATION_META } from "@/components/agent-trace";
 import { Color, Palette, Radius, Spacing, Type } from "@/constants/theme";
 import type { AgentTool } from "@/agent/types";
-import { useTranslation } from "@/i18n";
+import { LANGUAGE_LABELS, SUPPORTED_LANGUAGES, useTranslation } from "@/i18n";
 
 const STEP_OPTIONS = [4, 6, 8, 12, 16];
 
@@ -52,7 +52,7 @@ const switchProps = {
 };
 
 export default function Settings() {
-  const { t } = useTranslation();
+  const { t, language, changeLanguage } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -134,6 +134,25 @@ export default function Settings() {
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.kicker}>{t("preferences")}</Text>
         <Text style={styles.title}>{t("settings")}</Text>
+      </View>
+
+      <View style={styles.group}>
+        {SUPPORTED_LANGUAGES.map((item, index) => (
+          <TouchableOpacity
+            key={item}
+            style={[styles.row, index === SUPPORTED_LANGUAGES.length - 1 && styles.noBorder]}
+            onPress={() => changeLanguage(item)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: language === item }}
+            accessibilityLabel={LANGUAGE_LABELS[item]}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.rowText}>{LANGUAGE_LABELS[item]}</Text>
+            {language === item && (
+              <Ionicons name="checkmark" size={22} color={Color.accent} />
+            )}
+          </TouchableOpacity>
+        ))}
       </View>
 
       {/* Chave ausente é a causa nº 1 de "o app não faz nada" */}
