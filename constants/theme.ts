@@ -28,10 +28,10 @@ export const Palette = {
   surface3: "#DCE6F2",
 
   // Dark navy taken from the app icon, with blue-only gradient companions.
-  iris: "#010624",
-  irisPressed: "#07194A",
-  violet: "#0B2D69",
-  cyan: "#1A5D9E",
+  iris: "#0A3D91",
+  irisPressed: "#062B67",
+  violet: "#1055AE",
+  cyan: "#2878C7",
 
   // Light-mode semantic colours with accessible contrast.
   green: "#16803B",
