@@ -234,7 +234,7 @@ export default function AssistantScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.center]}>
-        <ActivityIndicator color="#8B90B8" />
+        <ActivityIndicator color={Color.secondary} />
       </View>
     );
   }
@@ -253,7 +253,7 @@ export default function AssistantScreen() {
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.back}>
-          <Feather name="chevron-left" size={26} color="#6E7BFF" />
+          <Feather name="chevron-left" size={26} color={Color.accent} />
         </TouchableOpacity>
         <Text style={styles.title}>Personal Assistant</Text>
       </View>
@@ -268,7 +268,7 @@ export default function AssistantScreen() {
       {/* Chave ausente */}
       {!hasApiKey() && (
         <View style={styles.banner}>
-          <Feather name="alert-triangle" size={18} color="#FF9F0A" />
+          <Feather name="alert-triangle" size={18} color={Color.warning} />
           <Text style={styles.bannerText}>
             Sem chave do OpenRouter. A varredura não roda até definir
             EXPO_PUBLIC_OPENROUTER_API_KEY no .env.
@@ -279,7 +279,7 @@ export default function AssistantScreen() {
       {/* Permissão */}
       {permission !== "granted" && (
         <View style={styles.permCard}>
-          <Ionicons name="notifications" size={22} color="#6E7BFF" />
+          <Ionicons name="notifications" size={22} color={Color.accent} />
           <View style={{ flex: 1 }}>
             <Text style={styles.permTitle}>Ative as notificações</Text>
             <Text style={styles.permSub}>
@@ -299,7 +299,7 @@ export default function AssistantScreen() {
       <View style={styles.group}>
         <View style={[styles.row, styles.noBorder]}>
           <View style={styles.rowLeft}>
-            <View style={[styles.iconBox, { backgroundColor: "#30D158" }]}>
+            <View style={[styles.iconBox, { backgroundColor: Color.success }]}>
               <Ionicons name="pulse" size={17} color="white" />
             </View>
             <View style={{ flex: 1 }}>
@@ -310,8 +310,8 @@ export default function AssistantScreen() {
             </View>
           </View>
           <Switch
-            trackColor={{ false: "#1B2666", true: "#30D158" }}
-            ios_backgroundColor="#1B2666"
+            trackColor={{ false: Color.surface3, true: Color.success }}
+            ios_backgroundColor={Color.surface3}
             onValueChange={toggleEnabled}
             value={config.enabled}
           />
@@ -361,8 +361,8 @@ export default function AssistantScreen() {
             <Text style={styles.rowText}>Silenciar à noite</Text>
           </View>
           <Switch
-            trackColor={{ false: "#1B2666", true: "#30D158" }}
-            ios_backgroundColor="#1B2666"
+            trackColor={{ false: Color.surface3, true: Color.success }}
+            ios_backgroundColor={Color.surface3}
             onValueChange={toggleQuiet}
             value={config.quietHoursEnabled}
           />
@@ -376,7 +376,7 @@ export default function AssistantScreen() {
               disabled={!config.quietHoursEnabled}
               style={styles.stepBtn}
             >
-              <Feather name="minus" size={16} color="#6E7BFF" />
+              <Feather name="minus" size={16} color={Color.accent} />
             </TouchableOpacity>
             <Text style={styles.stepValue}>
               {String(config.quietStartHour).padStart(2, "0")}:00
@@ -386,7 +386,7 @@ export default function AssistantScreen() {
               disabled={!config.quietHoursEnabled}
               style={styles.stepBtn}
             >
-              <Feather name="plus" size={16} color="#6E7BFF" />
+              <Feather name="plus" size={16} color={Color.accent} />
             </TouchableOpacity>
           </View>
 
@@ -397,7 +397,7 @@ export default function AssistantScreen() {
               disabled={!config.quietHoursEnabled}
               style={styles.stepBtn}
             >
-              <Feather name="minus" size={16} color="#6E7BFF" />
+              <Feather name="minus" size={16} color={Color.accent} />
             </TouchableOpacity>
             <Text style={styles.stepValue}>
               {String(config.quietEndHour).padStart(2, "0")}:00
@@ -407,7 +407,7 @@ export default function AssistantScreen() {
               disabled={!config.quietHoursEnabled}
               style={styles.stepBtn}
             >
-              <Feather name="plus" size={16} color="#6E7BFF" />
+              <Feather name="plus" size={16} color={Color.accent} />
             </TouchableOpacity>
           </View>
         </View>
@@ -442,8 +442,8 @@ export default function AssistantScreen() {
                   <Text style={styles.rowText}>{meta.label}</Text>
                 </View>
                 <Switch
-                  trackColor={{ false: "#1B2666", true: "#30D158" }}
-                  ios_backgroundColor="#1B2666"
+                  trackColor={{ false: Color.surface3, true: Color.success }}
+                  ios_backgroundColor={Color.surface3}
                   onValueChange={() => toggleWatch(id)}
                   value={isWatched(config, id)}
                 />
@@ -458,7 +458,7 @@ export default function AssistantScreen() {
         activeOpacity={0.6}
       >
         <Text style={styles.linkText}>Conectar mais serviços</Text>
-        <Feather name="chevron-right" size={18} color="#6E7BFF" />
+        <Feather name="chevron-right" size={18} color={Color.accent} />
       </TouchableOpacity>
 
       {/* Scan now */}
@@ -498,7 +498,7 @@ export default function AssistantScreen() {
               style={[styles.row, index === reminders.length - 1 && styles.noBorder]}
             >
               <View style={styles.rowLeft}>
-                <View style={[styles.iconBox, { backgroundColor: "#FF9F0A" }]}>
+                <View style={[styles.iconBox, { backgroundColor: Color.warning }]}>
                   <Ionicons name="alarm" size={16} color="white" />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -512,7 +512,7 @@ export default function AssistantScreen() {
                 onPress={() => removeReminder(r.id)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Feather name="x-circle" size={20} color="#FF453A" />
+                <Feather name="x-circle" size={20} color={Color.danger} />
               </TouchableOpacity>
             </View>
           ))

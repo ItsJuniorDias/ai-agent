@@ -183,10 +183,10 @@ export default function NotionScreen() {
             disabled={!token.trim() || testing}
           >
             {testing ? (
-              <ActivityIndicator size="small" color="#6E7BFF" />
+              <ActivityIndicator size="small" color={Color.accent} />
             ) : (
               <>
-                <Feather name="zap" size={15} color="#6E7BFF" />
+                <Feather name="zap" size={15} color={Color.accent} />
                 <Text style={styles.secondaryText}>Test connection</Text>
               </>
             )}

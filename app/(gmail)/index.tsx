@@ -199,7 +199,7 @@ export default function GmailScreen() {
             style={styles.linkRow}
             onPress={() => Linking.openURL(PLAYGROUND_URL)}
           >
-            <Feather name="external-link" size={16} color="#6E7BFF" />
+            <Feather name="external-link" size={16} color={Color.accent} />
             <Text style={styles.linkText}>Get a token in OAuth Playground</Text>
           </TouchableOpacity>
 

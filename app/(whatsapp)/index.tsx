@@ -60,7 +60,7 @@ export default function WhatsappScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="small" color="#6E7BFF" />
+        <ActivityIndicator size="small" color={Color.accent} />
       </View>
     );
   }

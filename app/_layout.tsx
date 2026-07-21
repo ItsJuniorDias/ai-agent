@@ -1,4 +1,4 @@
-import { DarkTheme, ThemeProvider, type Theme } from "@react-navigation/native";
+import { DefaultTheme, ThemeProvider, type Theme } from "@react-navigation/native";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -8,12 +8,12 @@ import "react-native-reanimated";
 import { Color } from "@/constants/theme";
 import { initNotifications } from "@/services/notifications";
 
-// Single dark identity — the whole app lives on the #020625 canvas.
-const MidnightTheme: Theme = {
-  ...DarkTheme,
-  dark: true,
+// Single light identity — never follows the device appearance.
+const DaylightTheme: Theme = {
+  ...DefaultTheme,
+  dark: false,
   colors: {
-    ...DarkTheme.colors,
+    ...DefaultTheme.colors,
     primary: Color.accent,
     background: Color.bg,
     card: Color.bg,
@@ -52,7 +52,7 @@ export default function RootLayout() {
   }, [router]);
 
   return (
-    <ThemeProvider value={MidnightTheme}>
+    <ThemeProvider value={DaylightTheme}>
       <Stack
         screenOptions={{ contentStyle: { backgroundColor: Color.bg } }}
       >
@@ -89,7 +89,7 @@ export default function RootLayout() {
 
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
     </ThemeProvider>
   );
 }

@@ -1,43 +1,29 @@
-# Design system — "Midnight Iris"
+# Design system — "Daylight Iris"
 
-Base primary color: **#020625** (deep indigo, rgb 2,6,37). Anchors the whole app
-as the canvas. Apple-grade dark aesthetic: layered navy surfaces, hairline
-translucent separators, SF type, restrained chrome — with one signature: the
-**agent aurora** (iris→violet→cyan) that reads as "the agent is thinking/acting",
-carried by a real **liquid-glass composer** at the bottom.
+The product has a **fixed light appearance**, independent of the system setting.
+Its cool-white canvas keeps the focused, Apple-inspired restraint of the original
+identity, while iris and the aurora gradient remain the agent signature.
 
-## Surfaces (elevation ramp off #020625)
-- canvas      #020625   base background / splash
-- raised      #060B2E   scroll backgrounds
-- surface     #0C1340   cards, grouped rows
-- surface2    #131C52   inputs, elevated cards, chips
-- surface3    #1B2666   pressed / active fills
-- hairline    rgba(255,255,255,0.09)
-- hairline2   rgba(255,255,255,0.14)
+## Surfaces
+- canvas #F7F8FC — application and splash background
+- raised / surface #FFFFFF — scroll areas, cards and grouped rows
+- surface2 #F0F2F8 — inputs, chips and secondary actions
+- surface3 #E5E8F2 — pressed and selected neutral states
+- separators use translucent cool indigo, never opaque black
 
-## Text
-- label       #F4F5FF
-- secondary   rgba(244,245,255,0.62)
-- tertiary    rgba(244,245,255,0.40)
-- quaternary  rgba(244,245,255,0.24)
-- placeholder #6A6F9C (opaque, for TextInput)
+## Type and colour
+- label #171A2C; secondary #5D647A; tertiary #7F879C
+- accent #5364E8; pressed #4654CB; soft accent at 12% opacity
+- aurora #5364E8 → #8757E8 → #149EAF
+- semantic colours are contrast-safe for light surfaces: success #16803B,
+  danger #C9342C and warning #B85B00
 
-## Accent — iris
-- accent        #6E7BFF
-- accentPressed #5A67F0
-- accentSoft    rgba(110,123,255,0.16)
-- aurora        #6E7BFF → #A06BFF → #37D0DE
+## Glass
+`BlurView` uses `tint="light"`, a white/cool-white fill and a subtle indigo
+border. The accessible opaque fallback is white. Shadows are low-opacity slate,
+keeping elevation visible without dirtying the canvas.
 
-## Semantic (dark-tuned)
-- success #30D158 / danger #FF453A / warning #FF9F0A (+ *Soft rgba 0.16)
-
-## Glass (liquid-glass bottom section)
-BlurView tint="dark" + gradient fill rgba(12,19,64,.55)→rgba(27,38,102,.66),
-1px top specular highlight rgba(255,255,255,.28), hairline border
-rgba(255,255,255,.14), soft black shadow. Falls back to opaque surface2 when
-Reduce Transparency is on.
-
-## Signature
-Aurora gradient send button + glass composer; faint aurora glow behind the
-empty-state icon and the live agent trace. Boldness spent there; everything
-else stays quiet Apple-dark.
+## Implementation rule
+Use `Color`, `Palette`, `Glass`, `Shadow`, `Spacing` and `Type` from
+`constants/theme.ts`. Do not introduce dark-mode conditionals or hardcoded UI
+colours; the light token set is the single source of truth.

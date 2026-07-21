@@ -33,7 +33,7 @@ if (
 
 /**
  * `color` is the vivid brand color — used as a solid tile background with a white
- * glyph (Settings). `onDark` is the legible-on-dark variant — used as the glyph
+ * glyph (Settings). `onSurface` is the legible-on-light variant — used as the glyph
  * color when it sits on a faint tinted background (trace, approval), where a
  * near-black brand like GitHub or Vercel would otherwise disappear.
  */
@@ -42,23 +42,23 @@ export const INTEGRATION_META: Record<
   {
     label: string;
     color: string;
-    onDark: string;
+    onSurface: string;
     icon: keyof typeof Feather.glyphMap;
   }
 > = {
-  core: { label: "Agente", color: Color.accent, onDark: Color.accent, icon: "cpu" },
-  github: { label: "GitHub", color: "#24292E", onDark: "#E6EDF3", icon: "github" },
-  gitlab: { label: "GitLab", color: "#FC6D26", onDark: "#FC6D26", icon: "git-merge" },
-  jira: { label: "Jira", color: "#0052CC", onDark: "#4C9AFF", icon: "trello" },
-  linear: { label: "Linear", color: "#5E6AD2", onDark: "#8B92F0", icon: "target" },
-  slack: { label: "Slack", color: "#4A154B", onDark: "#CE93D8", icon: "hash" },
-  discord: { label: "Discord", color: "#5865F2", onDark: "#7A85FF", icon: "message-circle" },
-  teams: { label: "Teams", color: "#6264A7", onDark: "#8B8CC7", icon: "users" },
-  whatsapp: { label: "WhatsApp", color: "#25D366", onDark: "#25D366", icon: "message-square" },
-  gmail: { label: "Gmail", color: "#EA4335", onDark: "#FF6A5C", icon: "mail" },
-  figma: { label: "Figma", color: "#F24E1E", onDark: "#F98B6B", icon: "figma" },
-  vercel: { label: "Vercel", color: "#0B0B0B", onDark: "#EDEEFB", icon: "triangle" },
-  notion: { label: "Notion", color: "#141414", onDark: "#EDEEFB", icon: "book-open" },
+  core: { label: "Agente", color: Color.accent, onSurface: Color.accent, icon: "cpu" },
+  github: { label: "GitHub", color: "#24292E", onSurface: "#24292E", icon: "github" },
+  gitlab: { label: "GitLab", color: "#FC6D26", onSurface: "#C84D11", icon: "git-merge" },
+  jira: { label: "Jira", color: "#0052CC", onSurface: "#0052CC", icon: "trello" },
+  linear: { label: "Linear", color: "#5E6AD2", onSurface: "#5E6AD2", icon: "target" },
+  slack: { label: "Slack", color: "#4A154B", onSurface: "#4A154B", icon: "hash" },
+  discord: { label: "Discord", color: "#5865F2", onSurface: "#5865F2", icon: "message-circle" },
+  teams: { label: "Teams", color: "#6264A7", onSurface: "#6264A7", icon: "users" },
+  whatsapp: { label: "WhatsApp", color: "#25D366", onSurface: "#16803B", icon: "message-square" },
+  gmail: { label: "Gmail", color: "#EA4335", onSurface: "#C9342C", icon: "mail" },
+  figma: { label: "Figma", color: "#F24E1E", onSurface: "#D44318", icon: "figma" },
+  vercel: { label: "Vercel", color: "#0B0B0B", onSurface: "#171A2C", icon: "triangle" },
+  notion: { label: "Notion", color: "#141414", onSurface: "#171A2C", icon: "book-open" },
 };
 
 /** Formata os argumentos em uma linha legível: `repo: ai-agent · number: 12` */
@@ -108,8 +108,8 @@ function StepRow({ step }: { step: AgentStep }) {
         onPress={toggle}
         activeOpacity={0.6}
       >
-        <View style={[styles.dot, { backgroundColor: alpha(meta.onDark, 0.16) }]}>
-          <Feather name={meta.icon} size={12} color={meta.onDark} />
+        <View style={[styles.dot, { backgroundColor: alpha(meta.onSurface, 0.12) }]}>
+          <Feather name={meta.icon} size={12} color={meta.onSurface} />
         </View>
 
         <View style={styles.stepTitleWrap}>

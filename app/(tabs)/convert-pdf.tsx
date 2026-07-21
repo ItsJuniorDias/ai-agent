@@ -137,7 +137,7 @@ export default function FileAnalyzer() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       <View style={styles.header}>
         <Text style={styles.dateText}>
@@ -350,7 +350,7 @@ const markdownStyles = StyleSheet.create({
     fontFamily: MonoFont,
   },
   fence: {
-    backgroundColor: alpha("#000000", 0.35),
+    backgroundColor: Color.surface2,
     color: Color.label,
     borderRadius: Radius.md,
     borderWidth: StyleSheet.hairlineWidth,

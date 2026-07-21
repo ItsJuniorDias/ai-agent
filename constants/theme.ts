@@ -1,20 +1,15 @@
 /**
- * Design system — "Midnight Iris".
+ * Design system — "Daylight Iris".
  *
- * Everything derives from the primary color #020625 (deep indigo). The app is a
- * single, deliberately dark identity with an Apple-grade material language:
- * layered navy surfaces, hairline translucent separators, SF type, and one
- * signature — the "agent aurora" carried by the liquid-glass composer.
- *
- * Screens consume these tokens instead of hardcoding hex, so the palette lives
- * in exactly one place. `Colors`/`Fonts` are kept (and pointed at the dark
- * identity for both schemes) for backward-compat with the themed-* primitives
- * and use-theme-color.
+ * The application deliberately has one appearance: light mode. Surfaces use a
+ * calm cool-white elevation ramp while iris and aurora remain the signature.
+ * Every screen should consume these semantic tokens rather than hardcoding UI
+ * colours, so the visual language remains consistent.
  */
 
 import { Platform } from "react-native";
 
-/** rgba() helper so callers can tune opacity without new tokens. */
+/** rgba() helper so callers can tune opacity without creating new tokens. */
 export function alpha(hex: string, a: number): string {
   const h = hex.replace("#", "");
   const r = parseInt(h.slice(0, 2), 16);
@@ -25,26 +20,26 @@ export function alpha(hex: string, a: number): string {
 
 // -- Raw palette ------------------------------------------------------------
 export const Palette = {
-  // Elevation ramp off the #020625 canvas.
-  canvas: "#020625",
-  raised: "#060B2E",
-  surface: "#0C1340",
-  surface2: "#131C52",
-  surface3: "#1B2666",
+  // Cool-neutral elevation ramp for a crisp, calm light interface.
+  canvas: "#F7F8FC",
+  raised: "#FFFFFF",
+  surface: "#FFFFFF",
+  surface2: "#F0F2F8",
+  surface3: "#E5E8F2",
 
   // Iris accent + aurora signature.
-  iris: "#6E7BFF",
-  irisPressed: "#5A67F0",
-  violet: "#A06BFF",
-  cyan: "#37D0DE",
+  iris: "#5364E8",
+  irisPressed: "#4654CB",
+  violet: "#8757E8",
+  cyan: "#149EAF",
 
-  // Dark-tuned semantics (Apple dark variants).
-  green: "#30D158",
-  red: "#FF453A",
-  orange: "#FF9F0A",
+  // Light-mode semantic colours with accessible contrast.
+  green: "#16803B",
+  red: "#C9342C",
+  orange: "#B85B00",
 
   white: "#FFFFFF",
-  black: "#000000",
+  black: "#101223",
 } as const;
 
 // -- Semantic color tokens --------------------------------------------------
@@ -55,92 +50,71 @@ export const Color = {
   surface2: Palette.surface2,
   surface3: Palette.surface3,
 
-  // Separators / borders — translucent white reads correctly over any surface.
-  hairline: alpha(Palette.white, 0.09),
-  hairlineStrong: alpha(Palette.white, 0.14),
-  border: alpha(Palette.white, 0.1),
+  // Cool translucent separators work across all light surfaces.
+  hairline: alpha("#27304F", 0.12),
+  hairlineStrong: alpha("#27304F", 0.2),
+  border: alpha("#27304F", 0.14),
 
   // Text.
-  label: "#F4F5FF",
-  secondary: alpha("#F4F5FF", 0.62),
-  tertiary: alpha("#F4F5FF", 0.4),
-  quaternary: alpha("#F4F5FF", 0.24),
-  placeholder: "#6A6F9C",
+  label: "#171A2C",
+  secondary: "#5D647A",
+  tertiary: "#7F879C",
+  quaternary: "#A2A8B8",
+  placeholder: "#7F879C",
 
   // Accent.
   accent: Palette.iris,
   accentPressed: Palette.irisPressed,
-  accentSoft: alpha(Palette.iris, 0.16),
+  accentSoft: alpha(Palette.iris, 0.12),
   onAccent: Palette.white,
 
   // Semantics.
   success: Palette.green,
   danger: Palette.red,
   warning: Palette.orange,
-  successSoft: alpha(Palette.green, 0.16),
-  dangerSoft: alpha(Palette.red, 0.16),
-  warningSoft: alpha(Palette.orange, 0.16),
+  successSoft: alpha(Palette.green, 0.12),
+  dangerSoft: alpha(Palette.red, 0.12),
+  warningSoft: alpha(Palette.orange, 0.12),
 
   // Aurora gradient stops (iris → violet → cyan).
   aurora: [Palette.iris, Palette.violet, Palette.cyan] as const,
-  auroraButton: [Palette.iris, "#7E74FF", "#9A6BFF"] as const,
+  auroraButton: [Palette.iris, "#6A5DE4", "#8654D8"] as const,
 } as const;
 
 // -- Liquid glass -----------------------------------------------------------
 export const Glass = {
-  tint: "dark" as const,
-  intensity: Platform.OS === "ios" ? 40 : 28,
-  fill: [alpha(Palette.surface, 0.55), alpha(Palette.surface3, 0.66)] as const,
-  fillSolid: Palette.surface2, // reduce-transparency fallback
-  border: alpha(Palette.white, 0.14),
-  highlight: alpha(Palette.white, 0.28),
-  shadow: Palette.black,
+  tint: "light" as const,
+  intensity: Platform.OS === "ios" ? 45 : 30,
+  fill: [alpha(Palette.white, 0.72), alpha("#EEF1FA", 0.82)] as const,
+  fillSolid: Palette.surface,
+  border: alpha("#27304F", 0.14),
+  highlight: alpha(Palette.white, 0.9),
+  shadow: "#36405F",
 } as const;
 
 // -- Radius -----------------------------------------------------------------
 export const Radius = {
-  xs: 8,
-  sm: 10,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
-  pill: 999,
+  xs: 8, sm: 10, md: 12, lg: 16, xl: 20, xxl: 24, pill: 999,
 } as const;
 
 // -- Spacing (4pt grid) -----------------------------------------------------
 export const Spacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
-  xxxl: 32,
+  xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32,
 } as const;
 
 // -- Elevation / shadow -----------------------------------------------------
 export const Shadow = {
   card: {
-    shadowColor: Palette.black,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    elevation: 6,
+    shadowColor: Glass.shadow, shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1, shadowRadius: 18, elevation: 3,
   },
   glass: {
-    shadowColor: Palette.black,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
-    shadowRadius: 28,
-    elevation: 16,
+    shadowColor: Glass.shadow, shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.14, shadowRadius: 24, elevation: 7,
   },
   glow: {
-    shadowColor: Palette.iris,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 18,
-    elevation: 10,
+    shadowColor: Palette.iris, shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.24, shadowRadius: 16, elevation: 6,
   },
 } as const;
 
@@ -157,28 +131,16 @@ export const Type = {
   footnote: { fontSize: 13, fontWeight: "400" },
   caption: { fontSize: 12, fontWeight: "400" },
   caption2: { fontSize: 11, fontWeight: "400" },
-  // Section eyebrows (grouped-list headers).
   eyebrow: { fontSize: 13, fontWeight: "600", letterSpacing: 0.6 },
 } as const;
 
-/**
- * Brand colors remapped for legibility on the dark canvas — near-black brands
- * (GitHub, Vercel, Notion, Slack aubergine) get luminous substitutes; the rest
- * are already vivid enough on indigo.
- */
+/** Brand colors retain their native appearance on the light canvas. */
 export function onDarkBrand(hex: string): string {
-  const map: Record<string, string> = {
-    "#181717": "#E6EDF3",
-    "#000000": "#EDEEFB",
-    "#24292E": "#E6EDF3",
-    "#4A154B": "#CE93D8",
-    "#0052CC": "#4C9AFF",
-    "#6264A7": "#8B8CC7",
-  };
-  return map[hex.toUpperCase()] ?? map[hex] ?? hex;
+  return hex;
 }
 
-// -- Backward-compat exports (themed-* + use-theme-color) --------------------
+// Backward-compatible exports. Both keys intentionally resolve to light tokens
+// so legacy themed primitives cannot re-enable dark mode.
 const scheme = {
   text: Color.label,
   background: Color.bg,
@@ -191,18 +153,8 @@ const scheme = {
 export const Colors = { light: scheme, dark: scheme };
 
 export const Fonts = Platform.select({
-  ios: {
-    sans: "system-ui",
-    serif: "ui-serif",
-    rounded: "ui-rounded",
-    mono: "ui-monospace",
-  },
-  default: {
-    sans: "normal",
-    serif: "serif",
-    rounded: "normal",
-    mono: "monospace",
-  },
+  ios: { sans: "system-ui", serif: "ui-serif", rounded: "ui-rounded", mono: "ui-monospace" },
+  default: { sans: "normal", serif: "serif", rounded: "normal", mono: "monospace" },
   web: {
     sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     serif: "Georgia, 'Times New Roman', serif",
@@ -211,5 +163,4 @@ export const Fonts = Platform.select({
   },
 });
 
-/** Monospace family for payload / trace, per platform. */
 export const MonoFont = Platform.OS === "ios" ? "Menlo" : "monospace";

@@ -23,7 +23,7 @@ export default function AIPrivacyScreen() {
           <Ionicons
             name="shield-checkmark"
             size={60}
-            color="#6E7BFF"
+            color={Color.accent}
             style={styles.headerIcon}
           />
           <Text style={styles.title}>Artificial Intelligence & Privacy</Text>
@@ -35,7 +35,7 @@ export default function AIPrivacyScreen() {
 
         {/* Requisito 1: Disclose what data will be sent */}
         <View style={styles.infoBlock}>
-          <Ionicons name="document-text" size={36} color="#6E7BFF" />
+          <Ionicons name="document-text" size={36} color={Color.accent} />
           <View style={styles.textContainer}>
             <Text style={styles.infoTitle}>What data is sent</Text>
             <Text style={styles.infoDescription}>
@@ -48,7 +48,7 @@ export default function AIPrivacyScreen() {
 
         {/* Requisito 2: Specify who the data is sent to */}
         <View style={styles.infoBlock}>
-          <Ionicons name="cloud-upload" size={36} color="#6E7BFF" />
+          <Ionicons name="cloud-upload" size={36} color={Color.accent} />
           <View style={styles.textContainer}>
             <Text style={styles.infoTitle}>Who we send it to</Text>
             <Text style={styles.infoDescription}>
@@ -61,7 +61,7 @@ export default function AIPrivacyScreen() {
 
         {/* Requisito 3 e 4: Como é usado e segurança */}
         <View style={styles.infoBlock}>
-          <Ionicons name="lock-closed" size={36} color="#6E7BFF" />
+          <Ionicons name="lock-closed" size={36} color={Color.accent} />
           <View style={styles.textContainer}>
             <Text style={styles.infoTitle}>Data Use & Protection</Text>
             <Text style={styles.infoDescription}>

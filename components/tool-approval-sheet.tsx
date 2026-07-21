@@ -73,9 +73,9 @@ export function ToolApprovalSheet({
 
           <View style={styles.header}>
             <View
-              style={[styles.icon, { backgroundColor: alpha(meta.onDark, 0.16) }]}
+              style={[styles.icon, { backgroundColor: alpha(meta.onSurface, 0.12) }]}
             >
-              <Feather name={meta.icon} size={18} color={meta.onDark} />
+              <Feather name={meta.icon} size={18} color={meta.onSurface} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.title}>{request.label}</Text>
@@ -155,7 +155,7 @@ export function ToolApprovalSheet({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: alpha("#01030F", 0.7),
+    backgroundColor: alpha("#101223", 0.38),
     justifyContent: "flex-end",
   },
   sheet: {

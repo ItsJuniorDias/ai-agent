@@ -80,7 +80,9 @@ export function GlassSurface({
   }
 
   return (
-    <View style={[styles.container, shape, { borderColor: Glass.border }, style]}>
+    <View
+      style={[styles.container, shape, { borderColor: Glass.border }, style]}
+    >
       <BlurView
         tint={Glass.tint}
         intensity={intensity}
@@ -88,6 +90,7 @@ export function GlassSurface({
           Platform.OS === "android" ? "dimezisBlurView" : undefined
         }
         style={[StyleSheet.absoluteFill, shape]}
+        pointerEvents="none"
       />
       {/* Color fill so foreground contrast holds over any background. */}
       <LinearGradient
@@ -95,6 +98,7 @@ export function GlassSurface({
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={[StyleSheet.absoluteFill, shape]}
+        pointerEvents="none"
       />
       {/* Faint downward sheen — the "wet" look. */}
       <LinearGradient

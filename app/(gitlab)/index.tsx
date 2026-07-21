@@ -50,7 +50,7 @@ export default function GitlabScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color="#6E7BFF" />
+        <ActivityIndicator size="large" color={Color.accent} />
       </View>
     );
   }

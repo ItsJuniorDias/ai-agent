@@ -175,7 +175,7 @@ export default function LinearScreen() {
                     <Text style={styles.sublabel}>{team.key}</Text>
                   </View>
                   {teamId === team.id && (
-                    <Feather name="check" size={19} color="#6E7BFF" />
+                    <Feather name="check" size={19} color={Color.accent} />
                   )}
                 </TouchableOpacity>
               ))
@@ -206,10 +206,10 @@ export default function LinearScreen() {
             disabled={!apiKey.trim() || loading}
           >
             {loading ? (
-              <ActivityIndicator size="small" color="#6E7BFF" />
+              <ActivityIndicator size="small" color={Color.accent} />
             ) : (
               <>
-                <Feather name="download-cloud" size={15} color="#6E7BFF" />
+                <Feather name="download-cloud" size={15} color={Color.accent} />
                 <Text style={styles.secondaryText}>Load my teams</Text>
               </>
             )}

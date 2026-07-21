@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef } from "react";
 import { Animated, Dimensions, StyleSheet, View } from "react-native";
+import { Color } from "@/constants/theme";
 
 const { width } = Dimensions.get("window");
 
@@ -68,7 +69,7 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#020625",
+    backgroundColor: Color.bg,
     justifyContent: "center",
     alignItems: "center",
   },

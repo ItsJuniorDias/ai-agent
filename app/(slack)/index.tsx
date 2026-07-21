@@ -84,7 +84,7 @@ export default function SlackScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.safeArea, styles.center]}>
-        <ActivityIndicator size="large" color="#8B90B8" />
+        <ActivityIndicator size="large" color={Color.secondary} />
       </SafeAreaView>
     );
   }

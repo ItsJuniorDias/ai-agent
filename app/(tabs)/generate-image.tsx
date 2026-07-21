@@ -41,7 +41,7 @@ import { generateImage } from "@/services/openrouter";
 import { IMAGE_MODELS, loadConfig } from "@/services/config";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { AuroraGlow } from "@/components/ui/aurora";
-import { Color, Radius, Shadow, Spacing, Type, alpha } from "@/constants/theme";
+import { Color, Palette, Radius, Shadow, Spacing, Type, alpha } from "@/constants/theme";
 
 const RATIOS = ["1:1", "16:9", "9:16", "4:3", "3:4"];
 
@@ -157,7 +157,7 @@ export default function ImageStudio() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         bounces={false}
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 16,
     right: 16,
-    backgroundColor: alpha("#01030F", 0.55),
+    backgroundColor: alpha(Palette.black, 0.55),
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Color.hairlineStrong,
     width: 44,
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
     width: "100%",
     minHeight: 50,
     maxHeight: 100,
-    backgroundColor: alpha("#01030F", 0.35),
+    backgroundColor: Color.surface2,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Color.hairline,
     borderRadius: Radius.md,
