@@ -290,7 +290,9 @@ export default function ChatScreen() {
     <View style={styles.safeArea}>
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        // Android resizes the window (configured in app.json); applying the
+        // "height" strategy as well can produce a second, incorrect offset.
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <View>

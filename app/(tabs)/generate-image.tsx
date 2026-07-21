@@ -154,7 +154,9 @@ export default function ImageStudio() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      // Android uses the native resize mode declared in app.json. This avoids
+      // double-adjusting the bottom composer when the keyboard opens.
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={styles.container}
     >
       <StatusBar style="dark" />
