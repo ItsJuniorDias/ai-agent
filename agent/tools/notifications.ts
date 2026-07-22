@@ -60,8 +60,24 @@ export const notifyNow: AgentTool = {
     },
     required: ["title", "body"],
   },
-  async execute(args) {
+  async execute(args, ctx) {
     if ((await getPermissionStatus()) !== "granted") return fail(NEEDS_PERMISSION);
+
+    // Cap de notificações do turno atual — quando o orquestrador (varredura
+    // em background) injeta `notificationBudget` no `sharedState`, aplicamos
+    // hard-limit aqui. O prompt já pede "seja conservador", mas soft constraint
+    // não basta: um scan que dispara 8 notificações num turno destrói a
+    // confiança do usuário pra sempre.
+    const state = ctx.sharedState;
+    if (state) {
+      const budget = state.notificationBudget;
+      const sent = typeof state.notificationsSent === "number" ? state.notificationsSent : 0;
+      if (typeof budget === "number" && sent >= budget) {
+        return fail(
+          `Limite de ${budget} notificação(ões) por ciclo já atingido. Pare de notificar, foque só no mais urgente já enviado e finalize a resposta.`,
+        );
+      }
+    }
 
     const key = typeof args.dedupe_key === "string" ? args.dedupe_key : "";
 
@@ -81,6 +97,14 @@ export const notifyNow: AgentTool = {
     if (!id) return fail("Não foi possível disparar a notificação neste ambiente.");
 
     if (key) await markNotified(key);
+
+    // Contabiliza para o budget do turno.
+    if (state && typeof state.notificationsSent === "number") {
+      state.notificationsSent = state.notificationsSent + 1;
+    } else if (state) {
+      state.notificationsSent = 1;
+    }
+
     return ok(`Notificação enviada: ${args.title}`);
   },
 };

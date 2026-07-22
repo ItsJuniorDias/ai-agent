@@ -21,6 +21,15 @@ export type MemoryVector = {
   text: string;
   embedding: number[];
   createdAt: string;
+  /**
+   * Última vez que essa memória foi retornada como hit relevante numa busca.
+   * Serve para eviction por LRU: quando lotamos o `MAX_MEMORIES`, descartamos
+   * as *menos usadas* em vez das mais antigas. Uma memória de "stack preferido
+   * do usuário" salva há 6 meses e consultada toda semana continua útil e não
+   * deve ser sobrescrita por uma pergunta única sobre uma issue X aleatória.
+   * Campo opcional para retrocompatibilidade — legado cai no `createdAt`.
+   */
+  lastAccessedAt?: string;
 };
 
 /** Guarda no máximo isso de memórias; as mais antigas são descartadas. */
@@ -56,9 +65,18 @@ async function readAll(): Promise<MemoryVector[]> {
 }
 
 async function writeAll(memories: MemoryVector[]): Promise<void> {
+  // Eviction por LRU: ordena ascendente por "último toque" (acesso ou criação)
+  // e mantém as N mais recentemente tocadas. Uma memória acessada agora vai
+  // para o fim da lista mesmo que tenha sido criada há meses.
+  const sorted = [...memories].sort((a, b) => {
+    const aTouch = a.lastAccessedAt ?? a.createdAt;
+    const bTouch = b.lastAccessedAt ?? b.createdAt;
+    return aTouch.localeCompare(bTouch);
+  });
+
   await AsyncStorage.setItem(
     STORAGE_KEYS.vectorMemory,
-    JSON.stringify(memories.slice(-MAX_MEMORIES)),
+    JSON.stringify(sorted.slice(-MAX_MEMORIES)),
   );
 }
 
@@ -84,11 +102,13 @@ export async function saveMemory(
     return duplicate;
   }
 
+  const now = new Date().toISOString();
   const memory: MemoryVector = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     text: trimmed,
     embedding,
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    lastAccessedAt: now,
   };
 
   memories.push(memory);
@@ -109,15 +129,28 @@ export async function searchMemory(
 
   const queryEmbedding = await createEmbedding(query, EMBEDDING_MODEL, signal);
 
-  return memories
-    .map((m) => ({
-      text: m.text,
-      score: cosineSimilarity(queryEmbedding, m.embedding),
-      createdAt: m.createdAt,
-    }))
-    .filter((m) => m.score > SIMILARITY_THRESHOLD)
+  const scored = memories.map((m, index) => ({
+    index,
+    text: m.text,
+    score: cosineSimilarity(queryEmbedding, m.embedding),
+    createdAt: m.createdAt,
+  }));
+
+  const hits = scored
+    .filter((s) => s.score > SIMILARITY_THRESHOLD)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
+
+  // Toca o `lastAccessedAt` das memórias que retornaram como relevantes. Faz o
+  // eviction futuro preservar o que é *usado*, não só o que é *recente*.
+  // Fire-and-forget: se falhar, o turno continua — não bloqueia o agente.
+  if (hits.length) {
+    const now = new Date().toISOString();
+    for (const hit of hits) memories[hit.index].lastAccessedAt = now;
+    writeAll(memories).catch(() => {});
+  }
+
+  return hits.map(({ text, score, createdAt }) => ({ text, score, createdAt }));
 }
 
 export async function forgetMemory(query: string): Promise<number> {

@@ -40,6 +40,14 @@ export type ToolContext = {
   signal?: AbortSignal;
   /** Manda um status para a UI durante uma execução longa. */
   progress: (text: string) => void;
+  /**
+   * Estado mutável compartilhado entre tools no mesmo turno do agente.
+   * Usado, por exemplo, para o `notify_now` respeitar um cap de notificações
+   * durante uma varredura em background: o orquestrador injeta
+   * `{ notificationBudget: 3, notificationsSent: 0 }` e a tool decrementa/checa.
+   * Não é persistido em disco — some ao fim do turno.
+   */
+  sharedState?: Record<string, unknown>;
 };
 
 export type AgentTool = {
@@ -161,6 +169,11 @@ export type RunAgentOptions = {
   extraSystem?: string;
   /** Sobrescreve o teto de rounds do config (a varredura usa um número baixo). */
   maxStepsOverride?: number;
+  /**
+   * Estado inicial injetado no ToolContext.sharedState. Usado, por exemplo,
+   * pelo modo background para passar `notificationBudget`.
+   */
+  sharedState?: Record<string, unknown>;
 };
 
 export type RunAgentResult = {

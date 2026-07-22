@@ -20,6 +20,12 @@ export const STORAGE_KEYS = {
   assistantState: "@assistant_state",
   /** Log de dedupe do notify_now — evita pingar duas vezes pelo mesmo item. */
   notifyLog: "@notify_log",
+  /**
+   * Transcript completo da última varredura em background (mensagens ORMessage
+   * + steps). Persistido pra permitir debug depois — quando uma notificação
+   * sai errada, tu abre a tela de Ajustes → Debug e vê o passo a passo real.
+   */
+  lastScanTranscript: "@last_scan_transcript",
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -136,8 +142,19 @@ export const EMBEDDING_MODEL = "openai/text-embedding-3-small";
 // ---------------------------------------------------------------------------
 
 export type AgentConfig = {
-  /** Modelo de raciocínio do loop do agente. */
+  /** Modelo de raciocínio do loop do agente. Usado no passo 0 (planejamento
+   * inicial) e na síntese final forçada quando o teto de passos estoura. */
   model: string;
+  /**
+   * Modelo mais barato/rápido usado nos passos intermediários do loop, quando
+   * já entramos em modo "orquestração" (o modelo só está decidindo qual tool
+   * chamar em seguida com base em resultados de leitura). Se `undefined`, todos
+   * os passos usam `model`. Ativa opt-in em Ajustes.
+   *
+   * Padrão que costuma render 40-60% de economia em runs de 3+ passos:
+   * `model = anthropic/claude-sonnet-4.6` + `orchestrationModel = google/gemini-2.5-flash-lite`.
+   */
+  orchestrationModel?: string;
   /** Modelo do Studio de imagens. */
   imageModel: string;
   /** Modelo usado para ler PDFs/documentos. */
@@ -155,6 +172,7 @@ export type AgentConfig = {
 
 export const DEFAULT_CONFIG: AgentConfig = {
   model: "google/gemini-3-flash-preview",
+  orchestrationModel: undefined,
   imageModel: "google/gemini-2.5-flash-image",
   documentModel: "google/gemini-3-flash-preview",
   webSearch: true,
@@ -277,6 +295,13 @@ export type AssistantConfig = {
   watch: Partial<Record<MonitorableIntegration, boolean>>;
   /** Teto de rounds do loop durante uma varredura — mantém custo/latência baixos. */
   scanStepBudget: number;
+  /**
+   * Máximo de notificações que uma única varredura pode disparar. O prompt já
+   * pede prudência, mas isso é hard-limit — a tool `notify_now` recusa depois
+   * do N-ésimo. Notificação em excesso destrói confiança pra sempre; melhor
+   * o modelo priorizar o que é realmente urgente.
+   */
+  scanNotificationCap: number;
 };
 
 export const DEFAULT_ASSISTANT_CONFIG: AssistantConfig = {
@@ -287,6 +312,7 @@ export const DEFAULT_ASSISTANT_CONFIG: AssistantConfig = {
   quietEndHour: 7,
   watch: {},
   scanStepBudget: 5,
+  scanNotificationCap: 3,
 };
 
 let assistantCache: AssistantConfig | null = null;

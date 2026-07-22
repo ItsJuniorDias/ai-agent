@@ -37,10 +37,14 @@ type GitHubConfig = {
 };
 
 async function config(): Promise<GitHubConfig | null> {
+  // Só lê do AsyncStorage. O fallback anterior para EXPO_PUBLIC_GITHUB_TOKEN
+  // era perigoso: variáveis EXPO_PUBLIC_* são *inlined no bundle JS* na build,
+  // então qualquer token colocado no .env de desenvolvimento acabaria embarcado
+  // num release publicado na App Store, extraível por qualquer curioso.
+  // Credencial só pela tela do app, gravada no storage seguro do device.
   const stored = await getJson<GitHubConfig>(STORAGE_KEY);
-  const token = stored?.accessToken || process.env.EXPO_PUBLIC_GITHUB_TOKEN;
-  if (!token) return null;
-  return { ...stored, accessToken: token };
+  if (!stored?.accessToken) return null;
+  return stored;
 }
 
 function headers(token: string) {

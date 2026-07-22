@@ -17,6 +17,7 @@
  * uma tool de leitura nova. Nenhuma linha aqui muda.
  */
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { runAgent } from "@/agent/run-agent";
 import { resolveTools } from "@/agent/registry";
 import type { AgentTool } from "@/agent/types";
@@ -26,6 +27,7 @@ import {
   isWatched,
   saveAssistantState,
   MONITORABLE_INTEGRATIONS,
+  STORAGE_KEYS,
   type MonitorableIntegration,
 } from "@/services/config";
 import { getPermissionStatus, isWithinQuietHours } from "@/services/notifications";
@@ -172,6 +174,13 @@ ${targetList}`;
       toolFilter: buildScanFilter(watchedSet),
       extraSystem: SCAN_DIRECTIVE,
       maxStepsOverride: assistant.scanStepBudget,
+      // Hard-cap de notificações do turno. O prompt já pede prudência, mas
+      // isso é o *limite real*: `notify_now` recusa depois do N-ésimo, então
+      // um scan mal-comportado não consegue disparar 8 alertas de uma vez.
+      sharedState: {
+        notificationBudget: assistant.scanNotificationCap ?? 3,
+        notificationsSent: 0,
+      },
     });
 
     // Notificações que de fato saíram (a tool marca as enviadas com este prefixo;
@@ -195,6 +204,28 @@ ${targetList}`;
       lastScanNotified: notified,
       lastScanReason: reason,
     });
+
+    // Persiste transcript da varredura para debug posterior. Quando uma
+    // notificação sai errada (ou não sai quando deveria), a tela de Debug em
+    // Ajustes lê essa chave e mostra o passo a passo real do agente naquele
+    // ciclo — antes disso, você não tinha como investigar depois do fato.
+    // Cortamos as mensagens de sistema iniciais (que são estáveis) e mantemos
+    // só os últimos 40 turnos de conteúdo variável, pra não estourar storage.
+    try {
+      const trimmedTranscript = result.transcript.slice(-40);
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.lastScanTranscript,
+        JSON.stringify({
+          at: new Date().toISOString(),
+          reason,
+          notified,
+          steps: result.steps,
+          transcript: trimmedTranscript,
+        }),
+      );
+    } catch {
+      // Não bloqueia o resultado se a persistência falhar.
+    }
 
     return { status: "ok", notified, summary };
   } catch (err: any) {

@@ -79,8 +79,12 @@ export const memoryForget: AgentTool = {
   integration: "core",
   label: "Esquecendo",
   description:
-    "Apaga da memória de longo prazo tudo que contiver um termo. Use quando o usuário pedir para esquecer algo.",
-  mutates: false,
+    "Apaga da memória de longo prazo tudo que contiver um termo (busca por substring, case-insensitive). Use quando o usuário pedir para esquecer algo. O usuário verá o termo exato que será usado e precisa aprovar antes — ação irreversível.",
+  // mutates:true porque apagar memória não tem undo. O modal de aprovação
+  // mostra ao usuário exatamente qual termo vai casar antes do apagamento,
+  // evitando que "esquece o projeto Pedagogy" nuke memórias tangencialmente
+  // relacionadas sem confirmação.
+  mutates: true,
   isConfigured: async () => true,
   parameters: {
     type: "object",

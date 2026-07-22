@@ -155,6 +155,51 @@ function headers(): Record<string, string> {
   };
 }
 
+/**
+ * Status HTTP que consideramos transientes — vale a pena repetir a request.
+ * 429 é rate limit, 408/502/503/504 são timeouts/indisponibilidade do provedor.
+ * 401/402/403 NÃO entram aqui: chave inválida, sem crédito ou sem permissão
+ * não vão se resolver sozinhos, retry só atrasa o erro real chegar ao usuário.
+ */
+const RETRY_STATUS = new Set([408, 429, 502, 503, 504]);
+const MAX_RETRY_ATTEMPTS = 3;
+const BASE_BACKOFF_MS = 400;
+
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    if (!signal) return;
+    if (signal.aborted) {
+      clearTimeout(timer);
+      reject(new DOMException("Aborted", "AbortError"));
+      return;
+    }
+    signal.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        reject(new DOMException("Aborted", "AbortError"));
+      },
+      { once: true },
+    );
+  });
+}
+
+/**
+ * Backoff exponencial com jitter para não sincronizar retries de vários
+ * clients contra o mesmo provedor.
+ */
+function backoffDelay(attempt: number, retryAfterHeader: string | null): number {
+  // O 429 do OpenRouter às vezes traz Retry-After em segundos. Respeite.
+  if (retryAfterHeader) {
+    const seconds = Number(retryAfterHeader);
+    if (Number.isFinite(seconds) && seconds > 0) return seconds * 1000;
+  }
+  const base = BASE_BACKOFF_MS * Math.pow(3, attempt);
+  const jitter = Math.random() * base * 0.3;
+  return Math.floor(base + jitter);
+}
+
 async function request<T>(
   path: string,
   body: unknown,
@@ -167,44 +212,65 @@ async function request<T>(
     );
   }
 
-  let response: Response;
-  try {
-    response = await fetch(`${OPENROUTER_BASE_URL}${path}`, {
-      method: "POST",
-      headers: headers(),
-      body: JSON.stringify(body),
-      signal,
-    });
-  } catch (err: any) {
-    if (err?.name === "AbortError") throw err;
-    throw new OpenRouterError(
-      `Falha de rede ao falar com o OpenRouter: ${err?.message ?? "desconhecido"}`,
-      0,
-    );
-  }
+  let lastError: OpenRouterError | null = null;
 
-  const raw = await response.text();
+  for (let attempt = 0; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
 
-  let parsed: any;
-  try {
-    parsed = raw ? JSON.parse(raw) : {};
-  } catch {
-    throw new OpenRouterError(
-      `Resposta não-JSON do OpenRouter (${response.status}): ${raw.slice(0, 200)}`,
-      response.status,
-    );
-  }
+    let response: Response;
+    try {
+      response = await fetch(`${OPENROUTER_BASE_URL}${path}`, {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify(body),
+        signal,
+      });
+    } catch (err: any) {
+      if (err?.name === "AbortError") throw err;
+      // Falha de rede pura (sem status): trata como transiente, dá mais uma chance.
+      lastError = new OpenRouterError(
+        `Falha de rede ao falar com o OpenRouter: ${err?.message ?? "desconhecido"}`,
+        0,
+      );
+      if (attempt < MAX_RETRY_ATTEMPTS) {
+        await sleep(backoffDelay(attempt, null), signal);
+        continue;
+      }
+      throw lastError;
+    }
 
-  if (!response.ok || parsed?.error) {
+    const raw = await response.text();
+
+    let parsed: any;
+    try {
+      parsed = raw ? JSON.parse(raw) : {};
+    } catch {
+      throw new OpenRouterError(
+        `Resposta não-JSON do OpenRouter (${response.status}): ${raw.slice(0, 200)}`,
+        response.status,
+      );
+    }
+
+    if (response.ok && !parsed?.error) return parsed as T;
+
     const apiMessage = parsed?.error?.message ?? response.statusText;
-    throw new OpenRouterError(
+    lastError = new OpenRouterError(
       describeStatus(response.status, apiMessage),
       response.status,
       parsed?.error?.code,
     );
+
+    // Só retry em transiente e se ainda temos tentativa.
+    if (!RETRY_STATUS.has(response.status) || attempt >= MAX_RETRY_ATTEMPTS) {
+      throw lastError;
+    }
+
+    const retryAfter = response.headers.get("Retry-After");
+    await sleep(backoffDelay(attempt, retryAfter), signal);
   }
 
-  return parsed as T;
+  // Inatingível na prática — o loop sempre retorna ou lança. Guarda semântica.
+  throw lastError ?? new OpenRouterError("Erro desconhecido no OpenRouter.", 0);
 }
 
 // ---------------------------------------------------------------------------
