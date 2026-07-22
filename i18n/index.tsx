@@ -4,7 +4,7 @@
  * Substitui o motor caseiro anterior (dicionário de ~30 chaves em um arquivo
  * só, detecção por GPS via expo-location). Agora:
  *
- *  - Dicionário por idioma em `i18n/locales/{en,pt,es,zh,hi,ar,bn}.ts`, com
+ *  - Dicionário por idioma em `i18n/locales/{en,pt,es,zh,hi,ar,fr}.ts`, com
  *    plurais e interpolação `{{var}}` nativos do i18next.
  *  - Idioma inicial vem do device via `expo-localization` (síncrono, sem rede,
  *    sem permissão) e é sobrescrito por uma preferência salva em AsyncStorage.
@@ -34,9 +34,9 @@ import React, {
 import { I18nManager } from "react-native";
 
 import ar from "./locales/ar";
-import bn from "./locales/bn";
 import en from "./locales/en";
 import es from "./locales/es";
+import fr from "./locales/fr";
 import hi from "./locales/hi";
 import pt from "./locales/pt";
 import zh from "./locales/zh";
@@ -48,7 +48,7 @@ export const SUPPORTED_LANGUAGES = [
   "zh",
   "hi",
   "ar",
-  "bn",
+  "fr",
 ] as const;
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
 
@@ -63,7 +63,7 @@ export const LANGUAGE_META: Record<
   zh: { native: "中文", rtl: false },
   hi: { native: "हिन्दी", rtl: false },
   ar: { native: "العربية", rtl: true },
-  bn: { native: "বাংলা", rtl: false },
+  fr: { native: "Français", rtl: false },
 };
 
 const RTL_LANGUAGES = new Set<Language>(["ar"]);
@@ -96,7 +96,7 @@ if (!i18n.isInitialized) {
       zh: { translation: zh },
       hi: { translation: hi },
       ar: { translation: ar },
-      bn: { translation: bn },
+      fr: { translation: fr },
     },
     lng: detectDeviceLanguage(),
     fallbackLng: FALLBACK,
