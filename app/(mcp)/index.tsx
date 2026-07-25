@@ -57,10 +57,7 @@ export default function MCPListScreen() {
     <SafeAreaView style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.headerBtn}
-        >
+        <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
           <Ionicons name="chevron-back" size={26} color={Color.accent} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t("mcp.listTitle")}</Text>
@@ -93,16 +90,13 @@ export default function MCPListScreen() {
           </View>
         ) : (
           <View style={styles.group}>
-            {servers.map((s, i) => {
+            {servers.map((s: MCPServerConfig, i: number) => {
               const status = statusOf(s);
               const toolCount = s.toolsCache?.length ?? 0;
               return (
                 <TouchableOpacity
                   key={s.id}
-                  style={[
-                    styles.row,
-                    i === servers.length - 1 && styles.noBorder,
-                  ]}
+                  style={[styles.row, i === servers.length - 1 && styles.noBorder]}
                   onPress={() => router.push(`/(mcp)/${s.id}` as never)}
                   activeOpacity={0.6}
                 >
@@ -114,30 +108,20 @@ export default function MCPListScreen() {
                       <View style={styles.nameRow}>
                         <Text style={styles.rowTitle}>{s.name}</Text>
                         <View
-                          style={[
-                            styles.dot,
-                            { backgroundColor: STATUS_COLOR[status] },
-                          ]}
+                          style={[styles.dot, { backgroundColor: STATUS_COLOR[status] }]}
                         />
                       </View>
                       <Text style={styles.rowSub} numberOfLines={1}>
                         {toolCount === 0
                           ? t("mcp.noToolsYet")
-                          : t(
-                              toolCount === 1 ? "mcp.toolOne" : "mcp.toolOther",
-                              {
-                                count: toolCount,
-                              },
-                            )}
+                          : t(toolCount === 1 ? "mcp.toolOne" : "mcp.toolOther", {
+                              count: toolCount,
+                            })}
                         {s.disabled ? ` · ${t("mcp.paused")}` : ""}
                       </Text>
                     </View>
                   </View>
-                  <Feather
-                    name="chevron-right"
-                    size={18}
-                    color={Color.tertiary}
-                  />
+                  <Feather name="chevron-right" size={18} color={Color.tertiary} />
                 </TouchableOpacity>
               );
             })}
@@ -170,7 +154,7 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     backgroundColor: Color.surface,
-    borderRadius: Radius.card,
+    borderRadius: Radius.lg,
     padding: 24,
     alignItems: "center",
     gap: 12,
@@ -197,7 +181,7 @@ const styles = StyleSheet.create({
   emptyBtnText: { color: Color.onAccent, fontSize: 15, fontWeight: "600" },
   group: {
     backgroundColor: Color.surface,
-    borderRadius: Radius.card,
+    borderRadius: Radius.lg,
     overflow: "hidden",
   },
   row: {

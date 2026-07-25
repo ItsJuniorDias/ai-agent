@@ -28,7 +28,7 @@ import {
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 
 import { Color, Radius } from "@/constants/theme";
 import { useTranslation } from "@/i18n";
@@ -86,6 +86,13 @@ export default function CustomToolNew() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.topBar}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.topBarBtn}>
+          <Ionicons name="chevron-back" size={26} color={Color.accent} />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }} />
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -149,7 +156,14 @@ export default function CustomToolNew() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: Color.bg },
-  scrollContent: { paddingHorizontal: 16, paddingTop: 24 },
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+  },
+  topBarBtn: { padding: 8, minWidth: 44 },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 8 },
   iconWrap: { alignItems: "center", marginBottom: 16 },
   title: {
     fontSize: 24,
@@ -174,7 +188,7 @@ const styles = StyleSheet.create({
   },
   textAreaGroup: {
     backgroundColor: Color.surface,
-    borderRadius: Radius.card,
+    borderRadius: Radius.lg,
     minHeight: 140,
     padding: 12,
   },
@@ -216,7 +230,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Color.hairlineStrong,
-    borderRadius: Radius.card,
+    borderRadius: Radius.lg,
   },
   secondaryOutlinedText: { color: Color.accent, fontSize: 15, fontWeight: "600" },
 });

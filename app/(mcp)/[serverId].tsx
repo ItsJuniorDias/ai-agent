@@ -35,7 +35,7 @@ import {
   updateMCPToolsCache,
 } from "@/services/mcp/storage";
 import { initialize, listTools, MCPError } from "@/services/mcp/client";
-import type { MCPServerConfig } from "@/services/mcp/types";
+import type { MCPServerConfig, MCPToolDefinition } from "@/services/mcp/types";
 
 const switchProps = {
   trackColor: { false: Color.surface3, true: Color.success },
@@ -205,7 +205,7 @@ export default function MCPServerScreen() {
           </View>
         ) : (
           <View style={styles.group}>
-            {tools.map((tool, i) => {
+            {tools.map((tool: MCPToolDefinition, i: number) => {
               const trusted = trustedSet.has(tool.name);
               const readOnly = tool.annotations?.readOnlyHint === true;
               return (
@@ -238,7 +238,7 @@ export default function MCPServerScreen() {
                   {!readOnly && (
                     <Switch
                       value={trusted}
-                      onValueChange={(v) => toggleTrusted(tool.name, v)}
+                      onValueChange={(v: boolean) => toggleTrusted(tool.name, v)}
                       {...switchProps}
                     />
                   )}
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   },
   group: {
     backgroundColor: Color.surface,
-    borderRadius: Radius.card,
+    borderRadius: Radius.lg,
     overflow: "hidden",
   },
   infoRow: {
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Color.hairlineStrong,
-    borderRadius: Radius.card,
+    borderRadius: Radius.lg,
     marginTop: 16,
   },
   refreshText: { color: Color.accent, fontSize: 15, fontWeight: "600" },

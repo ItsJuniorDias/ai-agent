@@ -5,14 +5,9 @@ export default function MCPLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: Color.bg },
-        headerTintColor: Color.label,
-        headerTitleStyle: { color: Color.label },
+        headerShown: false,
+        contentStyle: { backgroundColor: Color.bg },
       }}
-    >
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="add" options={{ title: "Add MCP server" }} />
-      <Stack.Screen name="[serverId]" options={{ title: "MCP server" }} />
-    </Stack>
+    />
   );
 }

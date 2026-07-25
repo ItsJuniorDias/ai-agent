@@ -77,7 +77,7 @@ export default function CustomToolsList() {
           </View>
         ) : (
           <View style={styles.group}>
-            {tools.map((tool, i) => (
+            {tools.map((tool: CustomToolConfig, i: number) => (
               <TouchableOpacity
                 key={tool.id}
                 style={[styles.row, i === tools.length - 1 && styles.noBorder]}
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   intro: { fontSize: 15, color: Color.secondary, lineHeight: 21, marginBottom: 20 },
   emptyCard: {
     backgroundColor: Color.surface,
-    borderRadius: Radius.card,
+    borderRadius: Radius.lg,
     padding: 24,
     alignItems: "center",
     gap: 12,
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   emptyBtnText: { color: Color.onAccent, fontSize: 15, fontWeight: "600" },
   group: {
     backgroundColor: Color.surface,
-    borderRadius: Radius.card,
+    borderRadius: Radius.lg,
     overflow: "hidden",
   },
   row: {

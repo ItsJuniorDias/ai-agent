@@ -1,9 +1,4 @@
-// @jsx: react-jsx
-import {
-  DefaultTheme,
-  ThemeProvider,
-  type Theme,
-} from "@react-navigation/native";
+import { DefaultTheme, ThemeProvider, type Theme } from "@react-navigation/native";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -48,8 +43,7 @@ export default function RootLayout() {
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener(
       (response) => {
-        const route = (response.notification.request.content.data as any)
-          ?.route;
+        const route = (response.notification.request.content.data as any)?.route;
         if (typeof route === "string" && route) {
           router.push(route as never);
         }
@@ -61,57 +55,44 @@ export default function RootLayout() {
   return (
     <I18nProvider>
       <ThemeProvider value={DaylightTheme}>
-        <Stack screenOptions={{ contentStyle: { backgroundColor: Color.bg } }}>
-          <Stack.Screen name="(app)/index" options={{ headerShown: false }} />
-          <Stack.Screen name="(jira)/index" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="(github)/index"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="(onboarding)/index"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="(vercel)/index"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="(linear)/index"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="(notion)/index"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen name="(gmail)/index" options={{ headerShown: false }} />
-          <Stack.Screen name="(slack)/index" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="(gitlab)/index"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen name="(teams)/index" options={{ headerShown: false }} />
-          <Stack.Screen name="(figma)/index" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="(discord)/index"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="(whatsapp)/index"
-            options={{ headerShown: false }}
-          />
+        <Stack
+        screenOptions={{ contentStyle: { backgroundColor: Color.bg } }}
+      >
+        <Stack.Screen name="(app)/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(jira)/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(github)/index" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="(onboarding)/index"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen name="(vercel)/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(linear)/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(notion)/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(gmail)/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(slack)/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(gitlab)/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(teams)/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(figma)/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(discord)/index" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="(whatsapp)/index"
+          options={{ headerShown: false }}
+        />
 
-          <Stack.Screen
-            name="(ai-terms)/index"
-            options={{ headerShown: false }}
-          />
+        <Stack.Screen
+          name="(ai-terms)/index"
+          options={{ headerShown: false }}
+        />
 
-          <Stack.Screen
-            name="(assistant)/index"
-            options={{ headerShown: false }}
-          />
+        <Stack.Screen
+          name="(assistant)/index"
+          options={{ headerShown: false }}
+        />
 
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
+        <Stack.Screen name="(mcp)" options={{ headerShown: false }} />
+        <Stack.Screen name="(custom-tools)" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style="dark" />
       </ThemeProvider>

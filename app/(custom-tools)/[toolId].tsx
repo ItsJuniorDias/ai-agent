@@ -143,7 +143,7 @@ export default function CustomToolEditor() {
   };
 
   const removeParam = (idx: number) => {
-    patch({ parameters: tool.parameters.filter((_, i) => i !== idx) });
+    patch({ parameters: tool.parameters.filter((_: CustomToolParameter, i: number) => i !== idx) });
   };
 
   const save = async () => {
@@ -201,20 +201,20 @@ export default function CustomToolEditor() {
             <FormRow
               label={t("customTools.name")}
               value={tool.name}
-              onChangeText={(v) => patch({ name: v })}
+              onChangeText={(v: string) => patch({ name: v })}
               mono
             />
             <View style={styles.divider} />
             <FormRow
               label={t("customTools.label")}
               value={tool.label}
-              onChangeText={(v) => patch({ label: v })}
+              onChangeText={(v: string) => patch({ label: v })}
             />
             <View style={styles.divider} />
             <FormRow
               label={t("customTools.description")}
               value={tool.description}
-              onChangeText={(v) => patch({ description: v })}
+              onChangeText={(v: string) => patch({ description: v })}
               multiline
             />
           </View>
@@ -248,7 +248,7 @@ export default function CustomToolEditor() {
             <FormRow
               label={t("customTools.url")}
               value={tool.urlTemplate}
-              onChangeText={(v) => patch({ urlTemplate: v })}
+              onChangeText={(v: string) => patch({ urlTemplate: v })}
               mono
               autoCapitalize="none"
               keyboardType="url"
@@ -259,7 +259,7 @@ export default function CustomToolEditor() {
                 <FormRow
                   label={t("customTools.body")}
                   value={tool.bodyTemplate ?? ""}
-                  onChangeText={(v) => patch({ bodyTemplate: v })}
+                  onChangeText={(v: string) => patch({ bodyTemplate: v })}
                   multiline
                   mono
                 />
@@ -282,7 +282,7 @@ export default function CustomToolEditor() {
                   <TextInput
                     style={[styles.headerInput, styles.mono]}
                     value={key}
-                    onChangeText={(v) => setHeaderKey(key, v)}
+                    onChangeText={(v: string) => setHeaderKey(key, v)}
                     autoCapitalize="none"
                     placeholder="Header-Name"
                     placeholderTextColor={Color.placeholder}
@@ -290,7 +290,7 @@ export default function CustomToolEditor() {
                   <TextInput
                     style={[styles.headerInput, styles.mono, { flex: 2 }]}
                     value={value}
-                    onChangeText={(v) => setHeaderValue(key, v)}
+                    onChangeText={(v: string) => setHeaderValue(key, v)}
                     autoCapitalize="none"
                     placeholder="value or {{param}}"
                     placeholderTextColor={Color.placeholder}
@@ -318,13 +318,13 @@ export default function CustomToolEditor() {
                 <Text style={styles.rowSub}>{t("customTools.noParams")}</Text>
               </View>
             )}
-            {tool.parameters.map((p, idx) => (
+            {tool.parameters.map((p: CustomToolParameter, idx: number) => (
               <View key={idx} style={styles.paramCard}>
                 <View style={styles.paramHeader}>
                   <TextInput
                     style={[styles.paramNameInput, styles.mono]}
                     value={p.name}
-                    onChangeText={(v) => updateParam(idx, { name: v })}
+                    onChangeText={(v: string) => updateParam(idx, { name: v })}
                     autoCapitalize="none"
                     placeholder="param_name"
                     placeholderTextColor={Color.placeholder}
@@ -336,7 +336,7 @@ export default function CustomToolEditor() {
                 <TextInput
                   style={styles.paramDescInput}
                   value={p.description}
-                  onChangeText={(v) => updateParam(idx, { description: v })}
+                  onChangeText={(v: string) => updateParam(idx, { description: v })}
                   placeholder={t("customTools.paramDescPh")}
                   placeholderTextColor={Color.placeholder}
                   multiline
@@ -369,7 +369,7 @@ export default function CustomToolEditor() {
                     </Text>
                     <Switch
                       value={p.required}
-                      onValueChange={(v) => updateParam(idx, { required: v })}
+                      onValueChange={(v: boolean) => updateParam(idx, { required: v })}
                       {...switchProps}
                     />
                   </View>
@@ -392,7 +392,7 @@ export default function CustomToolEditor() {
               </View>
               <Switch
                 value={tool.mutates}
-                onValueChange={(v) => patch({ mutates: v })}
+                onValueChange={(v: boolean) => patch({ mutates: v })}
                 {...switchProps}
               />
             </View>
@@ -404,7 +404,7 @@ export default function CustomToolEditor() {
               </View>
               <Switch
                 value={Boolean(tool.disabled)}
-                onValueChange={(v) => patch({ disabled: v })}
+                onValueChange={(v: boolean) => patch({ disabled: v })}
                 {...switchProps}
               />
             </View>
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
   },
   group: {
     backgroundColor: Color.surface,
-    borderRadius: Radius.card,
+    borderRadius: Radius.lg,
     overflow: "hidden",
   },
   divider: {

@@ -126,6 +126,13 @@ export default function MCPAddScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.topBar}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.topBarBtn}>
+          <Ionicons name="chevron-back" size={26} color={Color.accent} />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }} />
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -262,7 +269,14 @@ export default function MCPAddScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: Color.bg },
-  scrollContent: { paddingHorizontal: 16, paddingTop: 24 },
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+  },
+  topBarBtn: { padding: 8, minWidth: 44 },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 8 },
   title: { fontSize: 28, fontWeight: "700", color: Color.label, letterSpacing: -0.5 },
   subtitle: { fontSize: 15, color: Color.secondary, marginTop: 6, lineHeight: 21 },
   sectionLabel: {
@@ -274,7 +288,7 @@ const styles = StyleSheet.create({
   },
   group: {
     backgroundColor: Color.surface,
-    borderRadius: Radius.card,
+    borderRadius: Radius.lg,
     overflow: "hidden",
   },
   row: {
@@ -306,7 +320,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Color.hairlineStrong,
-    borderRadius: Radius.card,
+    borderRadius: Radius.lg,
     marginTop: 12,
   },
   customBtnText: { color: Color.accent, fontSize: 15, fontWeight: "600" },
@@ -325,7 +339,7 @@ const styles = StyleSheet.create({
   formTitle: { fontSize: 20, fontWeight: "700", color: Color.label },
   inputGroup: {
     backgroundColor: Color.surface,
-    borderRadius: Radius.card,
+    borderRadius: Radius.lg,
     overflow: "hidden",
   },
   inputWrapper: { paddingHorizontal: 16, height: 50, justifyContent: "center" },
