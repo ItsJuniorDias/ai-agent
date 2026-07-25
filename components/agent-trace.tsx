@@ -60,6 +60,8 @@ export const INTEGRATION_META: Record<
   figma: { label: "Figma", color: "#F24E1E", onSurface: "#D44318", icon: "figma" },
   vercel: { label: "Vercel", color: "#0B0B0B", onSurface: "#171A2C", icon: "triangle" },
   notion: { label: "Notion", color: "#141414", onSurface: "#171A2C", icon: "book-open" },
+  mcp: { label: "MCP", color: "#7C3AED", onSurface: "#5B21B6", icon: "server" },
+  custom: { label: "Custom", color: "#0891B2", onSurface: "#155E75", icon: "sliders" },
 };
 
 /** Formata os argumentos em uma linha legível: `repo: ai-agent · number: 12` */

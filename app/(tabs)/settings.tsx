@@ -463,6 +463,44 @@ export default function Settings() {
         <Text style={styles.linkText}>{t("settings.manageIntegrations")}</Text>
         <Feather name="chevron-right" size={18} color={Color.accent} />
       </TouchableOpacity>
+
+      {/* -- Extensões: MCP + Custom tools --------------------------------- */}
+      <Text style={styles.sectionTitle}>{t("settings.extensionsTitle")}</Text>
+      <View style={styles.group}>
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => router.push("/(mcp)" as never)}
+          activeOpacity={0.6}
+        >
+          <View style={styles.rowLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: "#7C3AED" }]}>
+              <Feather name="server" size={16} color={Palette.white} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowText}>{t("settings.mcpTitle")}</Text>
+              <Text style={styles.rowSubtext}>{t("settings.mcpSub")}</Text>
+            </View>
+          </View>
+          <Feather name="chevron-right" size={18} color={Color.tertiary} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.row, styles.noBorder]}
+          onPress={() => router.push("/(custom-tools)" as never)}
+          activeOpacity={0.6}
+        >
+          <View style={styles.rowLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: "#0891B2" }]}>
+              <Feather name="sliders" size={16} color={Palette.white} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowText}>{t("settings.customToolsTitle")}</Text>
+              <Text style={styles.rowSubtext}>{t("settings.customToolsSub")}</Text>
+            </View>
+          </View>
+          <Feather name="chevron-right" size={18} color={Color.tertiary} />
+        </TouchableOpacity>
+      </View>
+      <Text style={styles.footerText}>{t("settings.extensionsFooter")}</Text>
     </ScrollView>
   );
 }

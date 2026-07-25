@@ -8,7 +8,19 @@
 
 import type { ORMessage, ORUsage } from "@/services/openrouter";
 
-/** IDs das integrações. Casam com as rotas em app/(nome)/index.tsx. */
+/** IDs das integrações. Casam com as rotas em app/(nome)/index.tsx.
+ *
+ * `mcp` e `custom` são integrações "guarda-chuva" para tools que não são
+ * hardcoded no bundle:
+ *
+ *  - `mcp` — tools expostas por servidores MCP conectados pelo usuário. O nome
+ *    interno da tool leva o servidor de origem: `mcp__linear__get_issue`. O
+ *    trace mostra o servidor no rótulo.
+ *
+ *  - `custom` — tools declaradas pelo próprio usuário via HTTP tool builder
+ *    (URL + método + headers + body template). Cobre APIs que não têm servidor
+ *    MCP, incluindo a API interna dele.
+ */
 export type IntegrationId =
   | "github"
   | "gitlab"
@@ -22,6 +34,8 @@ export type IntegrationId =
   | "figma"
   | "vercel"
   | "notion"
+  | "mcp"
+  | "custom"
   | "core";
 
 export type ToolResult = {

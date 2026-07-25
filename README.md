@@ -140,8 +140,67 @@ não funciona.
 Imagem: `google/gemini-2.5-flash-image`, `google/gemini-3.1-flash-image`,
 `bytedance-seed/seedream-4.5`. Embeddings: `openai/text-embedding-3-small`.
 
+## Extensões: MCP + Custom HTTP tools
+
+O agente enxerga três fontes de tools, misturadas a cada turno:
+
+1. **Nativas.** As 31 tools que vêm no bundle (GitHub, Jira, Slack, memória, etc).
+2. **Servidores MCP.** Tools expostas por qualquer servidor que fale o Model
+   Context Protocol. Padrão aberto (spec 2025-06-18). O usuário adiciona o URL
+   e um bearer opcional; o app roda `initialize` + `tools/list`, cacheia o
+   catálogo e as tools viram `AgentTool` no registry.
+3. **Custom HTTP.** O usuário declara nome, método, URL, headers, body
+   template e schema de parâmetros. Vira uma tool também.
+
+Combinação intencional: **MCP cobre o que está no ecossistema, Custom cobre o
+resto.** Se o SaaS que você usa não tem servidor MCP, ou se é a sua própria
+API, você conecta na aba Custom. Isso é o gancho de defensibilidade — 99% dos
+apps de agent na App Store não permitem isso.
+
+### Fluxo MCP
+
+- **Tela `(mcp)/`**: lista servidores, mostra status (verde/amarelo/cinza) e
+  quantidade de tools cacheadas.
+- **Tela `(mcp)/add`**: catálogo pré-populado (Linear, Sentry, Notion, Stripe,
+  Cloudflare, Zapier, GitHub oficial, Postgres) + rota "custom URL". Ao
+  conectar, testa o handshake antes de salvar.
+- **Tela `(mcp)/[serverId]`**: refresh, pause, disconnect, e um toggle
+  "Trusted" por tool — tool marcada como trusted pula a aprovação humana.
+  Servidor que declara `annotations.readOnlyHint: true` também pula.
+- **Namespace de nome**: uma tool `get_issue` do servidor `linear` vira
+  `mcp__linear__get_issue`. Evita colisão entre servidores e deixa o modelo
+  saber a origem lendo o nome.
+
+### Fluxo Custom HTTP
+
+- **Tela `(custom-tools)/`**: lista as tools declaradas com badge do método.
+- **Tela `(custom-tools)/new`**: dois modos. AI-generate (usuário descreve a
+  API em texto e o LLM monta a config; ele revisa antes de salvar) ou start
+  blank pra preencher no formulário.
+- **Tela `(custom-tools)/[toolId]`**: editor completo. Métodos GET/POST/PUT/
+  PATCH/DELETE. `mutates` auto-true pra qualquer coisa que não seja GET.
+  Placeholders `{{param}}` na URL, headers e body são substituídos pelos
+  argumentos que o modelo passar.
+
+### Segurança
+
+- MCP: fail-closed. Toda tool remota é tratada como `mutates: true` a não ser
+  que o servidor declare `readOnlyHint: true` ou o usuário marque como
+  trusted. Rede timeout curto (30s handshake, 60s call). Só JSON-RPC via HTTP
+  POST — sem SSE (fetch RN não expõe body stream).
+- Custom HTTP: só `http:` e `https:` no URL. Resposta capada em 200KB pra não
+  atolar o contexto do modelo. Content-Type auto-adicionado se o body parece
+  JSON e ninguém setou.
+
 ## O que ficou de fora
 
+- **OAuth em MCP.** Só bearer token, igual às outras integrações. OAuth com
+  refresh token exige backend (o mesmo problema do Gmail explicado abaixo).
+- **Streaming MCP (SSE).** O `fetch` do RN não expõe `response.body` sem
+  polyfill; MCP `notifications/tools/list_changed` fica ignorado. O usuário
+  refaz `Refresh tools` manualmente quando desconfia do cache.
+- **MCP Prompts e Resources.** A spec define esses dois primitivos além de
+  `tools`. Sem uso imediato pro agente; expandir depois.
 - **Gmail com envio automático permanente.** Access token OAuth dura ~1h. Refresh
   token exige client secret, que exige backend. Sem token, a tool abre o app de
   e-mail com tudo preenchido. SMTP com senha de app — o que a tela pedia antes —

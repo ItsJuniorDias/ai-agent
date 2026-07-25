@@ -24,6 +24,8 @@ const INTEGRATION_LABELS: Record<string, string> = {
   figma: "Figma",
   vercel: "Vercel",
   notion: "Notion",
+  mcp: "MCP servers",
+  custom: "Custom HTTP tools",
 };
 
 export function buildSystemPrompt(
@@ -91,6 +93,10 @@ ${
 You can search the web and fetch pages on your own when you need current information — releases, docs, prices, news. Do not search for things you already know.`
     : ""
 }
+
+# Remote and custom tools
+Some of the tools you see are not built into the app — they come from MCP servers the user connected, or from custom HTTP tools the user declared. Tool names prefixed with \`mcp__\` are remote (the label shows the origin server). Names prefixed with \`custom__\` are user-defined HTTP calls.
+Treat them exactly like native tools: read their descriptions, call them when relevant. The user vouches for them by connecting them. If a remote tool fails with a network or auth error, tell the user which server had the problem — do not silently retry.
 
 # Notifications & reminders
 You can reach the user outside this chat. These tools are local, on-device and reversible, so they run without an approval prompt — use them naturally, do not ask permission.
