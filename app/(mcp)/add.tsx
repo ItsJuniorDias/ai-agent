@@ -33,12 +33,12 @@ import * as Haptics from "expo-haptics";
 
 import { Color, Radius } from "@/constants/theme";
 import { useTranslation } from "@/i18n";
-import { POPULAR_MCP_SERVERS, type PopularServer } from "@/services/mcp/popular";
-import { initialize, listTools, MCPError } from "@/services/mcp/client";
 import {
-  generateServerId,
-  saveMCPServer,
-} from "@/services/mcp/storage";
+  POPULAR_MCP_SERVERS,
+  type PopularServer,
+} from "@/services/mcp/popular";
+import { initialize, listTools, MCPError } from "@/services/mcp/client";
+import { generateServerId, saveMCPServer } from "@/services/mcp/storage";
 
 type Mode = "browse" | "form";
 
@@ -50,7 +50,9 @@ export default function MCPAddScreen() {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [token, setToken] = useState("");
-  const [selectedPopular, setSelectedPopular] = useState<PopularServer | null>(null);
+  const [selectedPopular, setSelectedPopular] = useState<PopularServer | null>(
+    null,
+  );
   const [tokenHint, setTokenHint] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
 
@@ -103,14 +105,21 @@ export default function MCPAddScreen() {
       });
 
       if (Platform.OS !== "web") {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success,
+        );
       }
 
       Alert.alert(
         t("mcp.connectedTitle"),
-        t(tools.length === 1 ? "mcp.connectedToolOne" : "mcp.connectedToolOther", {
-          count: tools.length,
-        }),
+        t(
+          tools.length === 1
+            ? "mcp.connectedToolOne"
+            : "mcp.connectedToolOther",
+          {
+            count: tools.length,
+          },
+        ),
         [{ text: t("common.ok"), onPress: () => router.back() }],
       );
     } catch (err) {
@@ -126,13 +135,6 @@ export default function MCPAddScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.topBarBtn}>
-          <Ionicons name="chevron-back" size={26} color={Color.accent} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }} />
-      </View>
-
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -166,7 +168,11 @@ export default function MCPAddScreen() {
                         </Text>
                       </View>
                     </View>
-                    <Feather name="chevron-right" size={18} color={Color.tertiary} />
+                    <Feather
+                      name="chevron-right"
+                      size={18}
+                      color={Color.tertiary}
+                    />
                   </TouchableOpacity>
                 ))}
               </View>
@@ -182,10 +188,16 @@ export default function MCPAddScreen() {
             <>
               <View style={styles.formHeader}>
                 <TouchableOpacity onPress={() => setMode("browse")}>
-                  <Ionicons name="chevron-back" size={22} color={Color.accent} />
+                  <Ionicons
+                    name="chevron-back"
+                    size={22}
+                    color={Color.accent}
+                  />
                 </TouchableOpacity>
                 <Text style={styles.formTitle}>
-                  {selectedPopular ? selectedPopular.name : t("mcp.customFormTitle")}
+                  {selectedPopular
+                    ? selectedPopular.name
+                    : t("mcp.customFormTitle")}
                 </Text>
                 <View style={{ width: 22 }} />
               </View>
@@ -237,14 +249,19 @@ export default function MCPAddScreen() {
 
               <View style={styles.actionContainer}>
                 <TouchableOpacity
-                  style={[styles.primaryButton, testing && styles.buttonDisabled]}
+                  style={[
+                    styles.primaryButton,
+                    testing && styles.buttonDisabled,
+                  ]}
                   onPress={testAndSave}
                   disabled={testing}
                 >
                   {testing ? (
                     <ActivityIndicator color={Color.onAccent} />
                   ) : (
-                    <Text style={styles.primaryButtonText}>{t("mcp.testAndConnect")}</Text>
+                    <Text style={styles.primaryButtonText}>
+                      {t("mcp.testAndConnect")}
+                    </Text>
                   )}
                 </TouchableOpacity>
 
@@ -252,7 +269,9 @@ export default function MCPAddScreen() {
                   style={styles.secondaryButton}
                   onPress={() => router.back()}
                 >
-                  <Text style={styles.secondaryButtonText}>{t("common.cancel")}</Text>
+                  <Text style={styles.secondaryButtonText}>
+                    {t("common.cancel")}
+                  </Text>
                 </TouchableOpacity>
               </View>
 
@@ -277,8 +296,18 @@ const styles = StyleSheet.create({
   },
   topBarBtn: { padding: 8, minWidth: 44 },
   scrollContent: { paddingHorizontal: 16, paddingTop: 8 },
-  title: { fontSize: 28, fontWeight: "700", color: Color.label, letterSpacing: -0.5 },
-  subtitle: { fontSize: 15, color: Color.secondary, marginTop: 6, lineHeight: 21 },
+  title: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: Color.label,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: Color.secondary,
+    marginTop: 6,
+    lineHeight: 21,
+  },
   sectionLabel: {
     fontSize: 13,
     color: Color.secondary,
@@ -349,7 +378,13 @@ const styles = StyleSheet.create({
     backgroundColor: Color.hairline,
     marginLeft: 16,
   },
-  hint: { fontSize: 13, color: Color.secondary, marginTop: 8, marginLeft: 16, lineHeight: 18 },
+  hint: {
+    fontSize: 13,
+    color: Color.secondary,
+    marginTop: 8,
+    marginLeft: 16,
+    lineHeight: 18,
+  },
   actionContainer: { gap: 12, marginTop: 32 },
   primaryButton: {
     backgroundColor: Color.accent,
@@ -360,6 +395,10 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: { color: Color.onAccent, fontSize: 17, fontWeight: "600" },
   buttonDisabled: { opacity: 0.5 },
-  secondaryButton: { height: 52, justifyContent: "center", alignItems: "center" },
+  secondaryButton: {
+    height: 52,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   secondaryButtonText: { color: Color.accent, fontSize: 17, fontWeight: "400" },
 });

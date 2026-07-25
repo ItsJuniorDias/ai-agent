@@ -77,7 +77,10 @@ export default function MCPServerScreen() {
         <View style={{ padding: 24 }}>
           <Text style={styles.title}>{t("mcp.notFoundTitle")}</Text>
           <Text style={styles.subtitle}>{t("mcp.notFoundBody")}</Text>
-          <TouchableOpacity style={styles.primaryButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => router.back()}
+          >
             <Text style={styles.primaryButtonText}>{t("common.back")}</Text>
           </TouchableOpacity>
         </View>
@@ -93,7 +96,8 @@ export default function MCPServerScreen() {
       await updateMCPToolsCache(server.id, tools);
       await load();
     } catch (err) {
-      const msg = err instanceof MCPError ? err.message : (err as Error).message;
+      const msg =
+        err instanceof MCPError ? err.message : (err as Error).message;
       Alert.alert(t("mcp.errRefreshTitle"), msg);
     } finally {
       setRefreshing(false);
@@ -135,9 +139,13 @@ export default function MCPServerScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.headerBtn}
+        >
           <Ionicons name="chevron-back" size={26} color={Color.accent} />
         </TouchableOpacity>
+
         <Text style={styles.headerTitle} numberOfLines={1}>
           {server.name}
         </Text>
@@ -195,7 +203,9 @@ export default function MCPServerScreen() {
 
         {/* -- Tools -------------------------------------------------------- */}
         <Text style={styles.sectionLabel}>
-          {t(tools.length === 1 ? "mcp.toolOne" : "mcp.toolOther", { count: tools.length })}
+          {t(tools.length === 1 ? "mcp.toolOne" : "mcp.toolOther", {
+            count: tools.length,
+          })}
         </Text>
         {tools.length === 0 ? (
           <View style={styles.group}>
@@ -211,7 +221,10 @@ export default function MCPServerScreen() {
               return (
                 <View
                   key={tool.name}
-                  style={[styles.toolRow, i === tools.length - 1 && styles.noBorder]}
+                  style={[
+                    styles.toolRow,
+                    i === tools.length - 1 && styles.noBorder,
+                  ]}
                 >
                   <View style={{ flex: 1 }}>
                     <Text style={styles.toolName}>{tool.name}</Text>
@@ -223,12 +236,16 @@ export default function MCPServerScreen() {
                     <View style={styles.badges}>
                       {readOnly && (
                         <View style={styles.badge}>
-                          <Text style={styles.badgeText}>{t("mcp.readOnly")}</Text>
+                          <Text style={styles.badgeText}>
+                            {t("mcp.readOnly")}
+                          </Text>
                         </View>
                       )}
                       {trusted && (
                         <View style={[styles.badge, styles.badgeAccent]}>
-                          <Text style={[styles.badgeText, styles.badgeAccentText]}>
+                          <Text
+                            style={[styles.badgeText, styles.badgeAccentText]}
+                          >
                             {t("mcp.trusted")}
                           </Text>
                         </View>
@@ -238,7 +255,9 @@ export default function MCPServerScreen() {
                   {!readOnly && (
                     <Switch
                       value={trusted}
-                      onValueChange={(v: boolean) => toggleTrusted(tool.name, v)}
+                      onValueChange={(v: boolean) =>
+                        toggleTrusted(tool.name, v)
+                      }
                       {...switchProps}
                     />
                   )}
@@ -270,7 +289,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   headerBtn: { padding: 8, minWidth: 44 },
-  headerTitle: { fontSize: 17, fontWeight: "600", color: Color.label, flex: 1, textAlign: "center" },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: "600",
+    color: Color.label,
+    flex: 1,
+    textAlign: "center",
+  },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 40 },
   title: { fontSize: 24, fontWeight: "700", color: Color.label },
   subtitle: { fontSize: 15, color: Color.secondary, marginTop: 8 },
@@ -315,7 +340,13 @@ const styles = StyleSheet.create({
   },
   rowTitle: { fontSize: 15, color: Color.label, fontWeight: "500" },
   rowSub: { fontSize: 13, color: Color.secondary, marginTop: 4 },
-  hint: { fontSize: 12, color: Color.tertiary, marginTop: 8, marginLeft: 16, lineHeight: 18 },
+  hint: {
+    fontSize: 12,
+    color: Color.tertiary,
+    marginTop: 8,
+    marginLeft: 16,
+    lineHeight: 18,
+  },
   refreshBtn: {
     flexDirection: "row",
     gap: 8,
