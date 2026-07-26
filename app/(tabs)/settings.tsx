@@ -48,6 +48,7 @@ import {
 } from "@/i18n";
 
 const STEP_OPTIONS = [4, 6, 8, 12, 16];
+const SUBAGENT_STEP_OPTIONS = [3, 5, 8, 12];
 
 /** Switch styling shared by every toggle — iris "on", quiet "off". */
 const switchProps = {
@@ -245,6 +246,89 @@ export default function Settings() {
         ))}
       </View>
       <Text style={styles.footerText}>{t("settings.modelFooter")}</Text>
+
+      {/* -- Sub-agents ---------------------------------------------------- */}
+      {/*
+        Configura o mini-loop que o main dispara via `spawn_subagent`. Se o
+        user não escolher nada, o `subagentModel` fica `undefined` e o loop
+        cai em `orchestrationModel` → `model` (nessa ordem). A linha "Auto"
+        expõe justamente esse comportamento — clara pra quem só quer que
+        funcione, e destravável pra quem quer economizar.
+      */}
+      <Text style={styles.sectionTitle}>{t("settings.subagentTitle")}</Text>
+      <View style={styles.group}>
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => update({ subagentModel: undefined })}
+          activeOpacity={0.6}
+        >
+          <View style={styles.rowLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: Color.secondary }]}>
+              <Ionicons name="git-branch" size={16} color={Palette.white} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowText}>{t("settings.subagentAuto")}</Text>
+              <Text style={styles.rowSubtext}>{t("settings.subagentAutoSub")}</Text>
+            </View>
+          </View>
+          {config.subagentModel === undefined && (
+            <Ionicons name="checkmark" size={22} color={Color.accent} />
+          )}
+        </TouchableOpacity>
+        {AGENT_MODELS.map((model, index) => (
+          <TouchableOpacity
+            key={model.id}
+            style={[
+              styles.row,
+              index === AGENT_MODELS.length - 1 && styles.noBorder,
+            ]}
+            onPress={() => update({ subagentModel: model.id })}
+            activeOpacity={0.6}
+          >
+            <View style={styles.rowLeft}>
+              <View style={[styles.iconContainer, { backgroundColor: model.color }]}>
+                <Ionicons name="sparkles" size={16} color={Palette.white} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowText}>{model.name}</Text>
+                <Text style={styles.rowSubtext}>
+                  {t(model.descKey)} ·{" "}
+                  {formatPrice(model.priceAmount, t(model.priceUnitKey))}
+                </Text>
+              </View>
+            </View>
+            {config.subagentModel === model.id && (
+              <Ionicons name="checkmark" size={22} color={Color.accent} />
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
+      <Text style={styles.footerText}>{t("settings.subagentFooter")}</Text>
+
+      <Text style={styles.sectionTitle}>{t("settings.subagentMaxSteps")}</Text>
+      <View style={styles.segmented}>
+        {SUBAGENT_STEP_OPTIONS.map((n) => (
+          <TouchableOpacity
+            key={n}
+            style={[
+              styles.segment,
+              config.subagentMaxSteps === n && styles.segmentActive,
+            ]}
+            onPress={() => update({ subagentMaxSteps: n })}
+            activeOpacity={0.7}
+          >
+            <Text
+              style={[
+                styles.segmentText,
+                config.subagentMaxSteps === n && styles.segmentTextActive,
+              ]}
+            >
+              {n}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <Text style={styles.footerText}>{t("settings.subagentMaxStepsFooter")}</Text>
 
       {/* -- Comportamento ----------------------------------------------- */}
       <Text style={styles.sectionTitle}>{t("settings.agentBehavior")}</Text>

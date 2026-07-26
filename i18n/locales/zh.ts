@@ -127,6 +127,14 @@ const zh: Dict = {
     maxRounds: "最大工具轮次",
     maxRoundsFooter:
       "助手在必须回答前可调用工具的次数。轮次越多越能处理复杂任务，每条消息的费用也越高。",
+    subagentTitle: "子代理模型",
+    subagentAuto: "自动",
+    subagentAutoSub: "使用编排模型；如未设置，则使用主模型。",
+    subagentFooter:
+      "当助手通过 spawn_subagent 委派专注任务时，此模型运行子循环。更便宜的模型通常足够 —— 子代理以干净的上下文启动，且只使用只读工具。",
+    subagentMaxSteps: "子代理最大轮次",
+    subagentMaxStepsFooter:
+      "每个子代理在必须汇总前拥有的工具调用轮次。轮次越少，子代理越专注且成本越低。",
     memory: "记忆",
     longTermMemory: "长期记忆",
     factOne: "已记住 {{count}} 条信息",
@@ -274,6 +282,13 @@ const zh: Dict = {
     open: "打开",
     concluded: "已完成",
     failed: "失败",
+    subagentLabel: "子代理",
+    subStepOne: "{{count}} 个内部步骤",
+    subStepOther: "{{count}} 个内部步骤",
+    subFinished: "已完成",
+    subMaxSteps: "已达轮次上限",
+    subFailed: "失败",
+    tokens: "tokens",
   },
 
   models: {

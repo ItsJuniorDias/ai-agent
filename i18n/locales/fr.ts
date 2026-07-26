@@ -132,6 +132,15 @@ const fr: Dict = {
     maxRounds: "TOURS D'OUTILS MAX",
     maxRoundsFooter:
       "Combien de fois l'agent peut appeler des outils avant de devoir répondre. Plus élevé gère les tâches complexes ; ça coûte aussi plus cher par message.",
+    subagentTitle: "MODÈLE DU SOUS-AGENT",
+    subagentAuto: "Auto",
+    subagentAutoSub:
+      "Utilise le modèle d'orchestration, ou le principal si aucun n'est défini.",
+    subagentFooter:
+      "Quand l'agent délègue une tâche ciblée via spawn_subagent, ce modèle exécute la sous-boucle. Un modèle moins cher suffit souvent — les sous-agents démarrent avec un contexte propre et n'ont que des outils de lecture.",
+    subagentMaxSteps: "TOURS MAX DU SOUS-AGENT",
+    subagentMaxStepsFooter:
+      "Combien de tours d'outils chaque sous-agent a avant de devoir résumer. Moins de tours = sous-agent focalisé et bon marché.",
     memory: "MÉMOIRE",
     longTermMemory: "Mémoire long terme",
     factOne: "{{count}} fait mémorisé",
@@ -288,6 +297,13 @@ const fr: Dict = {
     open: "Ouvrir",
     concluded: "Terminé",
     failed: "Échoué",
+    subagentLabel: "Sous-agent",
+    subStepOne: "{{count}} étape interne",
+    subStepOther: "{{count}} étapes internes",
+    subFinished: "Terminé",
+    subMaxSteps: "Limite atteinte",
+    subFailed: "Échec",
+    tokens: "tokens",
   },
 
   models: {

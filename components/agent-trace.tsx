@@ -94,11 +94,101 @@ function StatusIcon({ status }: { status: AgentStep["status"] }) {
   }
 }
 
-function StepRow({ step }: { step: AgentStep }) {
+// ---------------------------------------------------------------------------
+// Sub-agent trace aninhado
+// ---------------------------------------------------------------------------
+
+/**
+ * Shape do `uiData` que o `spawn_subagent` empurra pra UI. Está tipado como
+ * `unknown` no `ToolResult` — checamos aqui antes de renderizar.
+ */
+type SubagentUiData = {
+  summary: string;
+  steps: AgentStep[];
+  stop_reason: "final" | "max_steps" | "error";
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+    cost?: number;
+  };
+};
+
+function isSubagentUiData(data: unknown): data is SubagentUiData {
+  if (!data || typeof data !== "object") return false;
+  const d = data as Record<string, unknown>;
+  return (
+    typeof d.summary === "string" &&
+    Array.isArray(d.steps) &&
+    typeof d.stop_reason === "string"
+  );
+}
+
+/**
+ * Renderiza um step de `spawn_subagent`. Mostra o resumo do sub-agent como
+ * texto (não como JSON) e os steps internos com indentação suave. Cada
+ * sub-step é um `StepRow` recursivo — se em algum momento um sub-agent
+ * puder chamar outro (hoje não pode, ver `agent/subagent.ts`), esta UI
+ * já renderiza aninhado sem mudança.
+ */
+function SubagentBody({ uiData }: { uiData: SubagentUiData }) {
+  const { t } = useTranslation();
+
+  const stopLabel =
+    uiData.stop_reason === "final"
+      ? t("trace.subFinished")
+      : uiData.stop_reason === "max_steps"
+        ? t("trace.subMaxSteps")
+        : t("trace.subFailed");
+
+  const totalTokens = uiData.usage?.total_tokens;
+  const cost = uiData.usage?.cost;
+
+  return (
+    <View style={styles.subagentContainer}>
+      <View style={styles.subagentMeta}>
+        <Text style={styles.subagentMetaText}>
+          {stopLabel}
+          {totalTokens !== undefined
+            ? ` · ${totalTokens.toLocaleString()} ${t("trace.tokens")}`
+            : ""}
+          {cost !== undefined && cost > 0
+            ? ` · $${cost.toFixed(4)}`
+            : ""}
+        </Text>
+      </View>
+
+      {uiData.summary?.trim() && (
+        <Text style={styles.subagentSummary}>{uiData.summary.trim()}</Text>
+      )}
+
+      {uiData.steps.length > 0 && (
+        <View style={styles.subagentStepsWrap}>
+          <View style={styles.subagentStepsRail} />
+          <View style={styles.subagentStepsList}>
+            {uiData.steps.map((step) => (
+              <StepRow key={step.id} step={step} nested />
+            ))}
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function StepRow({ step, nested }: { step: AgentStep; nested?: boolean }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const meta = INTEGRATION_META[step.integration] ?? INTEGRATION_META.core;
   const args = formatArgs(step.args);
+
+  // Sub-agent tem tratamento visual e de expansão diferente: badge próprio,
+  // body substituído por SubagentBody quando temos uiData estruturado.
+  const isSubagent = step.name === "spawn_subagent";
+  const subUi =
+    isSubagent && isSubagentUiData(step.result?.uiData)
+      ? (step.result!.uiData as SubagentUiData)
+      : null;
 
   const toggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -106,24 +196,42 @@ function StepRow({ step }: { step: AgentStep }) {
   };
 
   return (
-    <View style={styles.step}>
+    <View style={[styles.step, nested && styles.stepNested]}>
       <TouchableOpacity
         style={styles.stepHeader}
         onPress={toggle}
         activeOpacity={0.6}
       >
-        <View style={[styles.dot, { backgroundColor: alpha(meta.onSurface, 0.12) }]}>
-          <Feather name={meta.icon} size={12} color={meta.onSurface} />
-        </View>
+        {isSubagent ? (
+          <View style={[styles.dot, styles.subagentDot]}>
+            <Feather name="git-branch" size={12} color={Color.accent} />
+          </View>
+        ) : (
+          <View style={[styles.dot, { backgroundColor: alpha(meta.onSurface, 0.12) }]}>
+            <Feather name={meta.icon} size={12} color={meta.onSurface} />
+          </View>
+        )}
 
         <View style={styles.stepTitleWrap}>
           <Text style={styles.stepTitle} numberOfLines={1}>
-            {step.label}
+            {isSubagent ? t("trace.subagentLabel") : step.label}
           </Text>
-          {!!args && (
+          {isSubagent && subUi ? (
             <Text style={styles.stepArgs} numberOfLines={1}>
-              {args}
+              {t(
+                subUi.steps.length === 1 ? "trace.subStepOne" : "trace.subStepOther",
+                { count: subUi.steps.length },
+              )}
+              {typeof step.args?.task === "string"
+                ? ` · ${String(step.args.task).slice(0, 60)}${String(step.args.task).length > 60 ? "…" : ""}`
+                : ""}
             </Text>
+          ) : (
+            !!args && (
+              <Text style={styles.stepArgs} numberOfLines={1}>
+                {args}
+              </Text>
+            )
           )}
         </View>
 
@@ -131,44 +239,50 @@ function StepRow({ step }: { step: AgentStep }) {
       </TouchableOpacity>
 
       {open && (
-        <View style={styles.stepBody}>
-          <Text style={styles.mono}>{step.name}</Text>
+        <View style={[styles.stepBody, nested && styles.stepBodyNested]}>
+          {subUi ? (
+            <SubagentBody uiData={subUi} />
+          ) : (
+            <>
+              <Text style={styles.mono}>{step.name}</Text>
 
-          {Object.keys(step.args).length > 0 && (
-            <Text style={styles.monoDim}>
-              {JSON.stringify(step.args, null, 2)}
-            </Text>
-          )}
+              {Object.keys(step.args).length > 0 && (
+                <Text style={styles.monoDim}>
+                  {JSON.stringify(step.args, null, 2)}
+                </Text>
+              )}
 
-          {step.result && (
-            <Text
-              style={[
-                styles.resultText,
-                !step.result.ok && styles.resultError,
-              ]}
-            >
-              {step.result.ok
-                ? (step.result.summary ?? t("trace.concluded"))
-                : (step.result.error ?? t("trace.failed"))}
-            </Text>
-          )}
+              {step.result && (
+                <Text
+                  style={[
+                    styles.resultText,
+                    !step.result.ok && styles.resultError,
+                  ]}
+                >
+                  {step.result.ok
+                    ? (step.result.summary ?? t("trace.concluded"))
+                    : (step.result.error ?? t("trace.failed"))}
+                </Text>
+              )}
 
-          {!!step.result?.url && step.result.url.startsWith("http") && (
-            <TouchableOpacity
-              onPress={() => Linking.openURL(step.result!.url!)}
-              style={styles.linkButton}
-            >
-              <Feather name="external-link" size={12} color={Color.accent} />
-              <Text style={styles.linkText}>{t("trace.open")}</Text>
-            </TouchableOpacity>
-          )}
+              {!!step.result?.url && step.result.url.startsWith("http") && (
+                <TouchableOpacity
+                  onPress={() => Linking.openURL(step.result!.url!)}
+                  style={styles.linkButton}
+                >
+                  <Feather name="external-link" size={12} color={Color.accent} />
+                  <Text style={styles.linkText}>{t("trace.open")}</Text>
+                </TouchableOpacity>
+              )}
 
-          {step.durationMs !== undefined && (
-            <Text style={styles.duration}>
-              {step.durationMs < 1000
-                ? `${step.durationMs} ms`
-                : `${(step.durationMs / 1000).toFixed(1)} s`}
-            </Text>
+              {step.durationMs !== undefined && (
+                <Text style={styles.duration}>
+                  {step.durationMs < 1000
+                    ? `${step.durationMs} ms`
+                    : `${(step.durationMs / 1000).toFixed(1)} s`}
+                </Text>
+              )}
+            </>
           )}
         </View>
       )}
@@ -258,6 +372,9 @@ const styles = StyleSheet.create({
   list: { marginTop: 4 },
   live: { paddingHorizontal: 4, paddingVertical: 2 },
   step: { marginVertical: 2 },
+  stepNested: {
+    marginVertical: 1,
+  },
   stepHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -271,6 +388,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  subagentDot: {
+    backgroundColor: alpha(Color.accent, 0.12),
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: alpha(Color.accent, 0.35),
+  },
   stepTitleWrap: { flex: 1 },
   stepTitle: { fontSize: 14, color: Color.label, fontWeight: "500" },
   stepArgs: { ...Type.caption, color: Color.secondary, marginTop: 1 },
@@ -281,6 +403,43 @@ const styles = StyleSheet.create({
     backgroundColor: Color.surface2,
     borderRadius: Radius.sm,
     gap: 6,
+  },
+  stepBodyNested: {
+    padding: 8,
+    backgroundColor: Color.surface3,
+  },
+  // -- Sub-agent trace body -------------------------------------------------
+  subagentContainer: {
+    gap: 10,
+  },
+  subagentMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  subagentMetaText: {
+    ...Type.caption2,
+    color: Color.tertiary,
+    fontFamily: MonoFont,
+  },
+  subagentSummary: {
+    ...Type.footnote,
+    color: Color.label,
+    lineHeight: 19,
+  },
+  subagentStepsWrap: {
+    flexDirection: "row",
+    marginTop: 2,
+  },
+  /** Barra vertical à esquerda que sinaliza aninhamento sem custar layout. */
+  subagentStepsRail: {
+    width: 2,
+    marginLeft: 4,
+    marginRight: 8,
+    backgroundColor: alpha(Color.accent, 0.35),
+    borderRadius: 1,
+  },
+  subagentStepsList: {
+    flex: 1,
   },
   mono: { fontFamily: MonoFont, fontSize: 11, color: Color.accent },
   monoDim: { fontFamily: MonoFont, fontSize: 11, color: Color.secondary },

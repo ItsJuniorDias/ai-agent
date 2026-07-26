@@ -133,6 +133,15 @@ const es: Dict = {
     maxRounds: "MÁX. DE RONDAS",
     maxRoundsFooter:
       "Cuántas veces puede llamar herramientas el agente antes de responder. Más rondas resuelven tareas difíciles; también cuestan más por mensaje.",
+    subagentTitle: "MODELO DEL SUB-AGENTE",
+    subagentAuto: "Automático",
+    subagentAutoSub:
+      "Usa el modelo de orquestación, o el principal si no hay ninguno.",
+    subagentFooter:
+      "Cuando el agente delega una tarea concreta con spawn_subagent, este modelo ejecuta el mini-bucle. Un modelo más barato suele bastar — los sub-agentes empiezan con contexto limpio y solo tienen herramientas de lectura.",
+    subagentMaxSteps: "MÁX. RONDAS DEL SUB-AGENTE",
+    subagentMaxStepsFooter:
+      "Cuántas rondas de herramientas tiene cada sub-agente antes de tener que resumir. Menos rondas mantienen al sub-agente enfocado y barato.",
     memory: "MEMORIA",
     longTermMemory: "Memoria a largo plazo",
     factOne: "{{count}} dato recordado",
@@ -287,6 +296,13 @@ const es: Dict = {
     open: "Abrir",
     concluded: "Hecho",
     failed: "Falló",
+    subagentLabel: "Sub-agente",
+    subStepOne: "{{count}} paso interno",
+    subStepOther: "{{count}} pasos internos",
+    subFinished: "Finalizado",
+    subMaxSteps: "Alcanzó el límite",
+    subFailed: "Falló",
+    tokens: "tokens",
   },
 
   models: {

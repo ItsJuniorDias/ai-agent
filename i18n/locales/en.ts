@@ -137,6 +137,14 @@ const en = {
     maxRounds: "MAX TOOL ROUNDS",
     maxRoundsFooter:
       "How many times the agent may call tools before it must answer. Higher handles harder tasks; it also costs more per message.",
+    subagentTitle: "SUB-AGENT MODEL",
+    subagentAuto: "Auto",
+    subagentAutoSub: "Use the orchestration model, or the main one if none is set.",
+    subagentFooter:
+      "When the agent delegates a focused task with spawn_subagent, this model runs the sub-loop. Cheaper is usually better — sub-agents start with fresh context and read-only tools.",
+    subagentMaxSteps: "SUB-AGENT MAX ROUNDS",
+    subagentMaxStepsFooter:
+      "How many tool rounds each sub-agent gets before it must summarize. Lower keeps sub-agents focused and cheap.",
     memory: "MEMORY",
     longTermMemory: "Long-term memory",
     factOne: "{{count}} fact remembered",
@@ -288,6 +296,13 @@ const en = {
     open: "Open",
     concluded: "Done",
     failed: "Failed",
+    subagentLabel: "Sub-agent",
+    subStepOne: "{{count}} inner step",
+    subStepOther: "{{count}} inner steps",
+    subFinished: "Finished",
+    subMaxSteps: "Hit step limit",
+    subFailed: "Failed",
+    tokens: "tokens",
   },
 
   models: {

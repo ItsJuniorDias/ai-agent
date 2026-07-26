@@ -132,6 +132,14 @@ const pt: Dict = {
     maxRounds: "MÁX. DE RODADAS",
     maxRoundsFooter:
       "Quantas vezes o agente pode chamar ferramentas antes de responder. Mais rodadas dão conta de tarefas difíceis; também custam mais por mensagem.",
+    subagentTitle: "MODELO DO SUB-AGENTE",
+    subagentAuto: "Automático",
+    subagentAutoSub: "Usa o modelo de orquestração, ou o principal se não houver.",
+    subagentFooter:
+      "Quando o agente delega uma tarefa focada com spawn_subagent, este modelo roda o mini-loop. Modelo mais barato costuma bastar — sub-agentes começam com contexto limpo e só têm ferramentas de leitura.",
+    subagentMaxSteps: "MÁX. DE RODADAS DO SUB-AGENTE",
+    subagentMaxStepsFooter:
+      "Quantas rodadas de ferramentas cada sub-agente tem antes de precisar resumir. Menos rodadas mantém o sub-agente focado e barato.",
     memory: "MEMÓRIA",
     longTermMemory: "Memória de longo prazo",
     factOne: "{{count}} fato lembrado",
@@ -286,6 +294,13 @@ const pt: Dict = {
     open: "Abrir",
     concluded: "Concluído",
     failed: "Falhou",
+    subagentLabel: "Sub-agente",
+    subStepOne: "{{count}} passo interno",
+    subStepOther: "{{count}} passos internos",
+    subFinished: "Finalizado",
+    subMaxSteps: "Atingiu limite de rodadas",
+    subFailed: "Falhou",
+    tokens: "tokens",
   },
 
   models: {

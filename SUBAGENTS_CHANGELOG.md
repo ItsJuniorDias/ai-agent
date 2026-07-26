@@ -1,11 +1,12 @@
 # Patch: sub-agentes
 
 Uma tool nova, `spawn_subagent`, que deixa o agente principal delegar sub-tarefas
-focadas a mini-loops isolados. Sem quebrar retrocompatibilidade — todos os
-campos novos em `AgentConfig` têm default, e o registro da tool passa pelo mesmo
-caminho das outras (`coreTools`).
+focadas a mini-loops isolados — mais a configuração em Ajustes e o trace
+aninhado no chat. Nada quebra retrocompatibilidade: campos novos em
+`AgentConfig` têm default, o registro da tool passa pelo mesmo caminho das
+outras (`coreTools`), e o campo novo `uiData` em `ToolResult` é opcional.
 
-O ganho aparece em duas situações reais:
+O ganho aparece em três situações reais:
 
 1. **Trabalho paralelizável.** "Revise cada um destes 5 PRs" vira 5 chamadas
    simultâneas ao sub-agent — na prática o `Promise.all` que já existe no
@@ -20,9 +21,13 @@ O ganho aparece em duas situações reais:
    sumário — não os detalhes de cada tool call. É pura economia de contexto
    nas conversas futuras.
 
+3. **Auditoria visual.** O trace do chat expande o sub-agent como um bloco
+   próprio, mostrando os steps internos, o sumário, o motivo de parada, os
+   tokens e o custo — sem que nada disso pese no contexto do modelo.
+
 ## 1. Novo módulo: `agent/subagent.ts`
 
-Um mini-loop ReAct em ~350 linhas, propositalmente **não** um wrapper do
+Um mini-loop ReAct em ~460 linhas, propositalmente **não** um wrapper do
 `runAgent`. Motivo: o `runAgent` tem responsabilidades que não fazem sentido
 aqui (histórico externo, aprovação humana, memória de longo prazo). Passar
 esses parâmetros como `null` e usar branches internos pra ignorar poluiria o
@@ -45,13 +50,21 @@ main agent
                   │    └─ retorna assistant sem tool_calls = fim
                   └─ retorna { text, steps, usage, stopReason }
 
-devolve ao main:
+devolve ao main (via `data`, enxuto ~500 tokens):
 {
-  summary: "...",           // texto a ser lido
+  summary: "...",
   steps_taken: 6,
   stop_reason: "final",
   step_trace: "✓ github_list_pull_requests, ✓ github_get_pull_request_diff, ...",
   usage: { prompt_tokens, completion_tokens, total_tokens, cost }
+}
+
+devolve à UI (via `uiData`, invisível ao modelo):
+{
+  summary: "...",
+  steps: SubagentStep[],  // completos, com args, results, timings
+  stop_reason: "final",
+  usage: ORUsage
 }
 ```
 
@@ -84,13 +97,14 @@ defesa:
 
 **Truncação do sumário.** Se o sub-agent escrever mais de 6k chars, cortamos
 com aviso. É o teto pra proteger o contexto do main, que é justamente o que
-a delegação queria preservar. Não é blessing: se está cortando muito, provavelmente
-o `brief` ou `task` estava vago demais.
+a delegação queria preservar. Não é blessing: se está cortando muito,
+provavelmente o `brief` ou `task` estava vago demais.
 
 **Modelo dedicado, opcional.** Novo `config.subagentModel`. Se `undefined`,
 cai em `config.orchestrationModel`, e depois em `config.model`. Um sub-agent
 faz trabalho focado com contexto limpo — casa bem com modelo barato.
 Combinação recomendada:
+
 ```ts
 {
   model: "anthropic/claude-sonnet-4.6",
@@ -144,23 +158,101 @@ quando delegar (subtarefas focadas, especialmente paralelas) e quando não
 (chat casual, writes). Sem essa instrução o modelo raramente decide chamar a
 tool sozinho — vale a pena.
 
-## Como usar
+## 5. UI: configuração dos sub-agents em Ajustes
 
-Zero mudança de setup:
+Duas novas seções na `app/(tabs)/settings.tsx`, colocadas logo depois de
+"Modelo do agente":
+
+**Sub-agent model.** Lista os mesmos `AGENT_MODELS` do modelo principal, mais
+uma linha "Auto" no topo — quando selecionada, `subagentModel` fica
+`undefined` e o sub-agent cai em `orchestrationModel` → `model`. Essa linha
+"Auto" existe pra não obrigar o usuário casual a entender a cascata de
+fallback: pra ele, "Auto" é literalmente auto.
+
+**Sub-agent max rounds.** Segmented control com opções 3 / 5 / 8 / 12 — o
+mesmo widget que já existe pro `maxSteps` do main, com um range menor porque
+sub-agent focado dificilmente precisa de mais de 8 rodadas.
+
+Nada de UI de "veja quantos sub-agents rodaram no último turno" aqui — esse
+sinal aparece diretamente no trace (item 6). A tela de Ajustes fica só com
+config.
+
+Strings i18n adicionadas nos 7 idiomas suportados (`en`, `pt`, `es`, `fr`,
+`zh`, `ar`, `hi`) sob as chaves `settings.subagentTitle`, `subagentAuto`,
+`subagentAutoSub`, `subagentFooter`, `subagentMaxSteps` e
+`subagentMaxStepsFooter`.
+
+**Arquivos.** `app/(tabs)/settings.tsx`, `i18n/locales/*.ts`.
+
+## 6. Trace aninhado do sub-agent
+
+O `agent-trace.tsx` agora reconhece um step `spawn_subagent` e renderiza um
+painel próprio quando expandido:
+
+- **Badge diferenciado.** Ícone `git-branch` no accent, borda sutil — visual
+  distinto das tools de integração.
+- **Rótulo próprio.** "Sub-agent · 5 inner steps · task…" no header em vez
+  do genérico "Delegando ao sub-agente" com args JSON.
+- **Body substituído.** Em vez do dump de JSON dos args + `summary`, o corpo
+  mostra:
+  - Uma linha de metadados: motivo de parada (Finished / Hit step limit /
+    Failed) + tokens totais + custo em USD, tudo em mono cinza.
+  - O sumário do sub-agent como prosa legível, com line-height 19.
+  - Os steps internos como `StepRow`s aninhados, à direita de uma barra
+    vertical accent-tinted que sinaliza aninhamento (o "rail"). Cada
+    sub-step é um `StepRow` recursivo — se um dia sub-agents puderem
+    disparar outros sub-agents (hoje bloqueado no `subagent.ts`), a UI já
+    renderiza aninhado sem mudança.
+
+Strings i18n novas em `trace.*`: `subagentLabel`, `subStepOne`,
+`subStepOther`, `subFinished`, `subMaxSteps`, `subFailed`, `tokens`.
+
+### Isolamento de dados: `ToolResult.uiData`
+
+Pra fazer o trace funcionar sem inflar o contexto do modelo (o que negaria o
+ponto todo dos sub-agents), adicionei um campo novo em `ToolResult`:
+
+```ts
+export type ToolResult = {
+  ok: boolean;
+  data?: unknown;      // vai pro modelo (via serializeResult)
+  uiData?: unknown;    // ← NOVO: SÓ pra UI, jamais serializado
+  error?: string;
+  summary?: string;
+  url?: string;
+};
+```
+
+O `serializeResult` em `agent/run-agent.ts` só olha para `data`/`summary`/
+`url`/`error` — o `uiData` é ignorado por construção, sem código extra.
+A `spawn_subagent.execute` agora retorna:
+
+- `data` para o modelo: sumário em texto + steps_taken + stop_reason +
+  step_trace compacto (string tipo "✓ github_list_pull_requests, ✓ …") +
+  usage. Tudo enxuto, cabe em ~500 tokens.
+- `uiData` para o trace: os `SubagentStep[]` completos com args, results,
+  timings, tudo. Fica na memória do estado da UI, nunca vai pro modelo.
+
+Essa separação é útil pra qualquer tool futura que produza dado de UI rico
+sem querer empurrar tudo pro contexto do modelo (attachments, previews,
+etc). Não é sub-agent-específico.
+
+**Arquivos.** `agent/types.ts` (novo campo), `agent/tools/core.ts` (usa),
+`components/agent-trace.tsx` (renderiza).
+
+## Como aplicar em quem já usa
+
+Nada muda:
 
 ```bash
 npm install
 npx expo start -c
 ```
 
-Se quiser configurar modelo dedicado pro sub-agent, em Ajustes (você precisa
-expor a UI ainda) ou via código:
-
-```ts
-await saveConfig({
-  subagentModel: "google/gemini-2.5-flash-lite",
-});
-```
+Configs novas (`subagentModel`, `subagentMaxSteps`) usam default via
+`loadConfig()` spread, então instalações existentes seguem funcionando. O
+campo `uiData` em `ToolResult` é opcional — tools que não retornam nada aí
+seguem funcionando idêntico.
 
 ## Exemplo de conversa
 
@@ -178,22 +270,24 @@ spawn_subagent(task: "revise o diff do PR #44 em octocat/hello-world e resuma...
 
 Os 3 rodam em paralelo (o `run-agent.ts` já particiona `mutates: false` em
 `Promise.all`). Voltam 3 sumários compactos. O main compara os 3 e responde
-ao user — sem que os diffs cheios entrem no contexto principal.
+ao user — sem que os diffs cheios entrem no contexto principal. No chat, o
+trace mostra 3 blocos de sub-agent expandíveis, cada um com seus steps
+internos, sumário, tokens e custo.
 
-## O que ficou de fora deste patch
+## O que ficou fora deste patch
 
-- **UI de configuração dos novos campos.** `subagentModel` e `subagentMaxSteps`
-  estão persistindo e funcionando, mas não há tela pra o user editar sem
-  código. Feature de UI, não de agente — fica pra próxima leva junto de
-  cost tracking persistido por conversa.
 - **Sub-agents com writes controlados.** Um modo futuro em que um sub-agent
   pode preparar um payload de write e mandar de volta ao main pra aprovação
   centralizada. Interessante mas exige repensar o `AgentEvent` — fora deste
   patch.
-- **Trace aninhado na UI.** Hoje o main mostra o sub-agent como um step
-  "Delegando ao sub-agente" com progresso via `progress()`. Uma UI que
-  expande e mostra os steps internos do sub seria útil pra debug — o dado
-  está lá em `ToolResult.data.step_trace`, é só uma tela nova ler.
+- **Custo do sub-agent visível no cabeçalho do turno.** O `uiData.usage`
+  está lá; falta só somar no total do turno na tela principal do chat.
+  Pequeno, faço junto com um refactor de "cost pill" numa próxima leva.
+- **Streaming ao vivo dos passos do sub-agent.** Hoje o `SubagentBody` só
+  aparece depois que o sub-agent termina — durante a execução, o main mostra
+  status via `progress()` como texto ("Sub-agent: passo 3/5"). Fazer a UI
+  desenhar sub-steps em tempo real exige passar `onEvent` do sub pra UI, e
+  isso muda a assinatura do `ToolContext`. Vale, mas em patch separado.
 - **A2A (agente-a-agente).** Discussão paralela: expor o próprio app como
   MCP server pra outros agentes o consumirem. Diferente arquitetural
   (servidor HTTP + auth + persistência), fica pra sessão dedicada.

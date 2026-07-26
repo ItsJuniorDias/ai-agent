@@ -287,23 +287,38 @@ export const spawnSubagent: AgentTool = {
       // O payload que volta pro modelo. Deliberadamente enxuto: sumário +
       // metadados. O modelo do main lê o `summary`; os outros campos ajudam
       // ele a decidir se precisa spawnar outro sub-agent complementar.
-      return ok(
-        `Sub-agent finalizou (${result.steps.length} passos, ${result.stopReason})`,
-        {
-          summary: result.text,
-          steps_taken: result.steps.length,
-          stop_reason: result.stopReason,
-          step_trace: stepSummary || "(sem tool calls)",
-          usage: result.usage
-            ? {
-                prompt_tokens: result.usage.prompt_tokens,
-                completion_tokens: result.usage.completion_tokens,
-                total_tokens: result.usage.total_tokens,
-                cost: result.usage.cost,
-              }
-            : undefined,
-        },
-      );
+      const dataForModel = {
+        summary: result.text,
+        steps_taken: result.steps.length,
+        stop_reason: result.stopReason,
+        step_trace: stepSummary || "(sem tool calls)",
+        usage: result.usage
+          ? {
+              prompt_tokens: result.usage.prompt_tokens,
+              completion_tokens: result.usage.completion_tokens,
+              total_tokens: result.usage.total_tokens,
+              cost: result.usage.cost,
+            }
+          : undefined,
+      };
+
+      // O payload rico só pra UI: steps completos, com args/results/timings.
+      // Vive em `uiData` porque a serialização pro modelo ignora esse campo —
+      // se estes steps voltassem via `data`, inflariam o contexto do main
+      // (justamente o que a delegação queria evitar).
+      const dataForUi = {
+        summary: result.text,
+        steps: result.steps,
+        stop_reason: result.stopReason,
+        usage: result.usage,
+      };
+
+      return {
+        ok: true,
+        summary: `Sub-agent finalizou (${result.steps.length} passos, ${result.stopReason})`,
+        data: dataForModel,
+        uiData: dataForUi,
+      };
     } catch (err: any) {
       if (err?.name === "AbortError") throw err;
       return fail(`Sub-agent falhou: ${err?.message ?? String(err)}`);
