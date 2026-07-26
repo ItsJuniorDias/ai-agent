@@ -74,7 +74,7 @@ e o prompt se viram sozinhos.
 
 | Integração | Tools |
 |---|---|
-| core | 5 (memória ×3, geração de imagem, data/hora) |
+| core | 6 (memória ×3, geração de imagem, data/hora, spawn_subagent) |
 | github | 5 |
 | gitlab | 4 |
 | jira | 3 |
@@ -99,6 +99,45 @@ cosseno sobre `@vector_memory` e injeta o que passar do threshold. Gravar exige
 o modelo chamar `memory_save`. A versão anterior fazia o contrário: dava embed em
 todo prompt, inclusive "oi" e "obrigado", gastando request à toa e poluindo a
 memória com ruído.
+
+### Sub-agents
+
+O agente pode delegar uma sub-tarefa a um mini-loop isolado via a tool
+`spawn_subagent`. O sub-agent começa com contexto vazio (não vê o histórico
+do main), só enxerga tools de leitura, e devolve UM sumário estruturado com
+o que encontrou. Casos onde compensa:
+
+- **Trabalho paralelizável:** "revise cada um destes 5 PRs" vira 5 chamadas
+  a `spawn_subagent` no mesmo turno. Como a tool é `mutates: false`, o loop
+  principal já joga tudo em `Promise.all` — 5 sub-agents rodam ao mesmo
+  tempo, cada um cuida de um PR, e o main recebe 5 sumários prontos pra
+  compor a resposta.
+- **Economia de contexto:** conversas longas com muitos diffs no histórico.
+  Delegar "resuma esses 3 arquivos" a um sub-agent limpa custa uma fração
+  do que empilhar as leituras no contexto do main.
+- **Especialização:** allowlist de tools + brief focado por tarefa. Menos
+  tools no payload = decisões melhores do modelo.
+
+Restrições intencionais:
+
+- Sub-agent é read-only. Nada de writes — o main é quem passa por aprovação
+  humana quando algo altera sistema externo. Sub-agent que "descobre" que
+  precisa abrir um PR retorna essa recomendação no sumário; o main decide
+  se executa.
+- Sem tools de memória (`memory_*`) — memória é sobre o usuário, não sobre
+  a task do sub-agent. O main é quem decide o que salvar.
+- Sem recursão: sub-agent não pode chamar `spawn_subagent`. Filtro na lista
+  de tools + guarda por `sharedState.subagentDepth` no `execute`.
+- Herda o `AbortSignal` do main. Cancelar o run principal mata todos os
+  sub-agents em voo.
+- Teto de rounds independente (`subagentMaxSteps`, padrão 5) e modelo
+  próprio opcional (`subagentModel`, cai em `orchestrationModel` ou `model`
+  se ausente).
+
+O retorno inclui `summary` (o texto a ser lido pelo main), `steps_taken`,
+`stop_reason` (`final`/`max_steps`/`error`) e `usage` agregado. O usage
+soma tokens/cost do sub-agent ao total da run — na UI o custo do turno
+inclui todo o trabalho delegado.
 
 ### Credenciais
 
