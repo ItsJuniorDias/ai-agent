@@ -158,31 +158,45 @@ quando delegar (subtarefas focadas, especialmente paralelas) e quando não
 (chat casual, writes). Sem essa instrução o modelo raramente decide chamar a
 tool sozinho — vale a pena.
 
-## 5. UI: configuração dos sub-agents em Ajustes
+## 5. UI: configuração dos sub-agents em tela dedicada
 
-Duas novas seções na `app/(tabs)/settings.tsx`, colocadas logo depois de
-"Modelo do agente":
+Uma versão anterior desse patch tinha colocado a config do sub-agent como
+duas seções gigantes dentro de Ajustes — o mesmo seletor de `AGENT_MODELS`
+aparecia duas vezes na mesma tela, uma pro main e outra pro sub. Ruim
+visualmente e ruim como sinal: pra 90% dos usuários, a config do sub-agent
+é "deixa no auto e vamo embora"; enfiar isso na tela principal cria
+fricção sem benefício.
 
-**Sub-agent model.** Lista os mesmos `AGENT_MODELS` do modelo principal, mais
-uma linha "Auto" no topo — quando selecionada, `subagentModel` fica
-`undefined` e o sub-agent cai em `orchestrationModel` → `model`. Essa linha
-"Auto" existe pra não obrigar o usuário casual a entender a cascata de
-fallback: pra ele, "Auto" é literalmente auto.
+Refactor: uma linha só em Ajustes (`app/(tabs)/settings.tsx`) com chevron
+que abre uma tela dedicada em `app/(subagent)/index.tsx`. Segue o mesmo
+padrão do Personal Assistant, MCP e Custom Tools — tudo que é
+config-de-detalhe pra minoria dos usuários vive numa tela própria.
 
-**Sub-agent max rounds.** Segmented control com opções 3 / 5 / 8 / 12 — o
-mesmo widget que já existe pro `maxSteps` do main, com um range menor porque
-sub-agent focado dificilmente precisa de mais de 8 rodadas.
+**Linha em Ajustes.** Título "Sub-agent settings" + subtítulo dinâmico que
+resume o estado atual ("Auto · 5 max rounds" ou "Gemini 2.5 Flash Lite · 8
+max rounds"). Um chevron indica que abre outra tela.
 
-Nada de UI de "veja quantos sub-agents rodaram no último turno" aqui — esse
-sinal aparece diretamente no trace (item 6). A tela de Ajustes fica só com
-config.
+**Tela dedicada (`app/(subagent)/index.tsx`).** Header com back button e
+título grande no padrão do assistant. Um `intro` em prosa explicando *o que
+é um sub-agent* — o único lugar do app onde o user encontra a feature
+explicada em texto, então vale caprichar. Duas seções:
+- Modelo com "Auto" no topo (que serializa como `undefined` e cai em
+  `orchestrationModel` → `model`) + os `AGENT_MODELS` normais.
+- Segmented control de max rounds (3 / 5 / 8 / 12).
 
-Strings i18n adicionadas nos 7 idiomas suportados (`en`, `pt`, `es`, `fr`,
-`zh`, `ar`, `hi`) sob as chaves `settings.subagentTitle`, `subagentAuto`,
-`subagentAutoSub`, `subagentFooter`, `subagentMaxSteps` e
-`subagentMaxStepsFooter`.
+**Nova rota.** Adicionada em `app/_layout.tsx` como `Stack.Screen name=
+"(subagent)/index"` com `headerShown: false` (a tela usa header próprio).
 
-**Arquivos.** `app/(tabs)/settings.tsx`, `i18n/locales/*.ts`.
+Strings i18n reorganizadas nos 7 idiomas suportados (`en`, `pt`, `es`,
+`fr`, `zh`, `ar`, `hi`):
+- `settings.subagentTitle`, `subagentRowTitle`, `subagentRowSteps`,
+  `subagentAuto`, `subagentFooter` — só o que a linha resumo em Ajustes usa.
+- Namespace novo `subagent.*` com `title`, `intro`, `modelSection`, `auto`,
+  `autoSub`, `modelFooter`, `maxRoundsSection`, `maxRoundsFooter` — usado
+  pela tela dedicada.
+
+**Arquivos.** `app/(subagent)/index.tsx` (novo), `app/_layout.tsx` (registro
+da rota), `app/(tabs)/settings.tsx` (linha resumo), `i18n/locales/*.ts`.
 
 ## 6. Trace aninhado do sub-agent
 

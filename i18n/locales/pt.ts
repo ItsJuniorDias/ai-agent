@@ -132,14 +132,12 @@ const pt: Dict = {
     maxRounds: "MÁX. DE RODADAS",
     maxRoundsFooter:
       "Quantas vezes o agente pode chamar ferramentas antes de responder. Mais rodadas dão conta de tarefas difíceis; também custam mais por mensagem.",
-    subagentTitle: "MODELO DO SUB-AGENTE",
+    subagentTitle: "SUB-AGENTES",
+    subagentRowTitle: "Ajustes do sub-agente",
+    subagentRowSteps: "{{count}} rodadas máx.",
     subagentAuto: "Automático",
-    subagentAutoSub: "Usa o modelo de orquestração, ou o principal se não houver.",
     subagentFooter:
-      "Quando o agente delega uma tarefa focada com spawn_subagent, este modelo roda o mini-loop. Modelo mais barato costuma bastar — sub-agentes começam com contexto limpo e só têm ferramentas de leitura.",
-    subagentMaxSteps: "MÁX. DE RODADAS DO SUB-AGENTE",
-    subagentMaxStepsFooter:
-      "Quantas rodadas de ferramentas cada sub-agente tem antes de precisar resumir. Menos rodadas mantém o sub-agente focado e barato.",
+      "Configure o mini-loop que o agente principal dispara com spawn_subagent — modelo e teto de rodadas.",
     memory: "MEMÓRIA",
     longTermMemory: "Memória de longo prazo",
     factOne: "{{count}} fato lembrado",
@@ -301,6 +299,20 @@ const pt: Dict = {
     subMaxSteps: "Atingiu limite de rodadas",
     subFailed: "Falhou",
     tokens: "tokens",
+  },
+
+  subagent: {
+    title: "Sub-agentes",
+    intro:
+      "Quando uma tarefa pode ser dividida em consultas focadas e só de leitura, o agente principal pode delegar a um mini-loop com modelo e teto de passos próprios. Sub-agentes rodam em paralelo, devolvem um resumo curto, e nunca tocam em nada que escreva num sistema externo.",
+    modelSection: "MODELO",
+    auto: "Automático",
+    autoSub: "Usa o modelo de orquestração, ou o principal se não houver.",
+    modelFooter:
+      "Modelo mais barato costuma bastar — sub-agentes começam com contexto limpo e só têm ferramentas de leitura, então raramente precisam de raciocínio pesado.",
+    maxRoundsSection: "MÁX. DE RODADAS",
+    maxRoundsFooter:
+      "Quantas rodadas de ferramentas cada sub-agente tem antes de precisar resumir. Menos rodadas mantém o sub-agente focado e barato.",
   },
 
   models: {

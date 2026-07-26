@@ -133,15 +133,12 @@ const es: Dict = {
     maxRounds: "MÁX. DE RONDAS",
     maxRoundsFooter:
       "Cuántas veces puede llamar herramientas el agente antes de responder. Más rondas resuelven tareas difíciles; también cuestan más por mensaje.",
-    subagentTitle: "MODELO DEL SUB-AGENTE",
+    subagentTitle: "SUB-AGENTES",
+    subagentRowTitle: "Ajustes del sub-agente",
+    subagentRowSteps: "{{count}} rondas máx.",
     subagentAuto: "Automático",
-    subagentAutoSub:
-      "Usa el modelo de orquestación, o el principal si no hay ninguno.",
     subagentFooter:
-      "Cuando el agente delega una tarea concreta con spawn_subagent, este modelo ejecuta el mini-bucle. Un modelo más barato suele bastar — los sub-agentes empiezan con contexto limpio y solo tienen herramientas de lectura.",
-    subagentMaxSteps: "MÁX. RONDAS DEL SUB-AGENTE",
-    subagentMaxStepsFooter:
-      "Cuántas rondas de herramientas tiene cada sub-agente antes de tener que resumir. Menos rondas mantienen al sub-agente enfocado y barato.",
+      "Configura el mini-bucle que el agente principal dispara con spawn_subagent — modelo y tope de rondas.",
     memory: "MEMORIA",
     longTermMemory: "Memoria a largo plazo",
     factOne: "{{count}} dato recordado",
@@ -303,6 +300,20 @@ const es: Dict = {
     subMaxSteps: "Alcanzó el límite",
     subFailed: "Falló",
     tokens: "tokens",
+  },
+
+  subagent: {
+    title: "Sub-agentes",
+    intro:
+      "Cuando una tarea se puede dividir en consultas concretas y solo de lectura, el agente principal puede delegarla a un mini-bucle con modelo y tope de pasos propios. Los sub-agentes corren en paralelo, devuelven un resumen breve, y nunca tocan nada que escriba en un sistema externo.",
+    modelSection: "MODELO",
+    auto: "Automático",
+    autoSub: "Usa el modelo de orquestación, o el principal si no hay ninguno.",
+    modelFooter:
+      "Un modelo más barato suele bastar — los sub-agentes empiezan con contexto limpio y solo tienen herramientas de lectura, por lo que raramente necesitan razonamiento pesado.",
+    maxRoundsSection: "MÁX. DE RONDAS",
+    maxRoundsFooter:
+      "Cuántas rondas de herramientas tiene cada sub-agente antes de tener que resumir. Menos rondas mantienen al sub-agente enfocado y barato.",
   },
 
   models: {
