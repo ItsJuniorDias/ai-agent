@@ -42,16 +42,6 @@ export type ToolResult = {
   ok: boolean;
   /** Payload devolvido ao modelo. Mantenha enxuto — vira token. */
   data?: unknown;
-  /**
-   * Payload rico *apenas para a UI*. Nunca é serializado para o modelo.
-   * Usado para expor coisas que só fazem sentido na tela — por exemplo, o
-   * `steps: SubagentStep[]` completo produzido dentro de um sub-agent, com
-   * args/results/timings que a gente quer mostrar no trace expandido mas que
-   * inflariam o contexto do modelo se voltassem via `data`. Se você está em
-   * dúvida se algo cabe aqui ou em `data`, a pergunta é: "o modelo do main
-   * precisa disso pra decidir o próximo passo?". Se não, é `uiData`.
-   */
-  uiData?: unknown;
   /** Mensagem de erro devolvida ao modelo para ele se corrigir. */
   error?: string;
   /** Resumo curto de uma linha, exibido no trace da UI. */

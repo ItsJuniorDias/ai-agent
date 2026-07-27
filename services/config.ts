@@ -167,24 +167,6 @@ export type AgentConfig = {
   requireApproval: boolean;
   /** Teto de iterações do loop, evita agente em loop infinito queimando crédito. */
   maxSteps: number;
-  /**
-   * Modelo usado pelos sub-agents disparados via `spawn_subagent`. Sub-agents
-   * fazem trabalho focado e recebem contexto novo cada vez, então costumam
-   * responder bem com um modelo mais barato do que o do main. Se `undefined`,
-   * cai em `orchestrationModel` ou `model` (nessa ordem).
-   *
-   * Padrão sugerido em Ajustes: `google/gemini-2.5-flash-lite` para o
-   * subagente enquanto o `model` principal é `anthropic/claude-sonnet-4.6` ou
-   * o `google/gemini-3-flash-preview`.
-   */
-  subagentModel?: string;
-  /**
-   * Teto de rounds do loop dentro do sub-agent. Menor que `maxSteps` porque a
-   * task de um sub-agent é sempre delimitada — não é conversa aberta.
-   * Se o sub-agent atinge esse teto ele fecha com síntese forçada, igual ao
-   * main. Padrão baixo pra manter custo/latência sob controle.
-   */
-  subagentMaxSteps: number;
   haptics: boolean;
 };
 
@@ -197,8 +179,6 @@ export const DEFAULT_CONFIG: AgentConfig = {
   longTermMemory: true,
   requireApproval: true,
   maxSteps: 8,
-  subagentModel: undefined,
-  subagentMaxSteps: 5,
   haptics: true,
 };
 

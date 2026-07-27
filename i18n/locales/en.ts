@@ -137,12 +137,6 @@ const en = {
     maxRounds: "MAX TOOL ROUNDS",
     maxRoundsFooter:
       "How many times the agent may call tools before it must answer. Higher handles harder tasks; it also costs more per message.",
-    subagentTitle: "SUB-AGENTS",
-    subagentRowTitle: "Sub-agent settings",
-    subagentRowSteps: "{{count}} max rounds",
-    subagentAuto: "Auto",
-    subagentFooter:
-      "Configure the mini-loop the main agent spins up with spawn_subagent — model and step ceiling.",
     memory: "MEMORY",
     longTermMemory: "Long-term memory",
     factOne: "{{count}} fact remembered",
@@ -294,27 +288,6 @@ const en = {
     open: "Open",
     concluded: "Done",
     failed: "Failed",
-    subagentLabel: "Sub-agent",
-    subStepOne: "{{count}} inner step",
-    subStepOther: "{{count}} inner steps",
-    subFinished: "Finished",
-    subMaxSteps: "Hit step limit",
-    subFailed: "Failed",
-    tokens: "tokens",
-  },
-
-  subagent: {
-    title: "Sub-agents",
-    intro:
-      "When a task can be split into focused, read-only lookups, the main agent can delegate them to a mini-loop with its own model and step budget. Sub-agents run in parallel, return a short summary, and never touch anything that writes to an external system.",
-    modelSection: "MODEL",
-    auto: "Auto",
-    autoSub: "Use the orchestration model, or the main one if none is set.",
-    modelFooter:
-      "Cheaper is usually better — sub-agents start with fresh context and read-only tools, so heavy reasoning is rarely needed.",
-    maxRoundsSection: "MAX ROUNDS",
-    maxRoundsFooter:
-      "How many tool rounds each sub-agent gets before it must summarize. Lower keeps sub-agents focused and cheap.",
   },
 
   models: {

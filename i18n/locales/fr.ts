@@ -132,12 +132,6 @@ const fr: Dict = {
     maxRounds: "TOURS D'OUTILS MAX",
     maxRoundsFooter:
       "Combien de fois l'agent peut appeler des outils avant de devoir répondre. Plus élevé gère les tâches complexes ; ça coûte aussi plus cher par message.",
-    subagentTitle: "SOUS-AGENTS",
-    subagentRowTitle: "Réglages du sous-agent",
-    subagentRowSteps: "{{count}} tours max",
-    subagentAuto: "Auto",
-    subagentFooter:
-      "Configure la sous-boucle que l'agent principal lance via spawn_subagent — modèle et plafond de tours.",
     memory: "MÉMOIRE",
     longTermMemory: "Mémoire long terme",
     factOne: "{{count}} fait mémorisé",
@@ -294,28 +288,6 @@ const fr: Dict = {
     open: "Ouvrir",
     concluded: "Terminé",
     failed: "Échoué",
-    subagentLabel: "Sous-agent",
-    subStepOne: "{{count}} étape interne",
-    subStepOther: "{{count}} étapes internes",
-    subFinished: "Terminé",
-    subMaxSteps: "Limite atteinte",
-    subFailed: "Échec",
-    tokens: "tokens",
-  },
-
-  subagent: {
-    title: "Sous-agents",
-    intro:
-      "Quand une tâche peut être découpée en recherches ciblées et en lecture seule, l'agent principal peut la déléguer à une sous-boucle avec son propre modèle et budget de tours. Les sous-agents tournent en parallèle, renvoient un résumé court, et ne touchent jamais à rien qui écrive dans un système externe.",
-    modelSection: "MODÈLE",
-    auto: "Auto",
-    autoSub:
-      "Utilise le modèle d'orchestration, ou le principal si aucun n'est défini.",
-    modelFooter:
-      "Un modèle moins cher suffit souvent — les sous-agents démarrent avec un contexte propre et n'ont que des outils de lecture, donc rarement besoin de raisonnement lourd.",
-    maxRoundsSection: "TOURS MAX",
-    maxRoundsFooter:
-      "Combien de tours d'outils chaque sous-agent a avant de devoir résumer. Moins de tours = sous-agent focalisé et bon marché.",
   },
 
   models: {

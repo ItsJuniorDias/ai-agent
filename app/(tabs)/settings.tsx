@@ -49,6 +49,18 @@ import {
 
 const STEP_OPTIONS = [4, 6, 8, 12, 16];
 
+/**
+ * Rota do editor de cada integração. A maioria dos IntegrationId bate 1:1
+ * com o nome da pasta em `app/` (github → `(github)`, mcp → `(mcp)`, etc),
+ * então basta interpolar. Custom é a exceção — a pasta é `(custom-tools)`,
+ * não `(custom)`. Sem esse override, tocar em "Custom" nas Integrações
+ * ativas navegava pra `/(custom)`, que colidia com `(custom-tools)/[toolId]`
+ * e caía em "Tool não encontrada".
+ */
+const INTEGRATION_ROUTE: Partial<Record<string, string>> = {
+  custom: "/(custom-tools)",
+};
+
 /** Switch styling shared by every toggle — iris "on", quiet "off". */
 const switchProps = {
   trackColor: { false: Color.surface3, true: Color.success },
@@ -246,42 +258,6 @@ export default function Settings() {
       </View>
       <Text style={styles.footerText}>{t("settings.modelFooter")}</Text>
 
-      {/* -- Sub-agents (uma linha, tela dedicada) ------------------------ */}
-      {/*
-        Antes essa config vivia como duas seções gigantes bem aqui — o mesmo
-        seletor de AGENT_MODELS aparecia duas vezes na tela. Ruim visualmente
-        e ruim como sinal: pra 90% dos usuários o sub-agent é "deixa no auto".
-        Agora é uma linha só com chevron, seguindo o mesmo padrão do Personal
-        Assistant, MCP e Custom tools. A UI completa vive em `app/(subagent)`.
-      */}
-      <Text style={styles.sectionTitle}>{t("settings.subagentTitle")}</Text>
-      <View style={styles.group}>
-        <TouchableOpacity
-          style={[styles.row, styles.noBorder]}
-          onPress={() => router.push("/(subagent)" as never)}
-          activeOpacity={0.6}
-        >
-          <View style={styles.rowLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: Color.accent }]}>
-              <Ionicons name="git-branch" size={16} color={Palette.white} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowText}>{t("settings.subagentRowTitle")}</Text>
-              <Text style={styles.rowSubtext}>
-                {config.subagentModel
-                  ? (AGENT_MODELS.find((m) => m.id === config.subagentModel)?.name ??
-                    config.subagentModel)
-                  : t("settings.subagentAuto")}
-                {" · "}
-                {t("settings.subagentRowSteps", { count: config.subagentMaxSteps })}
-              </Text>
-            </View>
-          </View>
-          <Feather name="chevron-right" size={18} color={Color.tertiary} />
-        </TouchableOpacity>
-      </View>
-      <Text style={styles.footerText}>{t("settings.subagentFooter")}</Text>
-
       {/* -- Comportamento ----------------------------------------------- */}
       <Text style={styles.sectionTitle}>{t("settings.agentBehavior")}</Text>
       <View style={styles.group}>
@@ -464,7 +440,9 @@ export default function Settings() {
                   styles.row,
                   index === connected.length - 1 && styles.noBorder,
                 ]}
-                onPress={() => router.push(`/(${id})` as never)}
+                onPress={() =>
+                  router.push((INTEGRATION_ROUTE[id] ?? `/(${id})`) as never)
+                }
                 activeOpacity={0.6}
               >
                 <View style={styles.rowLeft}>
